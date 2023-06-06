@@ -1,5 +1,5 @@
 pandasql==0.7.3
-gspread==5.7.2
+gsheetsdb==0.1.13.1
 sqlalchemy==1.4.46
 matplotlib==3.3.4
 scikit-learn==0.24.0
