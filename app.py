@@ -14,7 +14,7 @@ from google.oauth2 import service_account
 from gsheetsdb import connect
 
 st.write ("""
-## THE BASE COAT FOR MBCC 12 in 23-24!!
+## TEASER FOR MBCC 12 in 2023-24!!
 """)
 
 # Create a connection object.
