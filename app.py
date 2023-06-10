@@ -38,10 +38,9 @@ tab3, tab2, tab1 = st.tabs(["Live", "MBCC 12", "History"])
 
 with tab3:
 	st.header("Mehfoud Bowl Challenge Chalice History")
-	
-    rows = run_query(f'SELECT * FROM "{history_sheet}"')
+	rows = run_query(f'SELECT * FROM "{history_sheet}"')
 
 
     
-st.dataframe(rows)
+	st.dataframe(rows)
 
