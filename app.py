@@ -36,7 +36,7 @@ history_sheet = st.secrets["history_sheet"]
 
 tab3, tab2, tab1 = st.tabs(["Live", "MBCC 12", "History"])
 
-with tab3:
+with tab1:
 	st.header("Mehfoud Bowl Challenge Chalice History")
 	rows = run_query(f'SELECT * FROM "{history_sheet}"')
 
