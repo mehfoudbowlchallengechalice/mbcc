@@ -34,7 +34,7 @@ def run_query(query):
 
 history_sheet = st.secrets["history_sheet"]
 
-tabtoday, tab2, tab1 tabhistory = st.tabs(["Live", "MBCC 12", "Elimination Check??", "History"])
+tabtoday, tab2, tab1, tabhistory = st.tabs(["Live", "MBCC 12", "Elimination Check??", "History"])
 
 st.write ("""
 Pick a player
