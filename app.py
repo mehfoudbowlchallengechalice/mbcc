@@ -34,13 +34,20 @@ def run_query(query):
 
 history_sheet = st.secrets["history_sheet"]
 
-tab3, tab2, tab1 = st.tabs(["Live", "MBCC 12", "History"])
+tabtoday, tab2, tab1 tabhistory = st.tabs(["Live", "MBCC 12", "Elimination Check??", "History"])
 
-with tab1:
+st.write ("""
+Pick a player
+""")
+##TODO drop down here for players
+
+with tabtoday:
+	st.header("Games Today")	
+
+with tabhistory:
 	st.header("Mehfoud Bowl Challenge Chalice History")
 	rows = run_query(f'SELECT * FROM "{history_sheet}"')
-
-
     
 	st.dataframe(rows)
 
+	##TODO drop down for specific MBCC
