@@ -31,9 +31,15 @@ def run_query(query):
     rows = conn.execute(query, headers=1)
     rows = rows.fetchall()
     return rows
-  
-sheet_url = st.secrets["private_gsheets_url"]
-rows = run_query(f'SELECT * FROM "{sheet_url}"')
+
+history_sheet = st.secrets["history_sheet"]
+
+tab3, tab2, tab1 = st.tabs(["Live", "MBCC 12", "History"])
+
+with tab3:
+	st.header("Mehfoud Bowl Challenge Chalice History")
+	
+    rows = run_query(f'SELECT * FROM "{history_sheet}"')
 
 
     
