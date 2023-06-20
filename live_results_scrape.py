@@ -2,6 +2,8 @@ import requests
 from bs4 import BeautifulSoup
 import re
 import pandas as pd
+import time
+import datetime
 
 def get_schedule():
   """Gets the College Football Schedule for Week 1 of the 2023 season."""
@@ -16,11 +18,13 @@ def get_schedule():
   soup_2 = BeautifulSoup(response_2.content, "html.parser")
 
   df_fcs = organize_soup(soup_2)
-
+    
   final_df = df_main.append(df_fcs)
+  #final_df['game_timestamp_test'] = final_df.game_date+' '+final_df.game_time  
+  final_df['game_timestamp'] = pd.to_datetime(final_df.game_date+' '+final_df.game_time, format = "%A, %B %d, %Y %I:%M %p")
+  final_df = final_df.sort_values(by = ['game_timestamp'])
 
-  final_df.sort_values(by = ['game_date', 'game_time'])
-
+  print(final_df)
   return final_df
 
     
