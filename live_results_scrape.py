@@ -20,11 +20,9 @@ def get_schedule():
   df_fcs = organize_soup(soup_2)
     
   final_df = df_main.append(df_fcs)
-  #final_df['game_timestamp_test'] = final_df.game_date+' '+final_df.game_time  
   final_df['game_timestamp'] = pd.to_datetime(final_df.game_date+' '+final_df.game_time, format = "%A, %B %d, %Y %I:%M %p")
   final_df = final_df.sort_values(by = ['game_timestamp'])
 
-  print(final_df)
   return final_df
 
     
