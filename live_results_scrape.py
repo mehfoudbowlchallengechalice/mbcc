@@ -104,7 +104,7 @@ def organize_soup(soup):
     ind_start = str(row).find("gameId=")
     id_sliced = row_set[ind_start+7:ind_start+16]
     str_type.append('ident') 
-    str_name.append('id_sliced')
+    str_name.append(id_sliced)
     ind.append(row.sourcepos+ind_start+7)
 
   df = pd.DataFrame({
