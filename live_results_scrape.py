@@ -4,9 +4,9 @@ import re
 import pandas as pd
 import time
 import datetime
+import json
 
 def get_schedule():
-  """Gets the College Football Schedule for Week 1 of the 2023 season."""
   url_1 = "https://www.espn.com/college-football/schedule/_/week/1/year/2023/seasontype/3"
   response_1 = requests.get(url_1)
   soup_1 = BeautifulSoup(response_1.content, "html.parser")
@@ -19,15 +19,26 @@ def get_schedule():
 
   df_fcs = organize_soup(soup_2)
     
-  final_df = pd.concat([df_main, df_fcs])
-  final_df['game_timestamp'] = pd.to_datetime(final_df.game_date+' '+final_df.game_time, format = "%A, %B %d, %Y %I:%M %p")
-  final_df = final_df.sort_values(by = ['game_timestamp']).reset_index(drop = True)
+  game_df = pd.concat([df_main, df_fcs])
+  
+  score_df_main = get_scores(soup_1, df_main.game_id)
+  score_df_fcs = get_scores(soup_2, df_fcs.game_id)
+    
+  score_df = pd.concat([score_df_main, score_df_fcs])
 
+  final_df = game_df.merge(score_df, on = 'game_id')
+  
+  final_df['game_timestamp'] = pd.to_datetime(final_df.game_date+' '+final_df.game_time, format = "%A, %B %d, %Y %I:%M %p")
+  final_df = final_df.sort_values(by = ['game_timestamp'])
+
+  
+  
+  
   return final_df
 
     
 def organize_soup(soup):
-  print(soup)
+  #print(soup)
   # games 
 
   ## gathering the string and index
@@ -158,3 +169,55 @@ def organize_soup(soup):
   })
                 
   return df_final
+
+
+def get_scores(soup, ids):
+  #print(soup)
+  #print(soup.prettify())
+  games = soup.find_all("script", type="text/javascript")
+  #print(games)
+  details = games[2]
+
+  #print(details)
+# Regular expression pattern to extract the dictionary
+  pattern = r'window\[\'__espnfitt__\'\]=(\{.*\})'
+
+
+# Find the dictionary in the script using regular expressions
+  match = re.search(pattern, str(details))
+  #print(match)
+  #print(match.group(1))
+  ident_list = []
+  home_score_list = []
+  away_score_list = []
+# Extract the dictionary from the match object
+  if match:
+    dictionary_str = match.group(1)
+
+    dictionary = json.loads(dictionary_str)  # Convert the string to a dictionary
+    event_json = dictionary["page"]["content"]["events"]
+    for day in event_json:
+      event_day = event_json[day]
+      for j in event_day:
+        for k in j:
+          if k == 'id':
+            ident_list.append(j[k])
+          if k == 'competitors':
+            for l in j[k]:
+              for m in l:
+                if m == 'isHome':
+                  if l[m] == True:
+                    home_score_list.append(l['score'])
+                  else:
+                    away_score_list.append(l['score'])
+                    
+  
+
+  score_df = pd.DataFrame({
+      'game_id': ident_list,
+      'home_score': home_score_list,
+      'away_score': away_score_list
+  })
+
+
+  return score_df
