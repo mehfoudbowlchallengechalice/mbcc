@@ -5,10 +5,26 @@ import pandas as pd
 
 def get_schedule():
   """Gets the College Football Schedule for Week 1 of the 2023 season."""
-  url = "https://www.espn.com/college-football/schedule/_/week/1/year/2023/seasontype/3"
-  response = requests.get(url)
-  soup = BeautifulSoup(response.content, "html.parser")
+  url_1 = "https://www.espn.com/college-football/schedule/_/week/1/year/2023/seasontype/3"
+  response_1 = requests.get(url_1)
+  soup_1 = BeautifulSoup(response_1.content, "html.parser")
 
+  df_main = organize_soup(soup_1)
+
+  url_2 = "https://www.espn.com/college-football/schedule/_/week/1/year/2023/seasontype/3/group/81"
+  response_2 = requests.get(url_2)
+  soup_2 = BeautifulSoup(response_2.content, "html.parser")
+
+  df_fcs = organize_soup(soup_2)
+
+  final_df = df_main.append(df_fcs)
+
+  final_df.sort_values(by = ['game_date', 'game_time'])
+
+  return final_df
+
+    
+def organize_soup(soup):
 #   print(soup)
   # games 
 
