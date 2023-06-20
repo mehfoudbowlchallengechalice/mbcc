@@ -21,7 +21,7 @@ def get_schedule():
     
   final_df = pd.concat([df_main, df_fcs])
   final_df['game_timestamp'] = pd.to_datetime(final_df.game_date+' '+final_df.game_time, format = "%A, %B %d, %Y %I:%M %p")
-  final_df = final_df.sort_values(by = ['game_timestamp'])
+  final_df = final_df.sort_values(by = ['game_timestamp']).reset_index()
 
   return final_df
 
