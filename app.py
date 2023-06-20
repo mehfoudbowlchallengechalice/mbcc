@@ -18,6 +18,12 @@ st.write ("""
 ## TEASER FOR MBCC 12 in 2023-24!!
 """)
 
+st.write ("""
+Pick a player
+""")
+##TODO drop down here for players
+
+
 # Create a connection object.
 credentials = service_account.Credentials.from_service_account_info(
     st.secrets["gcp_service_account"],
@@ -42,10 +48,6 @@ history_sheet = st.secrets["history_sheet"]
 
 tabtoday, tab2, tab1, tabhistory = st.tabs(["Live", "MBCC 12", "Elimination Check??", "History"])
 
-st.write ("""
-Pick a player
-""")
-##TODO drop down here for players
 
 
 
