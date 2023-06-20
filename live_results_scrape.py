@@ -27,7 +27,7 @@ def get_schedule():
 
     
 def organize_soup(soup):
-  #print(soup)
+  print(soup)
   # games 
 
   ## gathering the string and index
@@ -51,7 +51,7 @@ def organize_soup(soup):
     row_set = str(row)
     ind_start = str(row).find("img alt")
     slice_net = row_set[ind_start:ind_start+20]
-    ind.append(row.sourcepos)
+    ind.append(row.sourcepos+ind_start)
     list_bound = [n for n in range(len(slice_net)) if slice_net.find('"', n) == n]
     str_name.append(slice_net[list_bound[0]+1:list_bound[1]])
     str_type.append('network')  
@@ -96,6 +96,16 @@ def organize_soup(soup):
     str_name.append(row.get_text(strip=True))
     str_type.append('time')
     
+    
+  ## bring in ID???
+  id_table = soup.find_all("a", {"class": "AnchorLink", "href": re.compile('/college-football/game*')})
+  for row in id_table:
+    row_set = str(row)
+    ind_start = str(row).find("gameId=")
+    id_sliced = row_set[ind_start+7:ind_start+16]
+    str_type.append('ident') 
+    str_name.append('id_sliced')
+    ind.append(row.sourcepos+ind_start+7)
 
   df = pd.DataFrame({
       'ind': ind,
@@ -110,6 +120,7 @@ def organize_soup(soup):
   time_list = []
   game_list = []
   network_list = []
+  id_list = []
   venue_list = []
   home_team = []
   away_team = []
@@ -125,6 +136,8 @@ def organize_soup(soup):
       time_list.append(row[1][1])
     if row[1][2] == 'network':
       network_list.append(row[1][1])
+    if row[1][2] == 'ident':
+      id_list.append(row[1][1])
     if row[1][2] == 'venue':
       venue_list.append(row[1][1])
     if row[1][2] == 'away_team':
@@ -139,6 +152,7 @@ def organize_soup(soup):
       'game_name': game_list,
       'game_venue': venue_list,
       'game_network': network_list,
+      'game_id': id_list,
       'game_home_team': home_team,
       'game_away_team': away_team
   })
