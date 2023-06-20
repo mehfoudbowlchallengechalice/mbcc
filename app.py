@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import plotly.figure_factory as ff
 import plotly.express as px
 import plotly.graph_objs as go
+from live_results_scrape import get_schedule
 from plotly.subplots import make_subplots
 from sklearn.linear_model import LogisticRegression
 import streamlit as st
@@ -32,6 +33,11 @@ def run_query(query):
     rows = rows.fetchall()
     return rows
 
+### change this in december!!!
+st.cache_data(ttl=60000)
+def bring_in_live_games():
+    return get_schedule()
+
 history_sheet = st.secrets["history_sheet"]
 
 tabtoday, tab2, tab1, tabhistory = st.tabs(["Live", "MBCC 12", "Elimination Check??", "History"])
@@ -42,7 +48,10 @@ Pick a player
 ##TODO drop down here for players
 
 with tabtoday:
-	st.header("Games Today")	
+	st.header("Games Today")
+	st.dataframe(bring_in_live_games())
+
+	
 
 with tabhistory:
 	st.header("Mehfoud Bowl Challenge Chalice History")
