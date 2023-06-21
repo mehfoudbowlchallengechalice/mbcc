@@ -22,7 +22,7 @@ st.write ("""
 Pick a player
 """)
 ##TODO drop down here for players
-
+## set option to have current winner in bold
 
 # Create a connection object.
 credentials = service_account.Credentials.from_service_account_info(
@@ -59,7 +59,7 @@ with tabtoday:
 	live_df = bring_in_live_games()
 	st.dataframe(live_df, hide_index=True)
 
-	
+	### add in today, future, all drop down
 
 with tabhistory:
 	st.header("Mehfoud Bowl Challenge Chalice History")
