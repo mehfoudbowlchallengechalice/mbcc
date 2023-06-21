@@ -45,16 +45,6 @@ def bring_in_live_games():
     return get_schedule()
 
 
-# CSS to inject contained in a string
-hide_dataframe_row_index = """
-            <style>
-            .row_heading.level0 {display:none}
-            .blank {display:none}
-            </style>
-            """
-
-# Inject CSS with Markdown
-st.markdown(hide_dataframe_row_index, unsafe_allow_html=True)
 
 
 history_sheet = st.secrets["history_sheet"]
@@ -67,7 +57,7 @@ tabtoday, tab2, tab1, tabhistory = st.tabs(["Live", "MBCC 12", "Elimination Chec
 with tabtoday:
 	st.header("Games Today")
 	live_df = bring_in_live_games()
-	st.dataframe(live_df)
+	st.dataframe(live_df.set_index(df.columns[0])))
 
 	
 
