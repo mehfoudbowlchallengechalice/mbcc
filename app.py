@@ -53,7 +53,8 @@ tabtoday, tab2, tab1, tabhistory = st.tabs(["Live", "MBCC 12", "Elimination Chec
 
 with tabtoday:
 	st.header("Games Today")
-	st.dataframe(bring_in_live_games())
+	live_df = bring_in_live_games()
+	st.dataframe(live_df)
 
 	
 
