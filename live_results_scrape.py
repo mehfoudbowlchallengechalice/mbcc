@@ -23,7 +23,7 @@ def get_schedule():
   
   score_df_main = get_scores(soup_1, df_main.game_id)
   score_df_fcs = get_scores(soup_2, df_fcs.game_id)
-    
+  print(score_df_fcs)
   score_df = pd.concat([score_df_main, score_df_fcs])
 
   final_df = game_df.merge(score_df, on = 'game_id')
