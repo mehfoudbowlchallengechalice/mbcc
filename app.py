@@ -66,7 +66,7 @@ with tabtoday:
 	elif option == "Future":
 		st.dataframe(live_df[live_df.game_date >= datetime.datetime.today()], hide_index=True)
 	elif option == "Today":
-		st.dataframe(live_df[(live_df.game_date >= datetime.datetime.today()) & (live_df.game_date == min(live_df.game_date)], hide_index=True)
+		st.dataframe(live_df[(live_df.game_date >= datetime.datetime.today()) & (live_df.game_date == min(live_df.game_date))], hide_index=True)
 	
 with tabhistory:
 	st.header("Mehfoud Bowl Challenge Chalice History")
