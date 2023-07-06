@@ -10,6 +10,7 @@ import plotly.graph_objs as go
 from live_results_scrape import get_schedule
 from plotly.subplots import make_subplots
 from sklearn.linear_model import LogisticRegression
+import datetime
 import streamlit as st
 from google.oauth2 import service_account
 from gsheetsdb import connect
@@ -66,7 +67,8 @@ with tabtoday:
 	elif option == "Future":
 		st.dataframe(live_df[pd.to_datetime(live_df.game_date) >= datetime.datetime.today()], hide_index=True)
 	elif option == "Today":
-		st.dataframe(live_df[(pd.to_datetime(live_df.game_date) >= datetime.datetime.today()) & (pd.to_datetime(live_df.game_date) == min(live_df.game_date))], hide_index=True)
+		st.dataframe(live_df[(pd.to_datetime(live_df.game_date) >= datetime.datetime.today()) 
+        			& (pd.to_datetime(live_df.game_date) == min(pd.to_datetime(live_df.game_date)))], hide_index=True)
 	
 with tabhistory:
 	st.header("Mehfoud Bowl Challenge Chalice History")
