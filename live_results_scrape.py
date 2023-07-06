@@ -17,13 +17,14 @@ def get_schedule():
   response_2 = requests.get(url_2)
   soup_2 = BeautifulSoup(response_2.content, "html.parser")
 
+  ## this currently errors out because of the FCS champtionship game - add code to remove it
   df_fcs = organize_soup(soup_2)
     
   game_df = pd.concat([df_main, df_fcs])
   
   score_df_main = get_scores(soup_1, df_main.game_id)
   score_df_fcs = get_scores(soup_2, df_fcs.game_id)
-  print(score_df_fcs)
+  
   score_df = pd.concat([score_df_main, score_df_fcs])
 
   final_df = game_df.merge(score_df, on = 'game_id')
