@@ -57,10 +57,17 @@ tabtoday, tab2, tab1, tabhistory = st.tabs(["Live", "MBCC 12", "Elimination Chec
 with tabtoday:
 	st.header("Games Today")
 	live_df = bring_in_live_games()
-	st.dataframe(live_df, hide_index=True)
 
 	### add in today, future, all drop down
+	option = st.selectbox("Select Games to See", ("Today", "Future", "All"))
 
+	if option == "All":
+		st.dataframe(live_df, hide_index=True)
+	elif option == "Future":
+		st.dataframe(live_df[live_df.game_date >= datetime.datetime.today()], hide_index=True)
+	elif option == "Today":
+		st.dataframe(live_df[(live_df.game_date >= datetime.datetime.today()) & (live_df.game_date == min(live_df.game_date)], hide_index=True)
+	
 with tabhistory:
 	st.header("Mehfoud Bowl Challenge Chalice History")
 	rows = run_query(f'SELECT * FROM "{history_sheet}"')
