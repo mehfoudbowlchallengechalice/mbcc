@@ -17,14 +17,13 @@ def get_schedule():
   response_2 = requests.get(url_2)
   soup_2 = BeautifulSoup(response_2.content, "html.parser")
 
-  ## this currently errors out because of the FCS champtionship game - add code to remove it
   df_fcs = organize_soup(soup_2)
     
   game_df = pd.concat([df_main, df_fcs])
   
   score_df_main = get_scores(soup_1, df_main.game_id)
   score_df_fcs = get_scores(soup_2, df_fcs.game_id)
-  
+
   score_df = pd.concat([score_df_main, score_df_fcs])
 
   final_df = game_df.merge(score_df, on = 'game_id')
@@ -56,7 +55,11 @@ def organize_soup(soup):
     if row.get_text(strip=True) == "Barstool Sports Arizona Bowl":
         ind.append(row.sourcepos+10)
         str_name.append('Barstool')
-        str_type.append('network') 
+        str_type.append('network')
+    if row.get_text(strip=True) == "FCS Championship":
+        ind.append(row.sourcepos+10)
+        str_name.append('ABC???')
+        str_type.append('network')
     
   table_network = soup.find_all("div", {"class": "Image__Wrapper Image__Wrapper--relative"}) 
   for row in table_network:
@@ -125,7 +128,7 @@ def organize_soup(soup):
       'type': str_type
   })
 
-  
+
   df_ordered = df.sort_values(by=['ind'])
    
   date_list = []
@@ -157,7 +160,7 @@ def organize_soup(soup):
     if row[1][2] == 'home_team':
       home_team.append(row[1][1])
     
-    
+  
   df_final = pd.DataFrame({
       'game_date': date_list,
       'game_time': time_list,
@@ -168,7 +171,8 @@ def organize_soup(soup):
       'game_home_team': home_team,
       'game_away_team': away_team
   })
-                
+  # removing the FCS championship game
+  df_final = df_final[df_final.game_name != "FCS Championship"]
   return df_final
 
 
@@ -212,7 +216,6 @@ def get_scores(soup, ids):
                   else:
                     away_score_list.append(l['score'])
                     
-  
 
   score_df = pd.DataFrame({
       'game_id': ident_list,
