@@ -60,7 +60,7 @@ with tabtoday:
 	st.header("Games Today")
 	#live_df = bring_in_live_games()
 	live_df = run_query(f'SELECT * FROM "{unlive_games}"')
-	
+	st.dataframe(live_df)
 	#TODO -- add detail for the spreadsheet for games
 	
 	### add in today, future, all drop down
