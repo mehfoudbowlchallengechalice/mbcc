@@ -60,7 +60,8 @@ with tabtoday:
 	st.header("Games Today")
 	#live_df = bring_in_live_games()
 	live_df = unlive_games
-	#TODO -- add spreadsheet for games
+	
+	#TODO -- add detail for the spreadsheet for games
 	
 	### add in today, future, all drop down
 	option = st.selectbox("Select Games to See", ("Today", "Future", "All"))
