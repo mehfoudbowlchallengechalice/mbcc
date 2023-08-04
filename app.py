@@ -57,8 +57,10 @@ tabtoday, tab2, tab1, tabhistory = st.tabs(["Live", "MBCC 12", "Elimination Chec
 
 with tabtoday:
 	st.header("Games Today")
-	live_df = bring_in_live_games()
-
+	#live_df = bring_in_live_games()
+	
+	#TODO -- add spreadsheet for games
+	
 	### add in today, future, all drop down
 	option = st.selectbox("Select Games to See", ("Today", "Future", "All"))
 
