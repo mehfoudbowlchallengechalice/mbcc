@@ -180,10 +180,10 @@ def get_scores(soup, ids):
   #print(soup)
   #print(soup.prettify())
   games = soup.find_all("script", type="text/javascript")
-  #print(games)
+  print(games)
   details = games[2]
 
-  #print(details)
+  print(details)
 # Regular expression pattern to extract the dictionary
   pattern = r'window\[\'__espnfitt__\'\]=(\{.*\})'
 
