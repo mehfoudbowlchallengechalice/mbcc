@@ -49,6 +49,7 @@ def bring_in_live_games():
 
 
 history_sheet = st.secrets["history_sheet"]
+unlive_games = st.secrets["unlive_games"]
 
 tabtoday, tab2, tab1, tabhistory = st.tabs(["Live", "MBCC 12", "Elimination Check??", "History"])
 
@@ -58,7 +59,7 @@ tabtoday, tab2, tab1, tabhistory = st.tabs(["Live", "MBCC 12", "Elimination Chec
 with tabtoday:
 	st.header("Games Today")
 	#live_df = bring_in_live_games()
-	
+	live_df = unlive_games
 	#TODO -- add spreadsheet for games
 	
 	### add in today, future, all drop down
