@@ -77,7 +77,7 @@ with tabtoday:
 with tabhistory:
 	st.header("Mehfoud Bowl Challenge Chalice History")
 	history_df = pd.DataFrame(run_query(f'SELECT * FROM "{history_sheet}"'))
-	history_df['Percentage Correct'] = 100*history_df['Percentage_Correct'].map('{:.2f}%'.format)
+	history_df['Percentage Correct'] = history_df['Percentage_Correct'].apply(lambda x: x*100).map('{:.2f}%'.format)
 	history_df['MBCC Title'] = history_df['MBCC_Title']
 	history_df_rev = history_df[['MBCC Title', 'Winner', 'Picks', 'Games', 'Percentage Correct']]
 	st.dataframe(history_df_rev)
