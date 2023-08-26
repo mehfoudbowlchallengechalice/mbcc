@@ -83,7 +83,7 @@ with tabhistory:
      				, Percentage_Correct as 'Percentage Correct'
      				FROM '{history_sheet}'
 	 		""")
-    	rows.style.format({'MBCC Title': '{:.1f}', 'Winner': '{:.2f}', 'Picks': '{:.1f}', 'Games': '{:.1f}', 'Percentage Correct': '{:.2f}%'}
+	rows.style.format({'MBCC Title': '{:.1f}', 'Winner': '{:.2f}', 'Picks': '{:.1f}', 'Games': '{:.1f}', 'Percentage Correct': '{:.2f}%'})
 	st.dataframe(rows)
 
 	##TODO drop down for specific MBCC
