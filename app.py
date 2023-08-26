@@ -76,12 +76,13 @@ with tabtoday:
 	
 with tabhistory:
 	st.header("Mehfoud Bowl Challenge Chalice History")
-	rows = run_query(f"""SELECT MBCC_Title as 'MBCC Title'
+	rows = run_query(f""" SELECT MBCC_Title as 'MBCC Title'
  				, Winner as 'Winner'
      				, Picks as 'Picks'
 	 			, Games as 'Games'
      				, Percentage_Correct as 'Percentage Correct'
-     				FROM "{history_sheet}"""")
+     				FROM '{history_sheet}'
+	 		""")
     	rows.style.format({'MBCC Title': '{:.1f}', 'Winner': '{:.2f}', 'Picks': '{:.1f}', 'Games': '{:.1f}', 'Percentage Correct': '{:.2f}%'}
 	st.dataframe(rows)
 
