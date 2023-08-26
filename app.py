@@ -76,7 +76,7 @@ with tabtoday:
 	
 with tabhistory:
 	st.header("Mehfoud Bowl Challenge Chalice History")
-	history_df = pd.DataFrame(run_query(f'SELECT MBCC_Title, Winner, Picks, Games, Percentage_Correct*100 FROM "{history_sheet}"'))
+	history_df = pd.DataFrame(run_query(f'SELECT MBCC_Title, Winner, Picks, Games, 100*Percentage_Correct FROM "{history_sheet}"'))
 	history_df = history_df.style.format({'Percentage_Correct': '{:.2f}%'})
 	# history_df = history_df.style.rename(columns = {'MBCC_Title':'MBCC Title', 'Percentage_Correct':'Percentage Correct'})
 	st.dataframe(history_df)
