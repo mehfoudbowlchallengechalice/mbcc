@@ -76,9 +76,12 @@ with tabtoday:
 	
 with tabhistory:
 	st.header("Mehfoud Bowl Challenge Chalice History")
-	history_df = pd.DataFrame(run_query(f'SELECT MBCC_Title, Winner, Picks, Games, 100*Percentage_Correct FROM "{history_sheet}"'))
-	history_df = history_df.style.format({'Percentage_Correct': '{:.2f}%'})
+	history_df = pd.DataFrame(run_query(f'SELECT * FROM "{history_sheet}"'))
+	history_df['Percentage Correct'] = 100*history_df['Percentage_Correct']
+	history_df = history_df.style.format({'Percentage Correct': '{:.2f}%'})
+	history_df['MBCC_Title']=history_df['MBCC Title']
 	# history_df = history_df.style.rename(columns = {'MBCC_Title':'MBCC Title', 'Percentage_Correct':'Percentage Correct'})
-	st.dataframe(history_df)
+	history_df_rev = history_df[['MBCC Title', 'Winner', 'Picks', 'Games', 'Percentage Correct']]
+	st.dataframe(history_df_rev)
 
 	##TODO drop down for specific MBCC
