@@ -76,13 +76,7 @@ with tabtoday:
 	
 with tabhistory:
 	st.header("Mehfoud Bowl Challenge Chalice History")
-	rows = run_query(f""" SELECT MBCC_Title
- 				, Winner
-     				, Picks
-	 			, Games
-     				, Percentage_Correct
-     				FROM '{history_sheet}'
-	 		""")
+	rows = run_query(f""" SELECT * FROM '{history_sheet}'""")
 	rows.style.format({'Percentage_Correct': '{:.2f}%'})
 	rows.rename(columns = {'MBCC_Title':'MBCC Title', 'Percentage_Correct':'Percentage Correct'})
 	st.dataframe(rows)
