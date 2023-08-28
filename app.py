@@ -91,6 +91,7 @@ with tabhistory:
 
 	season_history = pd.DataFrame(run_query(f'SELECT * FROM "{season_history}"'))
 	season_history['Percentage Correct'] = season_history['Percentage'].apply(lambda x: x*100).map('{:.2f}%'.format)
+	season_history= season_history[['Season', 'Total_Wins', 'Total_Losses', 'Percentage Correct']]
 	
 	if not_current:
 		if not_winner:
