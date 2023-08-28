@@ -77,13 +77,30 @@ with tabtoday:
 with tabhistory:
 	st.header("Mehfoud Bowl Challenge Chalice History")
 	history_df = pd.DataFrame(run_query(f'SELECT * FROM "{history_sheet}"'))
+	player_list = run_query(f'SELECT distinct Player FROM "{history_sheet}"')
+	player_list = player_list.insert(0, 'All Players')
 	history_df['Percentage Correct'] = history_df['Percentage_Correct'].apply(lambda x: x*100).map('{:.2f}%'.format)
-	not_current = st.checkbox('show all')
+	not_current = st.checkbox('show all players')
+	not_winner = st.checkbox('show more than winners')
+	option = st.selectbox('Select a Player', player_list)
+
 	if not_current:
-		history_df_rev = history_df[['MBCC', 'Player', 'Picks', 'Games', 'Percentage Correct']]
+		history_df_rev = history_df[['MBCC', 'Player', 'Picks', 'Games', 'Percentage Correct']].sort_values(by='MBCC')
+		if not_winner:
+			history_df_rev = history_df[['MBCC', 'Player', 'Picks', 'Games', 'Percentage Correct']].sort_values(by='MBCC')
+		else:
+			history_df_rev = history_df[(history_df['Winner'] == 'Winner') | (history_df['Winner'] == 'Co-Winner')][['MBCC', 'Player', 'Picks', 'Games', 'Percentage Correct']].sort_values(by='MBCC')
 	else:
-		history_df_rev = history_df[(history_df['Current'] == True) | (history_df['Winner'] == 'Winner') | (history_df['Winner'] == 'Co-Winner')][['MBCC', 'Player', 'Picks', 'Games', 'Percentage Correct', 'Winner']]
+		if not_winner:
+			history_df_rev = history_df[['MBCC', 'Player', 'Picks', 'Games', 'Percentage Correct']].sort_values(by='MBCC')
+		else:
+			history_df_rev = history_df[(history_df['Current'] == True) | (history_df['Winner'] == 'Winner') | (history_df['Winner'] == 'Co-Winner')][['MBCC', 'Player', 'Picks', 'Games', 'Percentage Correct', 'Winner']].sort_values(by='MBCC')
+
 	
-	st.dataframe(history_df_rev)
+	if option == 'All Players':
+		st.dataframe(history_df_rev.sort_values(by='MBCC'))
+	else:
+		st.dataframe(history_df_rev[history_df_rev.Player == option].sort_values(by='MBCC'))
+	
 
 	##TODO drop down for specific MBCC
