@@ -85,7 +85,7 @@ with tabhistory:
 	option = st.selectbox('Select a Player', player_list)
 
 	agg_history = pd.DataFrame(run_query(f'SELECT * FROM "{agg_history}"'))
-	agg_history = agg_history[agg_history.Active == 'TRUE']
+	agg_history = agg_history[agg_history.Active == True]
 
 	if not_current:
 		if not_winner:
