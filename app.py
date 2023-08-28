@@ -86,7 +86,9 @@ with tabhistory:
 
 	agg_history = pd.DataFrame(run_query(f'SELECT * FROM "{agg_history}"'))
 	agg_history = agg_history[agg_history.Active == True]
-
+	agg_history['Percentage Correct'] = history_df['Percentage'].apply(lambda x: x*100).map('{:.2f}%'.format)
+	
+	
 	if not_current:
 		if not_winner:
 			history_df_rev = history_df[['MBCC', 'Player', 'Picks', 'Games', 'Percentage Correct', 'Winner']].sort_values(by='MBCC')
