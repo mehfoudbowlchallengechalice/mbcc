@@ -78,8 +78,12 @@ with tabhistory:
 	st.header("Mehfoud Bowl Challenge Chalice History")
 	history_df = pd.DataFrame(run_query(f'SELECT * FROM "{history_sheet}"'))
 	history_df['Percentage Correct'] = history_df['Percentage_Correct'].apply(lambda x: x*100).map('{:.2f}%'.format)
-	history_df['MBCC Title'] = history_df['MBCC_Title']
-	history_df_rev = history_df[['MBCC Title', 'Winner', 'Picks', 'Games', 'Percentage Correct']]
+	not_current = st.checkbox('show all')
+	if not_current:
+		history_df_rev = history_df[['MBCC', 'Player', 'Picks', 'Games', 'Percentage Correct']]
+	else:
+		history_df_rev = history_df[(history_df['Current'] == True) | (history_df['Winner'] == 'Winner') | (history_df['Winner'] == 'Co-Winner')][['MBCC', 'Player', 'Picks', 'Games', 'Percentage Correct', 'Winner']]
+	
 	st.dataframe(history_df_rev)
 
 	##TODO drop down for specific MBCC
