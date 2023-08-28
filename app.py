@@ -90,6 +90,7 @@ with tabhistory:
 	agg_history = agg_history[['Player', 'Live_Wins', 'Live_Losses', 'Percentage Correct']]
 
 	season_history = pd.DataFrame(run_query(f'SELECT * FROM "{season_history}"'))
+	season_history['Percentage Correct'] = season_history['Percentage'].apply(lambda x: x*100).map('{:.2f}%'.format)
 	
 	if not_current:
 		if not_winner:
