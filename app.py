@@ -102,11 +102,19 @@ with tabhistory:
 
 	
 	if option == 'All Players':
+		st.write("Player Season Breakdown")
 		st.dataframe(history_df_rev.sort_values(by='MBCC'), hide_index=True)
+		st.markdown("""---""")
+		st.write("Player Career Breakdown")
 		st.dataframe(agg_history, hide_index=True)
 	
 	else:
+		st.write("Player Season Breakdown")
 		st.dataframe(history_df_rev[history_df_rev.Player == option].sort_values(by='MBCC'), hide_index=True)
+		st.markdown("""---""")
+		st.write("Player Career Breakdown")
 		st.dataframe(agg_history[agg_history.Player == option], hide_index=True)
 
+	st.markdown("""---""")
+	st.write("MBCC Season Breakdown")
 	##TODO drop down for specific MBCC
