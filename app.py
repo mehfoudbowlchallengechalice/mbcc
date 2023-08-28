@@ -77,7 +77,7 @@ with tabtoday:
 with tabhistory:
 	st.header("Mehfoud Bowl Challenge Chalice History")
 	history_df = pd.DataFrame(run_query(f'SELECT * FROM "{history_sheet}"'))
-	player_list = run_query(f'SELECT * FROM "{history_sheet}"')
+	player_list = history_df.Player.unique()
 	print(player_list)
 	
 	player_list = player_list.insert(0, 'All Players')
