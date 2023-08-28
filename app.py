@@ -94,9 +94,9 @@ with tabhistory:
 
 	
 	if option == 'All Players':
-		st.dataframe(history_df_rev.sort_values(by='MBCC'))
+		st.dataframe(history_df_rev.sort_values(by='MBCC'), hide_index=True))
 	else:
-		st.dataframe(history_df_rev[history_df_rev.Player == option].sort_values(by='MBCC'))
+		st.dataframe(history_df_rev[history_df_rev.Player == option].sort_values(by='MBCC'), hide_index=True))
 	
 
 	##TODO drop down for specific MBCC
