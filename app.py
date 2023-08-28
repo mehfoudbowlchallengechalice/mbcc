@@ -19,9 +19,6 @@ st.write ("""
 ## TEASER FOR MBCC 12 in 2023-24!!
 """)
 
-st.write ("""
-Pick a player
-""")
 ##TODO drop down here for players
 ## set option to have current winner in bold
 
