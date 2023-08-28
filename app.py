@@ -47,7 +47,7 @@ def bring_in_live_games():
 
 history_sheet = st.secrets["history_sheet"]
 agg_history = st.secrets["agg_history"]
-
+season_history = st.secrets["season_history"]
 unlive_games = st.secrets["unlive_games"]
 
 
@@ -88,6 +88,8 @@ with tabhistory:
 	agg_history = agg_history[agg_history.Active == True]
 	agg_history['Percentage Correct'] = agg_history['Live_Percentage'].apply(lambda x: x*100).map('{:.2f}%'.format)
 	agg_history = agg_history[['Player', 'Live_Wins', 'Live_Losses', 'Percentage Correct']]
+
+	season_history = pd.DataFrame(run_query(f'SELECT * FROM "{season_history}"'))
 	
 	if not_current:
 		if not_winner:
@@ -117,4 +119,6 @@ with tabhistory:
 
 	st.markdown("""---""")
 	st.write("MBCC Season Breakdown")
+	st.dataframe(season_history, hide_index=True)
+		
 	##TODO drop down for specific MBCC
