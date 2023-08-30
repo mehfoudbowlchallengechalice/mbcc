@@ -68,7 +68,16 @@ with tabtoday:
 	
 	### add in today, future, all drop down
 	option = st.selectbox("Select Games to See", ("Today", "Future", "All"))
-	checks = st.columns(4)
+	
+	if option == "All":
+		st.dataframe(live_df, hide_index=True)
+	elif option == "Future":
+		st.dataframe(live_df[pd.to_datetime(live_df.game_date) >= datetime.datetime.today()], hide_index=True)
+	elif option == "Today":
+		st.dataframe(live_df[(pd.to_datetime(live_df.game_date) >= datetime.datetime.today()) 
+        			& (pd.to_datetime(live_df.game_date) == min(pd.to_datetime(live_df.game_date)))], hide_index=True)
+
+	checks = st.columns(5)
 	with checks[0]:
 		option_cr = st.checkbox("Christopher", value = True)
 		option_ee = st.checkbox("Elise", value = True)
@@ -79,16 +88,13 @@ with tabtoday:
 		option_jn = st.checkbox("Jen", value = True)
 		option_jh = st.checkbox("Joseph", value = True)
 	with checks[3]:
+		option_la = st.checkbox("Laura", value = True)
+		option_ln = st.checkbox("Lauren", value = True)
+	with checks[4]:
 		option_ns = st.checkbox("Nicholas", value = True)
 		option_pf = st.checkbox("P Smurf", value = True)
+
 	
-	if option == "All":
-		st.dataframe(live_df, hide_index=True)
-	elif option == "Future":
-		st.dataframe(live_df[pd.to_datetime(live_df.game_date) >= datetime.datetime.today()], hide_index=True)
-	elif option == "Today":
-		st.dataframe(live_df[(pd.to_datetime(live_df.game_date) >= datetime.datetime.today()) 
-        			& (pd.to_datetime(live_df.game_date) == min(pd.to_datetime(live_df.game_date)))], hide_index=True)
 	
 with tabhistory:
 	st.header("Mehfoud Bowl Challenge Chalice History")
