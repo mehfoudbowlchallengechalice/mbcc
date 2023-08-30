@@ -52,7 +52,7 @@ picks = st.secrets["picks"]
 unlive_games = st.secrets["unlive_games"]
 
 
-tabtoday, tab2, tab1, tabhistory = st.tabs(["Live", "MBCC 12", "Elimination Check??", "History"])
+tabtoday, tab12, tab1, tabhistory = st.tabs(["Live", "MBCC 12", "Elimination Check??", "History"])
 
 
 
@@ -76,7 +76,9 @@ with tabtoday:
 	elif option == "Today":
 		st.dataframe(live_df[(pd.to_datetime(live_df.game_date) >= datetime.datetime.today()) 
         			& (pd.to_datetime(live_df.game_date) == min(pd.to_datetime(live_df.game_date)))], hide_index=True)
-
+	
+	st.markdown("""---""")
+	st.header("Picks")
 	checks = st.columns(5)
 	with checks[0]:
 		option_cr = st.checkbox("Christopher", value = True)
@@ -96,7 +98,16 @@ with tabtoday:
 
 	people_list = ["Christopher", "Elise", "Emma", "Gregory", "Jen", "Joseph", "Laura", "Lauren", "Nicholas", "P Smurf"]
 	collection_df = pd.DataFrame(list(zip(people_list, [option_cr, option_ee, option_ea, option_gy, option_jn, option_jh, option_la, option_ln, option_ns, option_pf])))
-	st.write(collection_df[collection_df[1] == True][0].values.tolist())
+	selection_list = collection_df[collection_df[1] == True][0].values.tolist()
+	selection_list = np.insert(selection_list, 0, 'Game')
+
+	if option == "All":
+		st.dataframe(picks_dates[[selection_list]], hide_index=True)
+	elif option == "Future":
+		st.dataframe(picks_dates[pd.to_datetime(picks_dates.game_date) >= datetime.datetime.today()][[selection_list]], hide_index=True)
+	elif option == "Today":
+		st.dataframe(picks_dates[(pd.to_datetime(picks_dates.game_date) >= datetime.datetime.today()) 
+        			& (pd.to_datetime(picks_dates.game_date) == min(pd.to_datetime(picks_dates.game_date)))][[selection_list]], hide_index=True)
 	
 with tabhistory:
 	st.header("Mehfoud Bowl Challenge Chalice History")
