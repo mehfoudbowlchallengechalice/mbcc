@@ -102,12 +102,12 @@ with tabtoday:
 	selection_list = np.insert(selection_list, 0, 'Game')
 
 	if option == "All":
-		st.dataframe(picks_dates[[selection_list]], hide_index=True)
+		st.dataframe(picks_dates[selection_list], hide_index=True)
 	elif option == "Future":
-		st.dataframe(picks_dates[pd.to_datetime(picks_dates.game_date) >= datetime.datetime.today()][[selection_list]], hide_index=True)
+		st.dataframe(picks_dates[pd.to_datetime(picks_dates.game_date) >= datetime.datetime.today()][selection_list], hide_index=True)
 	elif option == "Today":
 		st.dataframe(picks_dates[(pd.to_datetime(picks_dates.game_date) >= datetime.datetime.today()) 
-        			& (pd.to_datetime(picks_dates.game_date) == min(pd.to_datetime(picks_dates.game_date)))][[selection_list]], hide_index=True)
+        			& (pd.to_datetime(picks_dates.game_date) == min(pd.to_datetime(picks_dates.game_date)))][selection_list], hide_index=True)
 	
 with tabhistory:
 	st.header("Mehfoud Bowl Challenge Chalice History")
