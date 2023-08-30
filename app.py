@@ -48,6 +48,7 @@ def bring_in_live_games():
 history_sheet = st.secrets["history_sheet"]
 agg_history = st.secrets["agg_history"]
 season_history = st.secrets["season_history"]
+picks = st.secrets["picks"]
 unlive_games = st.secrets["unlive_games"]
 
 
@@ -60,12 +61,27 @@ with tabtoday:
 	st.header("Games Today")
 	#live_df = bring_in_live_games()
 	live_df = pd.DataFrame(run_query(f'SELECT * FROM "{unlive_games}"'))
-	
-	#TODO -- add detail for the spreadsheet for all games
+
+	# bringing in picks
+	picks_df = pd.DataFrame(run_query(f'SELECT * FROM "{picks}"'))
+	picks_dates = picks_df.merge(live_df[["game_name", "game_date"]], left_on = "Game", right_on = "game_name")
 	
 	### add in today, future, all drop down
 	option = st.selectbox("Select Games to See", ("Today", "Future", "All"))
-
+	checks = st.columns(4)
+	with checks[0]:
+		option_cr = st.checkbox("Christopher", value = True)
+		option_ee = st.checkbox("Elise", value = True)
+	with checks[1]:
+		option_ea = st.checkbox("Emma", value = True)
+		option_gy = st.checkbox("Gregory", value = True)
+	with checks[2]:
+		option_jn = st.checkbox("Jen", value = True)
+		option_jh = st.checkbox("Joseph", value = True)
+	with checks[3]:
+		option_ns = st.checkbox("Nicholas", value = True)
+		option_pf = st.checkbox("P Smurf", value = True)
+	
 	if option == "All":
 		st.dataframe(live_df, hide_index=True)
 	elif option == "Future":
