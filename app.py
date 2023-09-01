@@ -81,20 +81,20 @@ with tabtoday:
 	st.header("Picks")
 	checks = st.columns(5)
 	with checks[0]:
-		option_cr = st.checkbox("Christopher", value = True)
-		option_ee = st.checkbox("Elise", value = True)
+		option_cr = st.toggle("Christopher", value = True)
+		option_ee = st.toggle("Elise", value = True)
 	with checks[1]:
-		option_ea = st.checkbox("Emma", value = True)
-		option_gy = st.checkbox("Gregory", value = True)
+		option_ea = st.toggle("Emma", value = True)
+		option_gy = st.toggle("Gregory", value = True)
 	with checks[2]:
-		option_jn = st.checkbox("Jen", value = True)
-		option_jh = st.checkbox("Joseph", value = True)
+		option_jn = st.toggle("Jen", value = True)
+		option_jh = st.toggle("Joseph", value = True)
 	with checks[3]:
-		option_la = st.checkbox("Laura", value = True)
-		option_ln = st.checkbox("Lauren", value = True)
+		option_la = st.toggle("Laura", value = True)
+		option_ln = st.toggle("Lauren", value = True)
 	with checks[4]:
-		option_ns = st.checkbox("Nicholas", value = True)
-		option_pf = st.checkbox("PSmurf", value = True)
+		option_ns = st.toggle("Nicholas", value = True)
+		option_pf = st.toggle("PSmurf", value = True)
 
 	people_list = ["Christopher", "Elise", "Emma", "Gregory", "Jen", "Joseph", "Laura", "Lauren", "Nicholas", "PSmurf"]
 	collection_df = pd.DataFrame(list(zip(people_list, [option_cr, option_ee, option_ea, option_gy, option_jn, option_jh, option_la, option_ln, option_ns, option_pf])))
