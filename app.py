@@ -15,6 +15,8 @@ import streamlit as st
 from google.oauth2 import service_account
 from gsheetsdb import connect
 
+st.set_page_config(layout="wide")
+
 st.write ("""
 ## TEASER FOR MBCC 12 in 2023-24!!
 """)
@@ -54,8 +56,6 @@ unlive_games = st.secrets["unlive_games"]
 
 tabtoday, tab12, tab1, tabhistory = st.tabs(["Live", "MBCC 12", "Elimination Check??", "History"])
 
-
-st.set_page_config(layout="wide")
 
 with tabtoday:
 	st.header("Games Today")
