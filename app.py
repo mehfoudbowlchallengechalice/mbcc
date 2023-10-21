@@ -79,9 +79,9 @@ with tabtoday:
         			& (pd.to_datetime(live_df.game_date) == min(pd.to_datetime(live_df.game_date)))], hide_index=True)
 	
 	st.markdown("""---""")
-    st.header("Picks")
-    selection_list = toggle_list()
-    selection_list = np.insert(selection_list, 0, 'Game')
+	st.header("Picks")
+	selection_list = toggle_list()
+	selection_list = np.insert(selection_list, 0, 'Game')
 
 	if option == "All":
 		st.dataframe(picks_dates[selection_list])
