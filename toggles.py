@@ -1,3 +1,8 @@
+import streamlit as st
+import numpy as np
+import pandas as pd
+
+
 def toggle_list():
     checks = st.columns(5)
     	with checks[0]:
@@ -18,5 +23,5 @@ def toggle_list():
     
     	people_list = ["Christopher", "Elise", "Emma", "Gregory", "Jen", "Joseph", "Laura", "Lauren", "Nicholas", "PSmurf"]
     	collection_df = pd.DataFrame(list(zip(people_list, [option_cr, option_ee, option_ea, option_gy, option_jn, option_jh, option_la, option_ln, option_ns, option_pf])))
-    	selection_list = collection_df[collection_df[1] == True][0].values.tolist()
+        selection_list = collection_df[collection_df[1] == True][0].values.tolist()
         return selection_list
