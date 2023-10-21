@@ -98,6 +98,7 @@ with tabtoday:
 
 with tab12:
 	column_list = starting_people_list.append('gametracker')
+	st.markdown(column_list)
 	binary_tracker_df = pd.DataFrame(run_query(f'SELECT * FROM "{live_tracker_binary}"'))[column_list].apply(pd.to_numeric)
 	complex_tracker_df = pd.DataFrame(run_query(f'SELECT * FROM "{live_tracker_complex}"'))[column_list].apply(pd.to_numeric)
 
