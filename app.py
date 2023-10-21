@@ -53,6 +53,8 @@ agg_history = st.secrets["agg_history"]
 season_history = st.secrets["season_history"]
 picks = st.secrets["picks"]
 unlive_games = st.secrets["unlive_games"]
+live_tracker_binary = st.secrets["live_tracker_binary"]
+live_tracker_complex = st.secrets["live_tracker_complex"]
 
 
 tabtoday, tab12, tab1, tabhistory = st.tabs(["Live", "MBCC 12", "Elimination Check??", "History"])
@@ -90,7 +92,13 @@ with tabtoday:
 	elif option == "Today":
 		st.dataframe(picks_dates[(pd.to_datetime(picks_dates.game_date) >= datetime.datetime.today()) 
         			& (pd.to_datetime(picks_dates.game_date) == min(pd.to_datetime(picks_dates.game_date)))][selection_list])
+
+with tab12:
+	binary_tracker_df = pd.DataFrame(run_query(f'SELECT * FROM "{live_tracker_binary}"'))
+	complex_tracker_df = pd.DataFrame(run_query(f'SELECT * FROM "{live_tracker_complex}"'))
+
 	
+
 with tabhistory:
 	st.header("Mehfoud Bowl Challenge Chalice History")
 	history_df = pd.DataFrame(run_query(f'SELECT * FROM "{history_sheet}"'))
