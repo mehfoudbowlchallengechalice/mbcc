@@ -81,7 +81,7 @@ with tabtoday:
 	st.markdown("""---""")
 	st.header("Picks")
     selection_list = toggle_list()
-	selection_list = np.insert(selection_list, 0, 'Game')
+    selection_list = np.insert(selection_list, 0, 'Game')
 
 	if option == "All":
 		st.dataframe(picks_dates[selection_list])
