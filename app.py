@@ -97,7 +97,8 @@ with tabtoday:
         			& (pd.to_datetime(picks_dates.game_date) == min(pd.to_datetime(picks_dates.game_date)))][selection_list])
 
 with tab12:
-	column_list = starting_people_list.append('gametracker')
+	starting_people_list.append('gametracker')
+	column_list = starting_people_list
 	st.markdown(starting_people_list)
 	st.markdown(column_list)
 	binary_tracker_df = pd.DataFrame(run_query(f'SELECT * FROM "{live_tracker_binary}"'))
