@@ -1,6 +1,7 @@
 import streamlit as st
 import numpy as np
 import pandas as pd
+from people_list import people_list
 
 
 def toggle_list(i):
