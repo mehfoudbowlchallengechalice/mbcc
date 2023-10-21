@@ -5,6 +5,9 @@ import pandas as pd
 ## i creates the version of toggles so that we can use this function for multiple toggles
 def toggle_list(i):
 	checks = st.columns(5)
+	exec("print("+i+i+i+")")
+	exec("new_var = "+i)
+	print(new_var)
 	with checks[0]:
 		exec("option_cr"+i+" = st.toggle('Christopher', value = True)")
 		exec("option_ee"+i+" = st.toggle('Elise', value = True)")
