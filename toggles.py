@@ -22,8 +22,8 @@ def toggle_list(i):
 		option_ns = st.toggle("Nicholas", value = True, key = "ns"+i)
 		option_pf = st.toggle("PSmurf", value = True, key = "pf"+i)
 
-	people_list = people_list()
-	collection_df = pd.DataFrame(list(zip(people_list, [option_cr, option_ee, option_ea, option_gy, option_jn, option_jh, option_la, option_ln, option_ns, option_pf])))
+	set_people_list = people_list()
+	collection_df = pd.DataFrame(list(zip(set_people_list, [option_cr, option_ee, option_ea, option_gy, option_jn, option_jh, option_la, option_ln, option_ns, option_pf])))
 	selection_list = collection_df[collection_df[1] == True][0].values.tolist()
 	return selection_list
         
