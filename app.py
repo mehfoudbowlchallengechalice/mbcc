@@ -64,7 +64,7 @@ tabtoday, tab12, tab1, tabhistory = st.tabs(["Live", "MBCC 12", "Elimination Che
 
 
 with tabtoday:
-	st.header("Games Today")
+	st.header("Games")
 	#live_df = bring_in_live_games()
 	live_df = pd.DataFrame(run_query(f'SELECT * FROM "{unlive_games}"'))
 
@@ -107,8 +107,10 @@ with tab12:
 	
 	
 	tracker_list = toggle_list("b")
-
+	st.header("Argyle Chart")
 	st.line_chart(binary_tracker_df[binary_tracker_df.gametracker==1][tracker_list])
+	st.markdown("""---""")
+	st.header("Point Chaos Argyle Chart")
 	st.line_chart(complex_tracker_df[complex_tracker_df.gametracker==1][tracker_list])
 	
 
