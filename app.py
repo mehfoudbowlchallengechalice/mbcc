@@ -82,7 +82,7 @@ with tabtoday:
 	
 	st.markdown("""---""")
 	st.header("Picks")
-	selection_list = toggle_list()
+	selection_list = toggle_list(1)
 	selection_list = np.insert(selection_list, 0, 'Game')
 
 	if option == "All":
