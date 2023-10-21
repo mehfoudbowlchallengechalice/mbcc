@@ -97,6 +97,8 @@ with tab12:
 	binary_tracker_df = pd.DataFrame(run_query(f'SELECT * FROM "{live_tracker_binary}"'))
 	complex_tracker_df = pd.DataFrame(run_query(f'SELECT * FROM "{live_tracker_complex}"'))
 
+	tracker_list = toggle_list()
+	st.line_chart(binary_tracker_df[binary_tracker_df.gametracker==1], columns = tracker_list)
 	
 
 with tabhistory:
