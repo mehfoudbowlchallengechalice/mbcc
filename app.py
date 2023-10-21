@@ -9,6 +9,7 @@ import plotly.express as px
 import plotly.graph_objs as go
 from live_results_scrape import get_schedule
 from toggles import toggle_list
+from people_list import people_list
 from plotly.subplots import make_subplots
 from sklearn.linear_model import LogisticRegression
 import datetime
@@ -57,6 +58,8 @@ live_tracker_binary = st.secrets["live_tracker_binary"]
 live_tracker_complex = st.secrets["live_tracker_complex"]
 
 
+starting_people_list = people_list()
+
 tabtoday, tab12, tab1, tabhistory = st.tabs(["Live", "MBCC 12", "Elimination Check??", "History"])
 
 
@@ -94,8 +97,9 @@ with tabtoday:
         			& (pd.to_datetime(picks_dates.game_date) == min(pd.to_datetime(picks_dates.game_date)))][selection_list])
 
 with tab12:
-	binary_tracker_df = pd.DataFrame(run_query(f'SELECT * FROM "{live_tracker_binary}"')).apply(pd.to_numeric)
-	complex_tracker_df = pd.DataFrame(run_query(f'SELECT * FROM "{live_tracker_complex}"')).apply(pd.to_numeric)
+	column_list = starting_people_list.append('gametracker')
+	binary_tracker_df = pd.DataFrame(run_query(f'SELECT * FROM "{live_tracker_binary}"'))[column_list].apply(pd.to_numeric)
+	complex_tracker_df = pd.DataFrame(run_query(f'SELECT * FROM "{live_tracker_complex}"'))[column_list].apply(pd.to_numeric)
 
 	st.dataframe(binary_tracker_df)
 	
