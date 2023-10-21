@@ -2,27 +2,28 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 
-
-def toggle_list():
+## i creates the version of toggles so that we can use this function for multiple toggles
+def toggle_list(i):
 	checks = st.columns(5)
 	with checks[0]:
-		option_cr = st.toggle("Christopher", value = True)
-		option_ee = st.toggle("Elise", value = True)
+		exec("option_cr"+i+" = st.toggle('Christopher', value = True)")
+		exec("option_ee"+i+" = st.toggle('Elise', value = True)")
 	with checks[1]:
-		option_ea = st.toggle("Emma", value = True)
-		option_gy = st.toggle("Gregory", value = True)
+		exec("option_ea"+i+" = st.toggle('Emma', value = True)")
+		exec("option_gy"+i+" = st.toggle('Gregory', value = True)")
 	with checks[2]:
-		option_jn = st.toggle("Jen", value = True)
-		option_jh = st.toggle("Joseph", value = True)
+		exec("option_jn"+i+" = st.toggle('Jen', value = True)")
+		exec("option_jh"+i+" = st.toggle('Joseph', value = True)")
 	with checks[3]:
-		option_la = st.toggle("Laura", value = True)
-		option_ln = st.toggle("Lauren", value = True)
+		exec("option_la"+i+" = st.toggle('Laura', value = True)")
+		exec("option_ln"+i+" = st.toggle('Lauren', value = True)")
 	with checks[4]:
-		option_ns = st.toggle("Nicholas", value = True)
-		option_pf = st.toggle("PSmurf", value = True)
-
+		exec("option_ns"+i+" = st.toggle('Nicholas', value = True)")
+		exec("option_pf"+i+" = st.toggle('PSmurf', value = True)")
+		
+	exec("variable_list = [option_cr"+i+", option_ee"+i+", option_ea"+i+", option_gy"+i+", option_jn"+i+", option_jh"+i+", option_la"+i+", option_ln"+i+", option_ns"+i+", option_pf"+i+"]")
 	people_list = ["Christopher", "Elise", "Emma", "Gregory", "Jen", "Joseph", "Laura", "Lauren", "Nicholas", "PSmurf"]
-	collection_df = pd.DataFrame(list(zip(people_list, [option_cr, option_ee, option_ea, option_gy, option_jn, option_jh, option_la, option_ln, option_ns, option_pf])))
+	collection_df = pd.DataFrame(list(zip(people_list, variable_list)))
 	selection_list = collection_df[collection_df[1] == True][0].values.tolist()
 	return selection_list
         
