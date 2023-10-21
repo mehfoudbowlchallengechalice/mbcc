@@ -7,21 +7,20 @@ def toggle_list(i):
 	checks = st.columns(5)
 	with checks[0]:
 		exec("option_cr"+i+" = st.toggle('Christopher', value = True)", globals())
-		exec("option_ee"+i+" = st.toggle('Elise', value = True)")
+		exec("option_ee"+i+" = st.toggle('Elise', value = True)", globals())
 	with checks[1]:
-		exec("option_ea"+i+" = st.toggle('Emma', value = True)")
-		exec("option_gy"+i+" = st.toggle('Gregory', value = True)")
+		exec("option_ea"+i+" = st.toggle('Emma', value = True)", globals())
+		exec("option_gy"+i+" = st.toggle('Gregory', value = True)", globals())
 	with checks[2]:
-		exec("option_jn"+i+" = st.toggle('Jen', value = True)")
-		exec("option_jh"+i+" = st.toggle('Joseph', value = True)")
+		exec("option_jn"+i+" = st.toggle('Jen', value = True)", globals())
+		exec("option_jh"+i+" = st.toggle('Joseph', value = True)", globals())
 	with checks[3]:
-		exec("option_la"+i+" = st.toggle('Laura', value = True)")
-		exec("option_ln"+i+" = st.toggle('Lauren', value = True)")
+		exec("option_la"+i+" = st.toggle('Laura', value = True)", globals())
+		exec("option_ln"+i+" = st.toggle('Lauren', value = True)", globals())
 	with checks[4]:
-		exec("option_ns"+i+" = st.toggle('Nicholas', value = True)")
-		exec("option_pf"+i+" = st.toggle('PSmurf', value = True)")
+		exec("option_ns"+i+" = st.toggle('Nicholas', value = True)", globals())
+		exec("option_pf"+i+" = st.toggle('PSmurf', value = True)", globals())
 
-	print(option_cra)
 	exec("variable_list = [option_cr"+i+", option_ee"+i+", option_ea"+i+", option_gy"+i+", option_jn"+i+", option_jh"+i+", option_la"+i+", option_ln"+i+", option_ns"+i+", option_pf"+i+"]", globals())
 	print(variable_list)
 	people_list = ["Christopher", "Elise", "Emma", "Gregory", "Jen", "Joseph", "Laura", "Lauren", "Nicholas", "PSmurf"]
