@@ -4,7 +4,7 @@ import pandas as pd
 
 
 def toggle_list():
-    checks = st.columns(5)
+	checks = st.columns(5)
     	with checks[0]:
     		option_cr = st.toggle("Christopher", value = True)
     		option_ee = st.toggle("Elise", value = True)
