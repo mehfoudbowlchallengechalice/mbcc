@@ -97,21 +97,19 @@ with tabtoday:
         			& (pd.to_datetime(picks_dates.game_date) == min(pd.to_datetime(picks_dates.game_date)))][selection_list])
 
 with tab12:
-	starting_people_list.append('gametracker')
 	column_list = starting_people_list
-	st.markdown(starting_people_list)
-	st.markdown(column_list)
+	column_list.append('gametracker')
 	binary_tracker_df = pd.DataFrame(run_query(f'SELECT * FROM "{live_tracker_binary}"'))
 	complex_tracker_df = pd.DataFrame(run_query(f'SELECT * FROM "{live_tracker_complex}"'))
 
 	binary_tracker_df = binary_tracker_df[column_list].apply(pd.to_numeric)
+	complex_tracker_df = complex_tracker_df[column_list].apply(pd.to_numeric)
 	
-	st.dataframe(binary_tracker_df)
 	
 	tracker_list = toggle_list("b")
-	print(binary_tracker_df.head())
-	st.dataframe(binary_tracker_df[binary_tracker_df.gametracker==1][tracker_list])
+
 	st.line_chart(binary_tracker_df[binary_tracker_df.gametracker==1][tracker_list])
+	st.line_chart(complex_tracker_df[complex_tracker_df.gametracker==1][tracker_list])
 	
 
 with tabhistory:
