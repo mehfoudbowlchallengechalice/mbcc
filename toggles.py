@@ -22,6 +22,7 @@ def toggle_list(i):
 		exec("option_pf"+i+" = st.toggle('PSmurf', value = True)")
 		
 	exec("variable_list = [option_cr"+i+", option_ee"+i+", option_ea"+i+", option_gy"+i+", option_jn"+i+", option_jh"+i+", option_la"+i+", option_ln"+i+", option_ns"+i+", option_pf"+i+"]")
+	print(variable_list)
 	people_list = ["Christopher", "Elise", "Emma", "Gregory", "Jen", "Joseph", "Laura", "Lauren", "Nicholas", "PSmurf"]
 	collection_df = pd.DataFrame(list(zip(people_list, variable_list)))
 	selection_list = collection_df[collection_df[1] == True][0].values.tolist()
