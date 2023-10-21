@@ -97,6 +97,8 @@ with tab12:
 	binary_tracker_df = pd.DataFrame(run_query(f'SELECT * FROM "{live_tracker_binary}"'))
 	complex_tracker_df = pd.DataFrame(run_query(f'SELECT * FROM "{live_tracker_complex}"'))
 
+	st.dataframe(binary_tracker_df)
+	
 	tracker_list = toggle_list("b")
 	print(binary_tracker_df.head())
 	st.dataframe(binary_tracker_df[binary_tracker_df.gametracker==1][tracker_list])
