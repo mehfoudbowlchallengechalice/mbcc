@@ -20,7 +20,8 @@ def toggle_list(i):
 	with checks[4]:
 		exec("option_ns"+i+" = st.toggle('Nicholas', value = True)")
 		exec("option_pf"+i+" = st.toggle('PSmurf', value = True)")
-		
+
+	print(option_cra)
 	exec("variable_list = [option_cr"+i+", option_ee"+i+", option_ea"+i+", option_gy"+i+", option_jn"+i+", option_jh"+i+", option_la"+i+", option_ln"+i+", option_ns"+i+", option_pf"+i+"]")
 	print(variable_list)
 	people_list = ["Christopher", "Elise", "Emma", "Gregory", "Jen", "Joseph", "Laura", "Lauren", "Nicholas", "PSmurf"]
