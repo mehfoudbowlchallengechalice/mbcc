@@ -166,8 +166,8 @@ with tab1:
 	
 	for player in starting_people_list:
 		#win_per_player_specific = []
-		win_per_player.append(remaining_df[player])
-		st.dataframe(win_per_player)
+		win_per_player_specific.append(remaining_df[player])
+		st.dataframe(win_per_player_specific)
 	st.dataframe(remaining_df)
 
 with tabhistory:
