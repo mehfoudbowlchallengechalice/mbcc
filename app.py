@@ -62,7 +62,7 @@ picks = st.secrets["picks"]
 unlive_games = st.secrets["unlive_games"]
 live_tracker_binary = st.secrets["live_tracker_binary"]
 live_tracker_complex = st.secrets["live_tracker_complex"]
-full_score_matrix = st.secrets["full_pick_summary"]
+#full_score_matrix = st.secrets["full_pick_summary"]
 
 
 starting_people_list = people_list()
@@ -160,8 +160,9 @@ with tab12:
 
 with tab1:
 	#full_score_df = pd.DataFrame(run_query(f'SELECT * FROM "{full_score_matrix}"'))
-	tracker_only = pd.DataFrame(run_query(f'SELECT * FROM "{live_tracker_binary}"'))[['gametracker']][1:]
-	remaining_df = pd.concat([picks_dates, tracker_only], axis = 1)
+	tracker_only = pd.DataFrame(run_query(f'SELECT * FROM "{live_tracker_binary}"'))[['gametracker']].tail(-1)
+	remaining_df = pd.concat([picks_df, tracker_only], axis = 1)
+	
 	win_per_player = []
 	
 	for player in starting_people_list:
