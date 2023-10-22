@@ -207,6 +207,7 @@ with tab_elimination:
 	elim_mat_complete.columns = np.insert(the_people_list, 0, 'Player')
 	st.dataframe(elim_mat_complete)
 	new_elim_mat_complete = elim_mat_complete.set_index(['Player'])
+	st.dataframe(new_elim_mat_complete)
 	#st.dataframe(pd.DataFrame.from_dict(elimination_matrix_creation, index = the_people_list))
 
 
