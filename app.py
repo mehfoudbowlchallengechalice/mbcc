@@ -201,7 +201,7 @@ with tab_elimination:
 
 	elimination_matrix_creation = {}
 	for player in the_people_list:
-		elimination_matrix_creation[player] = full_elimination_matrix[player].values().values()
+		elimination_matrix_creation[player] = full_elimination_matrix[player].values()
 
 	st.dataframe(pd.DataFrame.from_dict(elimination_matrix_creation))
 
