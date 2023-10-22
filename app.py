@@ -162,8 +162,9 @@ with tab12:
 with tab_elimination:
 	#full_score_df = pd.DataFrame(run_query(f'SELECT * FROM "{full_score_matrix}"'))
 	tracker_only = pd.DataFrame(run_query(f'SELECT * FROM "{live_tracker_binary}"'))[['gametracker']].tail(-1).reset_index()
-	
-	st.dataframe(tracker_only)
+
+	# build data frame for representation of picks
+	# st.dataframe(tracker_only)
 	remaining_df = pd.concat([picks_df, tracker_only], axis = 1)
 	
 	
@@ -183,7 +184,6 @@ with tab_elimination:
 		### can calculate whether someone is eliminated here
 		player_elimination_check.append(comparison_dict[player] == max(comparison_dict.values()))
 
-	### turn dictionary into matrix or array to output
 
 	st.markdown(player_elimination_check)
 
@@ -196,6 +196,15 @@ with tab_elimination:
 	
 	st.markdown(full_elimination_matrix)
 	st.dataframe(remaining_df)
+
+	### turn dictionary into matrix or array to output
+
+	elimination_matrix_creation = {}
+	for player in the_player_list:
+		elimination_matrix_creation[player] = full_elimination_matrix[player].values().values()
+
+	st.dataframe(pd.DataFrame.from_dict(elimination_matrix_creation))
+
 
 with tab_history:
 	st.header("Mehfoud Bowl Challenge Chalice History")
