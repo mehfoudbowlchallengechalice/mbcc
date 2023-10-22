@@ -66,7 +66,7 @@ col1,col2 = st.columns(2)
 
 #main score
 main_score_df = current_scores_df[current_scores_df["Situation"]=="mbcc_score"].T
-main_score_df["overall_rank"] = main_score["main_score"].rank(ascending = False)
+main_score_df["overall_rank"] = main_score_df["main_score"].rank(ascending = False)
 main_score_df.sort_values(by=["overall_rank"])
 st.dataframe(main_score_df)
 
