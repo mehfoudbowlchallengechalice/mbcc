@@ -160,8 +160,14 @@ with tab12:
 
 with tab1:
 	#full_score_df = pd.DataFrame(run_query(f'SELECT * FROM "{full_score_matrix}"'))
-	tracker_only = pd.DataFrame(run_query(f'SELECT * FROM "{live_tracker_binary}"'))[['gametracker']][1:].reset_index()
+	tracker_only = pd.DataFrame(run_query(f'SELECT * FROM "{live_tracker_binary}"'))[['gametracker']][1:]
 	remaining_df = pd.concat([picks_dates, tracker_only], axis = 1)
+	win_per_player = []
+	
+	for player in starting_people_list:
+		#win_per_player_specific = []
+		#win_per_player.append(remaining_df[player])
+		st.dataframe(win_per_player)
 	st.dataframe(remaining_df)
 
 with tabhistory:
