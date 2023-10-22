@@ -160,7 +160,8 @@ with tab12:
 
 with tab1:
 	#full_score_df = pd.DataFrame(run_query(f'SELECT * FROM "{full_score_matrix}"'))
-	remaining_df = pd.concat([picks_dates, binary_tracker_df.gametracker])
+	tracker_only = pd.DataFrame(run_query(f'SELECT * FROM "{live_tracker_binary}"'))[['gametracker']][1:]
+	remaining_df = pd.concat([picks_dates, tracker_only])
 	st.dataframe(remaining_df)
 
 with tabhistory:
