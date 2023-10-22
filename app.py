@@ -203,7 +203,7 @@ with tab_elimination:
 	for player in the_people_list:
 		elimination_matrix_creation[player] = full_elimination_matrix[player].values()
 
-	st.dataframe(pd.DataFrame.from_dict(elimination_matrix_creation))
+	st.dataframe(pd.DataFrame.from_dict(elimination_matrix_creation).reset_index(the_people_list))
 
 
 with tab_history:
