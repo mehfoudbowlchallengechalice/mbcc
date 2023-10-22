@@ -20,7 +20,7 @@ from gsheetsdb import connect
 st.set_page_config(layout="wide")
 
 st.write ("""
-## TEASER FOR MBCC 12 in 2023-24!!
+## MBCC 12 in 2023-24
 """)
 
 
@@ -194,6 +194,8 @@ with tab_elimination:
 	
 
 	### turn dictionary into matrix or array to output
+
+	st.header("Elimination Matrix!")
 
 	elimination_matrix_creation = {}
 	for player in the_people_list:
