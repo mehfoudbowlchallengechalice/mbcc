@@ -179,9 +179,12 @@ with tab_elimination:
 			comparison_dict[compare_player] = len(player_picks & potential_correct_picks)
 
 		full_elimination_matrix[player] = comparison_dict
-		st.markdown(comparison_dict)
+
+		### can calculate whether someone is eliminated here
+
+	### turn dictionary into matrix or array to output
 							      
-		
+	st.markdown(full_elimination_matrix)
 	st.dataframe(remaining_df)
 
 with tab_history:
