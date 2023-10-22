@@ -159,8 +159,9 @@ with tab12:
 
 
 with tab1:
-	full_score_df = pd.DataFrame(run_query(f'SELECT * FROM "{full_score_matrix}"'))
-	st.dataframe(full_score_df)
+	#full_score_df = pd.DataFrame(run_query(f'SELECT * FROM "{full_score_matrix}"'))
+	remaining_df = pd.concat([pick_dates, binary_tracker_df.gametracker])
+	st.dataframe(remaining_df)
 
 with tabhistory:
 	st.header("Mehfoud Bowl Challenge Chalice History")
