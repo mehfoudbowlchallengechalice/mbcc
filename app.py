@@ -180,7 +180,7 @@ with tab_elimination:
 		st.markdown(potential_correct_picks)
 		comparison_dict = {}
 		for compare_player in starting_people_list:
-			player_picks = set(remaining_df['gametracker']==0][compare_player])
+			player_picks = set(remaining_df[remaining_df['gametracker']==0][compare_player])
 			comparison_dict[compare_player] = len(player_picks & potential_correct_picks)
 			st.markdown(player_picks)
 			st.markdown(potential_correct_picks)
