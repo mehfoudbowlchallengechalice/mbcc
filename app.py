@@ -115,7 +115,7 @@ with tab12:
 
 
 	st.header("Argyle Chart")
-	st.line_chart(binary_tracker_df[binary_tracker_df.gametracker==1][tracker_list])
+	st.line_chart(binary_tracker_df[binary_tracker_df.gametracker==1][tracker_list].T)
 	st.markdown("""---""")
 	st.header("Point Chaos Argyle Chart")
 	st.line_chart(complex_tracker_df[complex_tracker_df.gametracker==1][tracker_list])
