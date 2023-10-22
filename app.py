@@ -178,15 +178,16 @@ with tab_elimination:
 		# setting the correct picks based on the player
 		potential_correct_picks = set(remaining_df[remaining_df['gametracker']==0][player])
 		st.markdown(potential_correct_picks)
-		comparison_list = []
+		comparison_dict = {}
 		for compare_player in starting_people_list:
-			comparison_list[compare_player] = len(set(remaining_df[compare_player].tail(games_left)).intersection(set(potential_correct_picks)))
-			
-		st.markdown(comparison_list)
+			player_picks = set(remaining_df['gametracker']==0][compare_player])
+			comparison_dict[compare_player] = len(player_picks & potential_correct_picks)
+			st.markdown(player_picks)
+			st.markdown(potential_correct_picks)
+
+		
+		st.markdown(comparison_dict)
 							      
-		win_per_player_specific = []
-		win_per_player_specific.append(remaining_df[player])
-		st.dataframe(win_per_player_specific)
 		
 	st.dataframe(remaining_df)
 
