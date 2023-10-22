@@ -175,7 +175,7 @@ with tab_elimination:
 		potential_correct_picks[player] = remaining_df[player]
 		comparison_list = []
 		for compare_player in starting_people_list:
-			comparison_list[compare_player] = len(remaining_df[compare_player].merge(potential_correct_picks[player])
+			comparison_list[compare_player] = len(remaining_df[compare_player].merge(potential_correct_picks[player]))
 			
 		st.markdown(comparison_list)
 							      
