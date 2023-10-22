@@ -186,7 +186,14 @@ with tab_elimination:
 	### turn dictionary into matrix or array to output
 
 	st.markdown(player_elimination_check)
-							      
+
+	player_select = st.selectbox('Checking the elimination of which player?', the_people_list)
+	player_index = the_people_list.index(player_select)
+	if player_elimination_check[player_index]:
+		st.markdown("NOT YET ELIMINATED")
+	else:
+		st.markdown("ELIMINATED")
+	
 	st.markdown(full_elimination_matrix)
 	st.dataframe(remaining_df)
 
