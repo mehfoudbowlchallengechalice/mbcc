@@ -160,7 +160,7 @@ with tab12:
 
 with tab1:
 	full_score_df = pd.DataFrame(run_query(f'SELECT * FROM "{full_score_matrix}"'))
-	st.markdown(full_score_df.columns)
+	st.dataframe(full_score_df)
 
 with tabhistory:
 	st.header("Mehfoud Bowl Challenge Chalice History")
