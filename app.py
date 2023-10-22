@@ -172,10 +172,10 @@ with tab_elimination:
 	
 	for player in starting_people_list:
 		# setting the correct picks based on the player
-		potential_correct_picks[player] = remaining_df[player]
+		potential_correct_picks = remaining_df[player].tail(games_left)
 		comparison_list = []
 		for compare_player in starting_people_list:
-			comparison_list[compare_player] = len(remaining_df[compare_player].merge(potential_correct_picks[player]))
+			comparison_list[compare_player] = len(remaining_df[compare_player].tail(games_left).merge(potential_correct_picks))
 			
 		st.markdown(comparison_list)
 							      
