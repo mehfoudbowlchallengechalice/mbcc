@@ -171,19 +171,16 @@ with tab_elimination:
 	#games_left = tracker_only[tracker_only['gametracker']==0]
 
 	
-	st.dataframe(remaining_df)
+	st.markdown(starting_people_list)
 	
 	
 	for player in starting_people_list:
 		# setting the correct picks based on the player
 		potential_correct_picks = set(remaining_df[remaining_df['gametracker']==0][player])
-		st.markdown(potential_correct_picks)
 		comparison_dict = {}
 		for compare_player in starting_people_list:
 			player_picks = set(remaining_df[remaining_df['gametracker']==0][compare_player])
 			comparison_dict[compare_player] = len(player_picks & potential_correct_picks)
-			st.markdown(player_picks)
-			st.markdown(potential_correct_picks)
 
 		
 		st.markdown(comparison_dict)
