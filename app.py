@@ -97,10 +97,10 @@ with col2:
 
 
 ### creation of the tabs
-tabtoday, tab12, tab1, tabhistory = st.tabs(["Live", "MBCC 12", "Elimination Check??", "History"])
+tab_today, tab12, tab_elimination, tab_history = st.tabs(["Live", "MBCC 12", "Elimination Check??", "History"])
 
 
-with tabtoday:
+with tab_today:
 	st.header("Games")
 	#live_df = bring_in_live_games()
 	live_df = pd.DataFrame(run_query(f'SELECT * FROM "{unlive_games}"'))
@@ -158,7 +158,7 @@ with tab12:
 	st.line_chart(complex_tracker_df[complex_tracker_df.gametracker==1][tracker_list])
 
 
-with tab1:
+with tab_elimination:
 	#full_score_df = pd.DataFrame(run_query(f'SELECT * FROM "{full_score_matrix}"'))
 	tracker_only = pd.DataFrame(run_query(f'SELECT * FROM "{live_tracker_binary}"'))[['gametracker']].tail(-1).reset_index()
 	
@@ -173,7 +173,7 @@ with tab1:
 		st.dataframe(win_per_player_specific)
 	st.dataframe(remaining_df)
 
-with tabhistory:
+with tab_history:
 	st.header("Mehfoud Bowl Challenge Chalice History")
 	history_df = pd.DataFrame(run_query(f'SELECT * FROM "{history_sheet}"'))
 	player_list = history_df.Player.unique()
