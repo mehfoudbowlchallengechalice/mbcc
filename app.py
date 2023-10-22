@@ -82,11 +82,11 @@ point_diff_score_df.sort_values(by=["Point Difference Rank"])
 
 with col1:
 	st.header("Overall Score")
-	st.dataframe(main_score_df)
+	st.dataframe(main_score_df, hide_index=True)
 
 with col2:
 	st.header("Point Difference Score")
-	st.dataframe(point_diff_score_df)
+	st.dataframe(point_diff_score_df, hide_index=True)
 
 
 ### creation of the tabs
