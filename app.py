@@ -200,7 +200,7 @@ with tab_elimination:
 	### turn dictionary into matrix or array to output
 
 	elimination_matrix_creation = {}
-	for player in the_player_list:
+	for player in the_people_list:
 		elimination_matrix_creation[player] = full_elimination_matrix[player].values().values()
 
 	st.dataframe(pd.DataFrame.from_dict(elimination_matrix_creation))
