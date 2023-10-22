@@ -59,7 +59,21 @@ live_tracker_complex = st.secrets["live_tracker_complex"]
 
 
 starting_people_list = people_list()
+current_scores_df = pd.DataFrame(run_query(f'SELECT * FROM "{current_scores}"'))
 
+### creation of the columns
+col1,col2 = st.columns(2)
+
+#main score
+main_score_df = current_scores_df[current_scores_df["Situation"]=="mbcc_score"].T
+main_score_df["overall_rank"] = main_score["main_score"].rank(ascending = False)
+main_score_df.sort_values(by=["overall_rank"])
+st.dataframe(main_score_df)
+
+
+
+
+### creation of the tabs
 tabtoday, tab12, tab1, tabhistory = st.tabs(["Live", "MBCC 12", "Elimination Check??", "History"])
 
 
@@ -97,8 +111,7 @@ with tabtoday:
         			& (pd.to_datetime(picks_dates.game_date) == min(pd.to_datetime(picks_dates.game_date)))][selection_list])
 
 with tab12:
-	current_scores_df = pd.DataFrame(run_query(f'SELECT * FROM "{current_scores}"'))
-
+	
 	#### all charts (bar and 2 argyle)
 	column_list = starting_people_list
 	column_list.append('gametracker')
