@@ -166,24 +166,19 @@ with tab_elimination:
 	st.dataframe(tracker_only)
 	remaining_df = pd.concat([picks_df, tracker_only], axis = 1)
 	
-	win_per_player = []
-	
-	# finding the number of games left 
-	#games_left = tracker_only[tracker_only['gametracker']==0]
-
 	
 	st.markdown(the_people_list)
 	
-	
+	full_elimination_matrix = {}
 	for player in the_people_list:
 		# setting the correct picks based on the player
-		potential_correct_picks = set(remaining_df[remaining_df['gametracker']==0][player])
+		potential_correct_picks = set(remaining_df[remaining_df['gametracker']==0]["Game"]+remaining_df[remaining_df['gametracker']==0][player])
 		comparison_dict = {}
 		for compare_player in the_people_list:
-			player_picks = set(remaining_df[remaining_df['gametracker']==0][compare_player])
+			player_picks = set(remaining_df[remaining_df['gametracker']==0]["Game"]+remaining_df[remaining_df['gametracker']==0][compare_player])
 			comparison_dict[compare_player] = len(player_picks & potential_correct_picks)
 
-		
+		full_elimination_matrix[player] = comparison_dict
 		st.markdown(comparison_dict)
 							      
 		
