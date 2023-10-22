@@ -168,7 +168,7 @@ with tab_elimination:
 	
 	
 	st.markdown(the_people_list)
-	
+	player_elimination_check = []
 	full_elimination_matrix = {}
 	for player in the_people_list:
 		# setting the correct picks based on the player
@@ -181,8 +181,11 @@ with tab_elimination:
 		full_elimination_matrix[player] = comparison_dict
 
 		### can calculate whether someone is eliminated here
+		player_elimination_check.append(comparison_dict[player] == max(comparison_dict.values()))
 
 	### turn dictionary into matrix or array to output
+
+	st.markdown(player_elimination_check)
 							      
 	st.markdown(full_elimination_matrix)
 	st.dataframe(remaining_df)
