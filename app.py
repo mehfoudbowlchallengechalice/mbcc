@@ -66,6 +66,7 @@ live_tracker_complex = st.secrets["live_tracker_complex"]
 
 
 starting_people_list = people_list()
+the_people_list = people_list()
 current_scores_df = pd.DataFrame(run_query(f'SELECT * FROM "{current_scores}"'))
 
 ### creation of the columns
@@ -137,7 +138,8 @@ with tab_today:
 with tab12:
 	
 	#### all charts (bar and 2 argyle)
-	column_list = people_list().append('gametracker')
+	column_list = starting_people_list
+	column_list.append('gametracker')
 	binary_tracker_df = pd.DataFrame(run_query(f'SELECT * FROM "{live_tracker_binary}"'))
 	complex_tracker_df = pd.DataFrame(run_query(f'SELECT * FROM "{live_tracker_complex}"'))
 
