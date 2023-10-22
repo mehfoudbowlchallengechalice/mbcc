@@ -62,6 +62,7 @@ picks = st.secrets["picks"]
 unlive_games = st.secrets["unlive_games"]
 live_tracker_binary = st.secrets["live_tracker_binary"]
 live_tracker_complex = st.secrets["live_tracker_complex"]
+full_score_matrix = st.secrets["full_pick_summary"]
 
 
 starting_people_list = people_list()
@@ -121,6 +122,7 @@ with tabtoday:
 	
 	st.markdown("""---""")
 	st.header("Picks")
+	####TODO: CONDITIONAL FORMATTING POSSIBLE HERE????????
 	selection_list = toggle_list("a")
 	selection_list = np.insert(selection_list, 0, 'Game')
 
@@ -154,7 +156,11 @@ with tab12:
 	st.markdown("""---""")
 	st.header("Point Chaos Argyle Chart")
 	st.line_chart(complex_tracker_df[complex_tracker_df.gametracker==1][tracker_list])
-	
+
+
+with tab1:
+	full_score_df = pd.DataFrame(run_query(f'SELECT * FROM "{full_score_matrix}"'))
+	st.markdown(full_score_df.columns)
 
 with tabhistory:
 	st.header("Mehfoud Bowl Challenge Chalice History")
