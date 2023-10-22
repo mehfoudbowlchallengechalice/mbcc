@@ -98,12 +98,8 @@ with tabtoday:
 
 with tab12:
 	current_scores_df = pd.DataFrame(run_query(f'SELECT * FROM "{current_scores}"'))
-	st.dataframe(current_scores_df.iloc[0:2])
-	st.bar_chart(current_scores_df.iloc[0:1][starting_people_list])
 
-
-
-	#### argyle charts
+	#### all charts (bar and 2 argyle)
 	column_list = starting_people_list
 	column_list.append('gametracker')
 	binary_tracker_df = pd.DataFrame(run_query(f'SELECT * FROM "{live_tracker_binary}"'))
@@ -114,6 +110,10 @@ with tab12:
 	
 	
 	tracker_list = toggle_list("b")
+	st.header("Correct Picks")
+	st.bar_chart(current_scores_df.iloc[0:1][tracker_list])
+
+
 	st.header("Argyle Chart")
 	st.line_chart(binary_tracker_df[binary_tracker_df.gametracker==1][tracker_list])
 	st.markdown("""---""")
