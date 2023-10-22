@@ -48,7 +48,7 @@ def bring_in_live_games():
 
 
 
-
+current_scores = st.secrets["current_pick_success"]
 history_sheet = st.secrets["history_sheet"]
 agg_history = st.secrets["agg_history"]
 season_history = st.secrets["season_history"]
@@ -72,7 +72,7 @@ with tabtoday:
 	picks_df = pd.DataFrame(run_query(f'SELECT * FROM "{picks}"'))
 	picks_dates = picks_df.merge(live_df[["game_name", "game_date"]], left_on = "Game", right_on = "game_name")
 	
-	### add in today, future, all drop down
+	### today, future, all drop down to show picks
 	option = st.selectbox("Select Games to See", ("Today", "Future", "All"))
 	
 	if option == "All":
@@ -97,6 +97,13 @@ with tabtoday:
         			& (pd.to_datetime(picks_dates.game_date) == min(pd.to_datetime(picks_dates.game_date)))][selection_list])
 
 with tab12:
+	current_scores_df = pd.DataFrame(run_query(f'SELECT * FROM "{current_scores}"'))
+	st.dataframe(current_scores_df.iloc[0:2])
+	st.bar_chart(current_scores_df.iloc[0:1][starting_people_list])
+
+
+
+	#### argyle charts
 	column_list = starting_people_list
 	column_list.append('gametracker')
 	binary_tracker_df = pd.DataFrame(run_query(f'SELECT * FROM "{live_tracker_binary}"'))
