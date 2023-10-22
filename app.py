@@ -69,12 +69,24 @@ main_score_df = current_scores_df[current_scores_df["Situation"]=="mbcc_score"].
 main_score_df = main_score_df[1:]
 main_score_df.columns = ["Player", "Overall Score"]
 
-st.dataframe(main_score_df)
 main_score_df["Overall Rank"] = main_score_df["Overall Score"].rank(ascending = False)
 main_score_df.sort_values(by=["Overall Rank"])
-st.dataframe(main_score_df)
 
+#point difference score
+point_diff_score_df = current_scores_df[current_scores_df["Situation"]=="point_difference"].T.rename_axis('Situation').reset_index()
+point_diff_score_df = point_diff_score_df[1:]
+point_diff_score_df.columns = ["Player", "Point Difference"]
 
+point_diff_score_df["Point Difference Rank"] = point_diff_score_df["Point Difference"].rank(ascending = False)
+point_diff_score_df.sort_values(by=["Point Difference Rank"])
+
+with col1:
+	st.header("Overall Score")
+	st.dataframe(main_score_df)
+
+with col2:
+	st.header("Point Difference Score")
+	st.dataframe(point_diff_score_df)
 
 
 ### creation of the tabs
