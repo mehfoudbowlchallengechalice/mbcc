@@ -137,8 +137,7 @@ with tab_today:
 with tab12:
 	
 	#### all charts (bar and 2 argyle)
-	column_list = starting_people_list
-	column_list.append('gametracker')
+	column_list = people_list().append('gametracker')
 	binary_tracker_df = pd.DataFrame(run_query(f'SELECT * FROM "{live_tracker_binary}"'))
 	complex_tracker_df = pd.DataFrame(run_query(f'SELECT * FROM "{live_tracker_complex}"'))
 
