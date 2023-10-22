@@ -98,7 +98,7 @@ with col2:
 
 
 ### creation of the tabs
-tab_today, tab12, tab_elimination, tab_history = st.tabs(["Live", "MBCC 12", "Elimination Check??", "History"])
+tab_today, tab_mbcc_12, tab_elimination, tab_history = st.tabs(["Live", "MBCC 12", "Elimination Check", "History"])
 
 
 with tab_today:
@@ -135,7 +135,7 @@ with tab_today:
 		st.dataframe(picks_dates[(pd.to_datetime(picks_dates.game_date) >= datetime.datetime.today()) 
         			& (pd.to_datetime(picks_dates.game_date) == min(pd.to_datetime(picks_dates.game_date)))][selection_list])
 
-with tab12:
+with tab_mbcc_12:
 	
 	#### all charts (bar and 2 argyle)
 	column_list = starting_people_list
@@ -168,7 +168,6 @@ with tab_elimination:
 	remaining_df = pd.concat([picks_df, tracker_only], axis = 1)
 	
 	
-	st.markdown(the_people_list)
 	player_elimination_check = []
 	full_elimination_matrix = {}
 	for player in the_people_list:
@@ -185,7 +184,6 @@ with tab_elimination:
 		player_elimination_check.append(comparison_dict[player] == max(comparison_dict.values()))
 
 
-	st.markdown(player_elimination_check)
 
 	player_select = st.selectbox('Checking the elimination of which player?', the_people_list)
 	player_index = the_people_list.index(player_select)
@@ -194,8 +192,6 @@ with tab_elimination:
 	else:
 		st.markdown("ELIMINATED")
 	
-	st.markdown(full_elimination_matrix)
-	st.dataframe(remaining_df)
 
 	### turn dictionary into matrix or array to output
 
@@ -203,12 +199,11 @@ with tab_elimination:
 	for player in the_people_list:
 		elimination_matrix_creation[player] = full_elimination_matrix[player].values()
 
+	## create the elimination matrix for display
 	elim_mat_complete = pd.concat([pd.Series(the_people_list),pd.DataFrame.from_dict(elimination_matrix_creation)], axis=1)
 	elim_mat_complete.columns = np.insert(the_people_list, 0, 'Player')
-	st.dataframe(elim_mat_complete)
 	new_elim_mat_complete = elim_mat_complete.set_index(['Player'])
 	st.dataframe(new_elim_mat_complete)
-	#st.dataframe(pd.DataFrame.from_dict(elimination_matrix_creation, index = the_people_list))
 
 
 with tab_history:
