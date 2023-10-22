@@ -167,10 +167,22 @@ with tab_elimination:
 	
 	win_per_player = []
 	
+	# finding the number of games left
+	games_left = len(tracker_only[tracker_only['gametracker']==0])
+	
 	for player in starting_people_list:
+		# setting the correct picks based on the player
+		potential_correct_picks[player] = remaining_df[player]
+		comparison_list = []
+		for compare_player in starting_people_list:
+			comparison_list[compare_player] = len(remaining_df[compare_player].merge(potential_correct_picks[player])
+			
+		st.markdown(comparison_list)
+							      
 		win_per_player_specific = []
 		win_per_player_specific.append(remaining_df[player])
 		st.dataframe(win_per_player_specific)
+		
 	st.dataframe(remaining_df)
 
 with tab_history:
