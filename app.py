@@ -281,6 +281,11 @@ with sql_learning:
 	st.write("OR find the minimum number of picks - 'SELECT MIN(Picks) FROM history_df WHERE MBCC <> '2023-2024 (12th MBCC)''")
 	st.dataframe(ps.sqldf("SELECT MIN(Picks) FROM history_df WHERE MBCC <> '2023-2024 (12th MBCC)'"))
 	st.write("We can see this result in the top of our ordered table on picks")
+	st.write("Now let's using groupings --- 'SELECT Player, MAX(Picks) FROM history_df GROUP BY Player' tells us to take the max for each player")
+	st.dataframe(ps.sqldf("SELECT Player, MAX(Picks) FROM history_df GROUP BY Player"))
+	st.write("You can make it complicated by making smaller tables, and selecting from them, or joining on other tables")
+	st.write("for example, you can look at the number of picks in the past few years of the people who selected a specific team this year (using picks_df once updated) or many other things")
+	st.write("we can break down things more creatively once you've got those basics down, but type into the box below and press enter!")
 	
 	st.write("Try whatever you'd like:")
 	text_input = st.text_input(
