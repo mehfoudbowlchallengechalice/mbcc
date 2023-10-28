@@ -268,6 +268,14 @@ with sql_learning:
 	st.dataframe(ps.sqldf('SELECT Player, Picks FROM history_df WHERE Picks < 20'))
 	st.write("Now let's order it, then limit it... 'SELECT Player, Picks FROM history_df WHERE Picks < 20 ORDER BY PICKS LIMIT 5")
 	st.dataframe(ps.sqldf('SELECT Player, Picks FROM history_df WHERE Picks < 20 ORDER BY PICKS LIMIT 5'))
+	st.write("""uhoh, we're now only capturing this years picks, 
+ 		because they're all zero already... 
+   		let's add a filter for the mbcc, 
+     		and since we're ordering the picks in ascending order (lowest to highest), 
+       		we don't need the less than 20 filter, 
+	 	though we can use as many filters as we want
+   		-- 'WHERE MBCC <> '2023-2024 (12th MBCC)' -- <> means is not equal""")
+	st.dataframe(ps.sqldf("SELECT Player, Picks FROM history_df WHERE MBCC <> '2023-2024 (12th MBCC)' ORDER BY PICKS LIMIT 5"))
 	st.write("Now let's add up the picks - 'SELECT SUM(Picks) FROM history_df'")
 	st.dataframe(ps.sqldf('SELECT SUM(Picks) FROM history_df'))
 	st.write("OR find the minimum number of picks - 'SELECT MIN(Picks) FROM history_df'")
