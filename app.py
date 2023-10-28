@@ -256,7 +256,7 @@ with tab_history:
 	st.write("MBCC Season Breakdown")
 	st.dataframe(season_history, hide_index=True)
 
-with sql_lessons:
+with sql_learning:
 	st.markdown("""---""")
 	st.write("Hello, let's learn some SQL")
 	st.write("the asterisk gives us all columns after the SELECT, the table is called 'history_df' after the FROM -- here we see 'SELECT * FROM history_df LIMIT 5'")
