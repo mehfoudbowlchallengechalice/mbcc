@@ -98,7 +98,7 @@ with col2:
 
 
 ### creation of the tabs
-tab_today, tab_mbcc_12, tab_elimination, tab_history = st.tabs(["Live", "MBCC 12", "Elimination Check", "History"])
+tab_today, tab_mbcc_12, tab_elimination, tab_history, sql_learning = st.tabs(["Live", "MBCC 12", "Elimination Check", "History", "Click Here Gregory"])
 
 
 with tab_today:
@@ -256,16 +256,24 @@ with tab_history:
 	st.write("MBCC Season Breakdown")
 	st.dataframe(season_history, hide_index=True)
 
-
+with sql_lessons:
 	st.markdown("""---""")
 	st.write("Hello, let's learn some SQL")
-	st.write("* gives us all columns -- here we see 'SELECT * FROM history_df LIMIT 5'")
+	st.write("the asterisk gives us all columns after the SELECT, the table is called 'history_df' after the FROM -- here we see 'SELECT * FROM history_df LIMIT 5'")
 	st.dataframe(ps.sqldf('SELECT * FROM history_df LIMIT 5'))
 	st.write("The columns in the table are at the top -- MBCC, Player, Picks, Games, Percentage_Correct, Winner, Current, Percentage Correct")
 	st.write("We only have 5 rows because we said LIMIT 5")
 	st.write("Now we can select columns, do math with this, or filter it")
 	st.write("'SELECT Player, Picks FROM history_df WHERE Picks < 20' will give us each person who picked less than 20 games correctly in a season using the WHERE as that filter indicator")
 	st.dataframe(ps.sqldf('SELECT Player, Picks FROM history_df WHERE Picks < 20'))
+	st.write("Now let's order it, then limit it... 'SELECT Player, Picks FROM history_df WHERE Picks < 20 ORDER BY PICKS LIMIT 5")
+	st.dataframe(ps.sqldf('SELECT Player, Picks FROM history_df WHERE Picks < 20 ORDER BY PICKS LIMIT 5'))
+	st.write("Now let's add up the picks - 'SELECT SUM(Picks) FROM history_df'")
+	st.dataframe(ps.sqldf('SELECT SUM(Picks) FROM history_df'))
+	st.write("OR find the minimum number of picks - 'SELECT MIN(Picks) FROM history_df'")
+	st.dataframe(ps.sqldf('SELECT MIN(Picks) FROM history_df'))
+	st.write("We can see this result in the top of our ordered table on picks")
+	
 	st.write("Try whatever you'd like:")
 	text_input = st.text_input(
 	        "Write your query here (SELECT * FROM history_df)",
