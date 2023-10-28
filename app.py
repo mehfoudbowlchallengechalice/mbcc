@@ -259,9 +259,13 @@ with tab_history:
 
 	st.markdown("""---""")
 	st.write("Hello, let's learn some SQL")
-	st.write("* gives us all columns -- here we see 'SELECT * FROM history_df'")
-	st.dataframe(ps.sqldf('SELECT * FROM history_df'))
-	st.write("The columns in the table are at the top")
+	st.write("* gives us all columns -- here we see 'SELECT * FROM history_df LIMIT 5'")
+	st.dataframe(ps.sqldf('SELECT * FROM history_df LIMIT 5'))
+	st.write("The columns in the table are at the top -- MBCC, Player, Picks, Games, Percentage_Correct, Winner, Current, Percentage Correct")
+	st.write("We only have 5 rows because we said LIMIT 5")
+	st.write("Now we can select columns, do math with this, or filter it")
+	st.write("'SELECT Player, Picks FROM history_df WHERE Picks < 20' will give us each person who picked less than 20 games correctly in a season using the WHERE as that filter indicator")
+	st.dataframe(ps.sqldf('SELECT Player, Picks FROM history_df WHERE Picks < 20'))
 	st.write("Try whatever you'd like:")
 	text_input = st.text_input(
 	        "Write your query here (SELECT * FROM history_df)",
