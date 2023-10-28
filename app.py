@@ -278,8 +278,8 @@ with sql_learning:
 	st.dataframe(ps.sqldf("SELECT Player, Picks FROM history_df WHERE MBCC <> '2023-2024 (12th MBCC)' ORDER BY PICKS LIMIT 5"))
 	st.write("Now let's add up the picks - 'SELECT SUM(Picks) FROM history_df'")
 	st.dataframe(ps.sqldf('SELECT SUM(Picks) FROM history_df'))
-	st.write("OR find the minimum number of picks - 'SELECT MIN(Picks) FROM history_df'")
-	st.dataframe(ps.sqldf('SELECT MIN(Picks) FROM history_df'))
+	st.write("OR find the minimum number of picks - 'SELECT MIN(Picks) FROM history_df WHERE MBCC <> '2023-2024 (12th MBCC)''")
+	st.dataframe(ps.sqldf("SELECT MIN(Picks) FROM history_df WHERE MBCC <> '2023-2024 (12th MBCC)'"))
 	st.write("We can see this result in the top of our ordered table on picks")
 	
 	st.write("Try whatever you'd like:")
