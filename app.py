@@ -255,5 +255,22 @@ with tab_history:
 	st.markdown("""---""")
 	st.write("MBCC Season Breakdown")
 	st.dataframe(season_history, hide_index=True)
+
+
+	st.markdown("""---""")
+	st.write("Hello, let's learn some SQL")
+	st.write("* gives us all columns -- here we see 'SELECT * FROM history_df'")
+	st.dataframe(ps.sqldf('SELECT * FROM history_df'))
+	st.write("The columns in the table are at the top")
+	st.write("Try whatever you'd like:")
+	text_input = st.text_input(
+	        "Write your query here (SELECT * FROM history_df)",
+        	label_visibility="visible",
+	        disabled=False,
+        	placeholder="QUERY",
+    		)
+	st.dataframe(ps.sqldf(text_input))
+
+	
 		
 	##TODO drop down for specific MBCC
