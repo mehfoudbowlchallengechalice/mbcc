@@ -300,21 +300,21 @@ with tab_history:
 with need_to_know:
 	#st.header("Information")
 	st.markdown("""
- 	###Objective:
-	-	Pick the most games correctly. If you pick more correctly than anyone else, you win.
-  	-	Root for your teams to win by as much as possible or lose by as few as possible when winning isn't an option.
+ 	###Objective: \ 
+	-	Pick the most games correctly. If you pick more correctly than anyone else, you win. \
+  	-	Root for your teams to win by as much as possible or lose by as few as possible when winning isn't an option. \
    		-	In betting, your team can cover without winning, that's what this represents
 	""")
 	
 	
-	st.markdown("""Tiebreakers (only decides 1st vs 2nd):
-	1.	Point Spread Points
-	2.	Upset Pick Points
-	3.	Playoff Bracket Points
-	4.	Potential Upset Picks
-	5.	Point Differential in Upset Picks Correct
-	6.	Point Differential in Playoff Picks
-	7.	Point Differential in Potential Upset Picks
+	st.markdown("""Tiebreakers (only decides 1st vs 2nd):\
+	1.	Point Spread Points\
+	2.	Upset Pick Points\
+	3.	Playoff Bracket Points\
+	4.	Potential Upset Picks\
+	5.	Point Differential in Upset Picks Correct\
+	6.	Point Differential in Playoff Picks\
+	7.	Point Differential in Potential Upset Picks\
  	8.	MBCC Commemorative Coin Flip
 	""")
 	
