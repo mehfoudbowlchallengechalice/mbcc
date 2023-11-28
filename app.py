@@ -20,7 +20,7 @@ from PIL import Image
 
 st.set_page_config(layout="wide")
 
-st.write ("""
+st.header ("""
 #### MBCC 12 in 2023-24
 """)
 
