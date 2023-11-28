@@ -300,14 +300,13 @@ with tab_history:
 with need_to_know:
 	st.header("Information")
 	"""
-	Objective:
+	###Objective:
  	- Pick the most games correctly. If you pick more correctly than anyone else, you win.
   	- Root for your teams to win by as much as possible or lose by as few as possible when winning isn't an option.
    		- In betting, your team can cover without winning, that's what this represents
 	
  
-	Tiebreakers (only decides 1st vs 2nd):
- 
+	###Tiebreakers (only decides 1st vs 2nd):
 	1. Point Spread Points
 	1. Upset Pick Points
 	1. Playoff Bracket Points
