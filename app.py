@@ -21,7 +21,7 @@ from PIL import Image
 st.set_page_config(layout="wide")
 
 st.write ("""
-## MBCC 12 in 2023-24
+### MBCC 12 in 2023-24
 """)
 
 
