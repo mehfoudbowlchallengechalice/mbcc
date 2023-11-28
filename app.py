@@ -307,7 +307,7 @@ with need_to_know:
 	"""
 	)
 	
- 	"""
+ 	st.markdown("""
 	###Tiebreakers (only decides 1st vs 2nd):
 	1. Point Spread Points
 	1. Upset Pick Points
@@ -317,7 +317,7 @@ with need_to_know:
 	1. Point Differential in Playoff Picks
 	1. Point Differential in Potential Upset Picks
  	1. MBCC Commemorative Coin Flip
-	"""
+	""")
 	
 		
 	##TODO drop down for specific MBCC
