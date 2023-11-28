@@ -309,13 +309,13 @@ with need_to_know:
 	
 	
 	st.markdown("""**Tiebreakers** (only decides 1st vs 2nd):  \n
-	1. Point Spread Points  \n
-	2. Upset Pick Points  \n
-	3. Playoff Bracket Points  \n
-	4. Potential Upset Picks  \n
-	5. Point Differential in Upset Picks Correct  \n
-	6. Point Differential in Playoff Picks  \n
-	7. Point Differential in Potential Upset Picks  \n
+	1. Point Spread (points gained by wins, lost by losses, added together)  \n
+	2. Upset Picks (number of upset picks predicted correctly)  \n
+	3. Playoff Bracket Picks (number of playoff picks predicted correctly)  \n
+	4. Potential Upset Picks (number of upset picks attempted, even if not correct)  \n
+	5. Upset Pick Point Spread (point spread of correct upset picks)  \n
+	6. Playoff Bracket Pick Point Spread (point spread of the playoff games)  \n
+	7. Potential Upset Picks Point Spread (point spread of all attempted upset picks)  \n
  	8. MBCC Commemorative Coin Flip
 	""")
 	
