@@ -300,20 +300,16 @@ with tab_history:
 with need_to_know:
 	"""
 	### Markdown
-	Unordered List:
-	- First
-	- Second
-	    - thirdt
-	    - Fourth
+	Tiebreakers (only decides 1st vs 2nd):
 	
-	Ordered List:
-	
-	1. First item
-	1. Second item
-	1. Third item
-	    1. Indented item
-	    2. Indented item
-	1. Fourth item 
+	1. Point Spread Points
+	1. Upset Pick Points
+	1. Playoff Bracket Points
+	1. Potential Upset Picks
+	1. Point Differential in Upset Picks Correct
+	1. Point Differential in Playoff Picks
+	1. Point Differential in Potential Upset Picks
+ 	1. MBCC Commemorative Coin Flip
 	"""
 	
 		
