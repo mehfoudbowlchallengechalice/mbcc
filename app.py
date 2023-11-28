@@ -98,7 +98,8 @@ with col2:
 
 
 ### creation of the tabs
-tab_today, tab_mbcc_12, tab_elimination, tab_history, sql_learning = st.tabs(["Live", "MBCC 12", "Elimination Check", "History", "Click Here Gregory"])
+#tab_today, tab_mbcc_12, tab_elimination, tab_history, sql_learning = st.tabs(["Live", "MBCC 12", "Elimination Check", "History", "Click Here Gregory"])
+tab_today, tab_mbcc_12, tab_elimination, tab_history, need_to_know = st.tabs(["Live", "MBCC 12", "Elimination Check", "History", "Information"])
 
 
 with tab_today:
@@ -256,46 +257,64 @@ with tab_history:
 	st.write("MBCC Season Breakdown")
 	st.dataframe(season_history, hide_index=True)
 
-with sql_learning:
-	st.markdown("""---""")
-	st.write("Hello, let's learn some SQL")
-	st.write("the asterisk gives us all columns after the SELECT, the table is called 'history_df' after the FROM -- here we see 'SELECT * FROM history_df LIMIT 5'")
-	st.dataframe(ps.sqldf('SELECT * FROM history_df LIMIT 5'))
-	st.write("The columns in the table are at the top -- MBCC, Player, Picks, Games, Percentage_Correct, Winner, Current, Percentage Correct")
-	st.write("We only have 5 rows because we said LIMIT 5")
-	st.write("Now we can select columns, do math with this, or filter it")
-	st.write("'SELECT Player, Picks FROM history_df WHERE Picks < 20' will give us each person who picked less than 20 games correctly in a season using the WHERE as that filter indicator")
-	st.dataframe(ps.sqldf('SELECT Player, Picks FROM history_df WHERE Picks < 20'))
-	st.write("Now let's order it, then limit it... 'SELECT Player, Picks FROM history_df WHERE Picks < 20 ORDER BY PICKS LIMIT 5")
-	st.dataframe(ps.sqldf('SELECT Player, Picks FROM history_df WHERE Picks < 20 ORDER BY PICKS LIMIT 5'))
-	st.write("""uhoh, we're now only capturing this years picks, 
- 		because they're all zero already... 
-   		let's add a filter for the mbcc, 
-     		and since we're ordering the picks in ascending order (lowest to highest), 
-       		we don't need the less than 20 filter, 
-	 	though we can use as many filters as we want
-   		-- 'WHERE MBCC <> '2023-2024 (12th MBCC)' -- <> means is not equal""")
-	st.dataframe(ps.sqldf("SELECT Player, Picks FROM history_df WHERE MBCC <> '2023-2024 (12th MBCC)' ORDER BY PICKS LIMIT 5"))
-	st.write("Now let's add up the picks - 'SELECT SUM(Picks) FROM history_df'")
-	st.dataframe(ps.sqldf('SELECT SUM(Picks) FROM history_df'))
-	st.write("OR find the minimum number of picks - 'SELECT MIN(Picks) FROM history_df WHERE MBCC <> '2023-2024 (12th MBCC)''")
-	st.dataframe(ps.sqldf("SELECT MIN(Picks) FROM history_df WHERE MBCC <> '2023-2024 (12th MBCC)'"))
-	st.write("We can see this result in the top of our ordered table on picks")
-	st.write("Now let's using groupings --- 'SELECT Player, MAX(Picks) FROM history_df GROUP BY Player' tells us to take the max for each player")
-	st.dataframe(ps.sqldf("SELECT Player, MAX(Picks) FROM history_df GROUP BY Player"))
-	st.write("You can make it complicated by making smaller tables, and selecting from them, or joining on other tables")
-	st.write("for example, you can look at the number of picks in the past few years of the people who selected a specific team this year (using picks_df once updated) or many other things")
-	st.write("we can break down things more creatively once you've got those basics down, but type into the box below and press enter!")
+# with sql_learning:
+# 	st.markdown("""---""")
+# 	st.write("Hello, let's learn some SQL")
+# 	st.write("the asterisk gives us all columns after the SELECT, the table is called 'history_df' after the FROM -- here we see 'SELECT * FROM history_df LIMIT 5'")
+# 	st.dataframe(ps.sqldf('SELECT * FROM history_df LIMIT 5'))
+# 	st.write("The columns in the table are at the top -- MBCC, Player, Picks, Games, Percentage_Correct, Winner, Current, Percentage Correct")
+# 	st.write("We only have 5 rows because we said LIMIT 5")
+# 	st.write("Now we can select columns, do math with this, or filter it")
+# 	st.write("'SELECT Player, Picks FROM history_df WHERE Picks < 20' will give us each person who picked less than 20 games correctly in a season using the WHERE as that filter indicator")
+# 	st.dataframe(ps.sqldf('SELECT Player, Picks FROM history_df WHERE Picks < 20'))
+# 	st.write("Now let's order it, then limit it... 'SELECT Player, Picks FROM history_df WHERE Picks < 20 ORDER BY PICKS LIMIT 5")
+# 	st.dataframe(ps.sqldf('SELECT Player, Picks FROM history_df WHERE Picks < 20 ORDER BY PICKS LIMIT 5'))
+# 	st.write("""uhoh, we're now only capturing this years picks, 
+#  		because they're all zero already... 
+#    		let's add a filter for the mbcc, 
+#      		and since we're ordering the picks in ascending order (lowest to highest), 
+#        		we don't need the less than 20 filter, 
+# 	 	though we can use as many filters as we want
+#    		-- 'WHERE MBCC <> '2023-2024 (12th MBCC)' -- <> means is not equal""")
+# 	st.dataframe(ps.sqldf("SELECT Player, Picks FROM history_df WHERE MBCC <> '2023-2024 (12th MBCC)' ORDER BY PICKS LIMIT 5"))
+# 	st.write("Now let's add up the picks - 'SELECT SUM(Picks) FROM history_df'")
+# 	st.dataframe(ps.sqldf('SELECT SUM(Picks) FROM history_df'))
+# 	st.write("OR find the minimum number of picks - 'SELECT MIN(Picks) FROM history_df WHERE MBCC <> '2023-2024 (12th MBCC)''")
+# 	st.dataframe(ps.sqldf("SELECT MIN(Picks) FROM history_df WHERE MBCC <> '2023-2024 (12th MBCC)'"))
+# 	st.write("We can see this result in the top of our ordered table on picks")
+# 	st.write("Now let's using groupings --- 'SELECT Player, MAX(Picks) FROM history_df GROUP BY Player' tells us to take the max for each player")
+# 	st.dataframe(ps.sqldf("SELECT Player, MAX(Picks) FROM history_df GROUP BY Player"))
+# 	st.write("You can make it complicated by making smaller tables, and selecting from them, or joining on other tables")
+# 	st.write("for example, you can look at the number of picks in the past few years of the people who selected a specific team this year (using picks_df once updated) or many other things")
+# 	st.write("we can break down things more creatively once you've got those basics down, but type into the box below and press enter!")
 	
-	st.write("Try whatever you'd like:")
-	text_input = st.text_input(
-	        "Write your query here (SELECT * FROM history_df)",
-        	label_visibility="visible",
-	        disabled=False,
-        	placeholder="QUERY",
-    		)
-	st.dataframe(ps.sqldf(text_input))
+# 	st.write("Try whatever you'd like:")
+# 	text_input = st.text_input(
+# 	        "Write your query here (SELECT * FROM history_df)",
+#         	label_visibility="visible",
+# 	        disabled=False,
+#         	placeholder="QUERY",
+#     		)
+# 	st.dataframe(ps.sqldf(text_input))
 
+with need_to_know:
+	"""
+	### Markdown
+	Unordered List:
+	- First
+	- Second
+	    - thirdt
+	    - Fourth
+	
+	Ordered List:
+	
+	1. First item
+	1. Second item
+	1. Third item
+	    1. Indented item
+	    2. Indented item
+	1. Fourth item 
+	"""
 	
 		
 	##TODO drop down for specific MBCC
