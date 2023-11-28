@@ -21,14 +21,12 @@ from PIL import Image
 st.set_page_config(layout="wide")
 
 st.header ("""
-#### MBCC 12 in 2023-24
+MBCC 12 in 2023-24
 """)
 
 
-###TODO:: add line at the bottom for Lauren being the current winner, and then a line to show who's currently in the lead
 ###TODO:: add games in, games left
 
-######### DOWN BELOW --- add in elimination check process
 
 ##TODO drop down here for players
 ## set option to have current winner in bold
