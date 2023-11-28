@@ -16,6 +16,7 @@ import datetime
 import streamlit as st
 from google.oauth2 import service_account
 from gsheetsdb import connect
+from PIL import Image
 
 st.set_page_config(layout="wide")
 
@@ -318,5 +319,16 @@ with need_to_know:
  	8. MBCC Commemorative Coin Flip
 	""")
 	
-		
+
+	st.markdown("""**Winnings:**  \n
+	1. First place gets $300 and their name on the trophy (determined by most picks correct and tiebreaker if needed)  \n
+ 	2. Second place gets about $150 (whatever is in the change jar) (determined by best point spread)  \n
+  	3. Hokie Prize $300 split between those who beat Papa Smurf's number of wins  \n
+	""")
+
+	image = Image.open("last_years_winner.jpg")
+
+	st.image(image, caption = "Last years winner - Lauren!")
+
+	
 	##TODO drop down for specific MBCC
