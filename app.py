@@ -326,7 +326,7 @@ with need_to_know:
   	3. Hokie Prize $300 split between those who beat Papa Smurf's number of wins  \n
 	""")
 
-	image = Image.open("last_years_winner.jpg")
+	image = Image.open("last_years_winner.png")
 
 	st.image(image, caption = "Last years winner - Lauren!")
 
