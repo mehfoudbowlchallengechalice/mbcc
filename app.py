@@ -328,7 +328,7 @@ with need_to_know:
 
 	image = Image.open("last_years_winner.png")
 
-	st.image(image, caption = "Last years winner - Lauren!")
+	st.image(image, caption = "Last years winner - Lauren!", width = 20)
 
 	
 	##TODO drop down for specific MBCC
