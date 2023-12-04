@@ -76,8 +76,8 @@ games_in = current_scores_df.iloc[4]['Christopher']
 games_left = current_scores_df.iloc[5]['Christopher']
 
 
-st.markdown("games in: ", games_in)
-st.markdown("games left: ", games_left)
+st.write("games in: ", games_in)
+st.write("games left: ", games_left)
 
 ### creation of the columns
 col1,col2 = st.columns(2)
