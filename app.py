@@ -109,7 +109,7 @@ st.write("We are currently ", games_in_s, " games in, which means we have ", gam
 #tab_today, tab_mbcc_12, tab_elimination, tab_history, sql_learning = st.tabs(["Live", "MBCC 12", "Elimination Check", "History", "Click Here Gregory"])
 tab_today, tab_mbcc_12, tab_elimination, tab_history, need_to_know = st.tabs(["Live", "MBCC 12", "Elimination Check", "History", "Information"])
 
-
+### set up the games to include a link and then scores from the scores page???
 with tab_today:
 	st.header("Games")
 	#live_df = bring_in_live_games()
