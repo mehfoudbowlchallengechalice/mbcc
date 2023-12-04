@@ -24,11 +24,15 @@ st.header ("""
 MBCC 12 in 2023-24
 """)
 
+pick_url = 'https://forms.gle/QBjfisMMErnJsajg9'
+st.header ("Make your [picks](%s) before December 14th at 12 PM!" % pick_url)
+
 
 ###TODO:: add games in, games left
 
 
-##TODO drop down here for players
+
+##TODO drop down here for players (create player tab?)
 ## set option to have current winner in bold
 
 # Create a connection object.
