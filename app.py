@@ -69,8 +69,11 @@ starting_people_list = people_list()
 the_people_list = people_list()
 current_scores_df = pd.DataFrame(run_query(f'SELECT * FROM "{current_scores}"'))
 
-games_in = str(current_scores_df.iloc[4]['Christopher'])
-games_left = str(current_scores_df.iloc[5]['Christopher'])
+games_in = current_scores_df.iloc[4]['Christopher']
+games_left = current_scores_df.iloc[5]['Christopher']
+
+games_in_s = str(games_in)
+games_left_s = str(games_left)
 
 
 ### creation of the columns
@@ -101,8 +104,7 @@ with col2:
 	st.dataframe(point_diff_score_df, hide_index=True)
 
 
-st.write("games in: ", games_in)
-st.write("games left: ", games_left)
+st.write("We are currently ", games_in_s, " games in, which means we have ", games_left_s, " games left. We've completed ", str(round(100*games_in/(games_in+games_left),2)), "% of MBCC12.")
 ### creation of the tabs
 #tab_today, tab_mbcc_12, tab_elimination, tab_history, sql_learning = st.tabs(["Live", "MBCC 12", "Elimination Check", "History", "Click Here Gregory"])
 tab_today, tab_mbcc_12, tab_elimination, tab_history, need_to_know = st.tabs(["Live", "MBCC 12", "Elimination Check", "History", "Information"])
