@@ -28,9 +28,6 @@ pick_url = 'https://forms.gle/QBjfisMMErnJsajg9'
 st.header ("Make your [picks](%s) before December 14th at 12 PM!" % pick_url)
 
 
-###TODO:: add games in, games left
-
-
 
 ##TODO drop down here for players (create player tab?)
 ## set option to have current winner in bold
@@ -76,9 +73,6 @@ games_in = str(current_scores_df.iloc[4]['Christopher'])
 games_left = str(current_scores_df.iloc[5]['Christopher'])
 
 
-st.write("games in: ", games_in)
-st.write("games left: ", games_left)
-
 ### creation of the columns
 col1,col2 = st.columns(2)
 
@@ -107,6 +101,8 @@ with col2:
 	st.dataframe(point_diff_score_df, hide_index=True)
 
 
+st.write("games in: ", games_in)
+st.write("games left: ", games_left)
 ### creation of the tabs
 #tab_today, tab_mbcc_12, tab_elimination, tab_history, sql_learning = st.tabs(["Live", "MBCC 12", "Elimination Check", "History", "Click Here Gregory"])
 tab_today, tab_mbcc_12, tab_elimination, tab_history, need_to_know = st.tabs(["Live", "MBCC 12", "Elimination Check", "History", "Information"])
