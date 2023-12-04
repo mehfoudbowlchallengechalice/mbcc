@@ -72,8 +72,11 @@ starting_people_list = people_list()
 the_people_list = people_list()
 current_scores_df = pd.DataFrame(run_query(f'SELECT * FROM "{current_scores}"'))
 
-st.header("games in: ", current_scores_df.iloc[4]['Christopher'].to_string())
-st.header("games left: ", current_scores_df.iloc[5]['Christopher'].to_string())
+games_in = current_scores_df.iloc[4]['Christopher']
+games_left = current_scores_df.iloc[5]['Christopher']
+
+st.header("games in: ", games_in)
+st.header("games left: ", games_left)
 
 ### creation of the columns
 col1,col2 = st.columns(2)
