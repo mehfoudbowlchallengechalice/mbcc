@@ -103,8 +103,8 @@ tab_today, tab_mbcc_12, tab_elimination, tab_history, need_to_know = st.tabs(["L
 
 with tab_today:
 	st.header("Games")
-	#live_df = bring_in_live_games()
-	live_df = pd.DataFrame(run_query(f'SELECT * FROM "{unlive_games}"'))
+	live_df = bring_in_live_games()
+	#live_df = pd.DataFrame(run_query(f'SELECT * FROM "{unlive_games}"'))
 
 	# bringing in picks
 	picks_df = pd.DataFrame(run_query(f'SELECT * FROM "{picks}"'))
