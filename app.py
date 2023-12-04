@@ -72,7 +72,7 @@ starting_people_list = people_list()
 the_people_list = people_list()
 current_scores_df = pd.DataFrame(run_query(f'SELECT * FROM "{current_scores}"'))
 
-st.write(print("games in: ", current_scores_df.iloc[4]['Christopher']))
+st.write("games in: ", current_scores_df.iloc[4]['Christopher'])
 
 ### creation of the columns
 col1,col2 = st.columns(2)
