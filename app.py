@@ -74,11 +74,10 @@ current_scores_df = pd.DataFrame(run_query(f'SELECT * FROM "{current_scores}"'))
 
 games_in = current_scores_df.iloc[4]['Christopher']
 games_left = current_scores_df.iloc[5]['Christopher']
-st.write(type(games_in))
-st.write(type(str(games_in)))
 
-st.header("games in: ", str(games_in))
-st.header("games left: ", str(games_left))
+
+st.markdown("games in: ", games_in)
+st.markdown("games left: ", games_left)
 
 ### creation of the columns
 col1,col2 = st.columns(2)
