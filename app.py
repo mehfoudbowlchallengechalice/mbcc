@@ -72,6 +72,8 @@ starting_people_list = people_list()
 the_people_list = people_list()
 current_scores_df = pd.DataFrame(run_query(f'SELECT * FROM "{current_scores}"'))
 
+st.write(print(current_scores_df
+
 ### creation of the columns
 col1,col2 = st.columns(2)
 
