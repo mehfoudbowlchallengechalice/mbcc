@@ -76,8 +76,8 @@ games_in = str(current_scores_df.iloc[4]['Christopher'])
 games_left = str(current_scores_df.iloc[5]['Christopher'])
 
 
-st.write("games in: ", games_in)
-st.write("games left: ", games_left)
+st.subheader("games in: ", games_in)
+st.subheader("games left: ", games_left)
 
 ### creation of the columns
 col1,col2 = st.columns(2)
