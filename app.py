@@ -158,14 +158,14 @@ with tab_today:
 	column_hide_dict = dict(zip(columns_to_hide, none_list))
 	
 	if option == "All":
-		picks_dates = picks_dates[selection_list]
+		#picks_dates = picks_dates[selection_list]
 		st.dataframe(picks_dates.style.apply(highlight_all_names, axis=None), hide_index = True, column_config = column_hide_dict)
 	elif option == "Future":
-		picks_dates = picks_dates[pd.to_datetime(picks_dates.game_date) >= datetime.datetime.today()][selection_list]
+		picks_dates = picks_dates[pd.to_datetime(picks_dates.game_date) >= datetime.datetime.today()]#[selection_list]
 		st.dataframe(picks_dates.style.apply(highlight_all_names, axis=None), hide_index = True, column_config = column_hide_dict)
 	elif option == "Today":
 		picks_dates = picks_dates[(pd.to_datetime(picks_dates.game_date) >= datetime.datetime.today()) 
-        			& (pd.to_datetime(picks_dates.game_date) == min(pd.to_datetime(picks_dates.game_date)))][selection_list]
+        			& (pd.to_datetime(picks_dates.game_date) == min(pd.to_datetime(picks_dates.game_date)))]#[selection_list]
 		st.dataframe(picks_dates.style.apply(highlight_all_names, axis=None), hide_index = True, column_config = column_hide_dict)
 
 
