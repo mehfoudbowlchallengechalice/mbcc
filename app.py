@@ -53,13 +53,19 @@ def bring_in_live_games():
     return get_schedule()
 
 
-### data frame 
-def highlighter(x, s):
-    # initialize default colors
-    color_codes = pd.DataFrame('', index=x.index, columns=x.columns)
-    # set Check color to red if consumption exceeds threshold green otherwise
-    color_codes[s] = np.where(x[s] == x['winner'], 'color:green', 'color:red')
-    return color_codes
+### data frame conditioning
+def highlight_cells(picker, winner):
+	if picker == winner:
+		format_code = """color: green;
+  				font-weight: bold"""
+	elif winner == 'TBD':
+		format_code = ''
+	else picker <> winner:
+		format_code = """color: red;
+  				font-weight: bold"""
+	return format_code
+
+
 
 
 current_scores = st.secrets["current_pick_success"]
@@ -159,7 +165,7 @@ with tab_today:
 	
 	
 	if option == "All":
-		st.dataframe(picks_dates[selection_list].style.applymap(highlighter, subset = [selection_list_p]))
+		st.dataframe(picks_dates[selection_list].style.apply(highlight_cells, subset = [selection_list_p], axis = 1, winner = winner))
 	elif option == "Future":
 		st.dataframe(picks_dates[pd.to_datetime(picks_dates.game_date) >= datetime.datetime.today()][selection_list])
 	elif option == "Today":
