@@ -159,7 +159,7 @@ with tab_today:
 	
 	
 	if option == "All":
-		st.dataframe(picks_dates[selection_list].style.apply(highlighter, subset = [selection_list_p]))
+		st.dataframe(picks_dates[selection_list].style.applymap(highlighter, subset = [selection_list_p]))
 	elif option == "Future":
 		st.dataframe(picks_dates[pd.to_datetime(picks_dates.game_date) >= datetime.datetime.today()][selection_list])
 	elif option == "Today":
