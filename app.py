@@ -132,7 +132,7 @@ with tab_today:
 	picks_df = pd.DataFrame(run_query(f'SELECT * FROM "{picks}"'))
 	picks_dates = picks_df.merge(new_live_df[["game_name", "game_date", "game_home_team", "game_away_team", "winner"]], left_on = "Game", right_on = "game_name")
 	
-	picks_dates["loser"] = np.where(picks_dates["game_home_team"] == picks_dates["winner"], picks_dates["game_away_team"], picks_dates["game_home_team"])
+	picks_dates["loser"] = np.where(picks_dates["winner"] == 'TBD', 'TBD', np.where(picks_dates["game_home_team"] == picks_dates["winner"], picks_dates["game_away_team"], picks_dates["game_home_team"]))
 	
 	### today, future, all drop down to show picks
 	option = st.selectbox("Select Games to See", ("Today", "Future", "All"))
