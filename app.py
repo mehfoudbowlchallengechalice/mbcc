@@ -69,8 +69,6 @@ def reset_tbd(x):
 	if x['winner'] == 'TBD':
 		format_code = ''
 	return format_code
-    
-df.style.apply(select_col, axis=None)
 
 
 current_scores = st.secrets["current_pick_success"]
