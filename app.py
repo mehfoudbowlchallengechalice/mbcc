@@ -55,18 +55,6 @@ def bring_in_live_games():
 
 
 
-
-# def reset_tbd(x):
-# 	#compare columns
-# 	mask = x['winner] == 'TBD'
-# 	#DataFrame with same index and columns names as original filled empty strings
-# 	#modify values of df1 column by boolean mask
-# 	x.loc[mask] = ''
-# 	return x
-
-#df.style.apply(select_col, axis=None)
-
-
 current_scores = st.secrets["current_pick_success"]
 history_sheet = st.secrets["history_sheet"]
 agg_history = st.secrets["agg_history"]
@@ -164,6 +152,8 @@ with tab_today:
 	selection_list = np.insert(selection_list_p, 0, 'Game')
 
 	picks_dates_styled = picks_dates.style.apply(highlight_all)
+
+	st.dataframe(picks_dates_styled)
 	
 	columns_to_hide = ["game_date", "game_home_team", "game_away_team", "winner", "loser"]+deselection_list_p
 	
