@@ -53,6 +53,8 @@ def bring_in_live_games():
     return get_schedule()
 
 
+### this will help, because damn
+####https://stackoverflow.com/questions/41203959/conditionally-format-python-pandas-cell
 ### data frame conditioning
 def highlight_cells(x, winners):
 	if x in winners:
@@ -175,7 +177,7 @@ with tab_today:
 		st.dataframe(picks_dates[selection_list].style
 			     .map(highlight_cells, subset = selection_list_p
 				  , winners = picks_dates['winner'].to_list())
-			     .style.apply(lambda x, games_without_scores: ['' if x.Game in games_without_scores], axis = 1))
+			    )#.style.apply(lambda x, games_without_scores: ['' if x.Game in games_without_scores], axis = 1))
 	elif option == "Future":
 		st.dataframe(picks_dates[pd.to_datetime(picks_dates.game_date) >= datetime.datetime.today()][selection_list])
 	elif option == "Today":
