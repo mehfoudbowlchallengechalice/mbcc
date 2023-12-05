@@ -55,7 +55,7 @@ def bring_in_live_games():
 
 ### data frame 
 def winner_green_loser_red(val, winner):
-    if val <> winner:
+    if val != winner:
 	color = 'red'
     elif val == winner:
 	color = 'green'
