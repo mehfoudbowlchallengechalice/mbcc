@@ -172,14 +172,14 @@ with tab_today:
 	st.markdown("""---""")
 	st.header("Picks")
 	####TODO: CONDITIONAL FORMATTING POSSIBLE HERE????????
-	selection_list_p = toggle_list("a")
+	selection_list_p, deselection_list_p = toggle_list("a")
 	selection_list = np.insert(selection_list_p, 0, 'Game')
 
 	picks_dates_styled = picks_dates.style.map(highlight_cells, subset = selection_list_p)
                             #.apply(lambda x: ['color:green' if v == x.iloc[13] else '' for v in x], axis = 1)
                             #.apply(lambda x: ['color:red' if v == x.iloc[14] else '' for v in x], axis = 1)
 
-	columns_to_hide = ["game_date", "game_home_team", "game_away_team", "winner", "loser"]
+	columns_to_hide = ["game_date", "game_home_team", "game_away_team", "winner", "loser"]+deselection_list_p
 	
 	if option == "All":
 		#st.dataframe(picks_dates[selection_list].style
@@ -188,10 +188,10 @@ with tab_today:
 		#	    )#.style.apply(lambda x, games_without_scores: ['' if x.Game in games_without_scores], axis = 1))
 		st.dataframe(picks_dates_styled.hide([columns_to_hide])) #[selection_list])
 	elif option == "Future":
-		st.dataframe(picks_dates_styled[pd.to_datetime(picks_dates.game_date) >= datetime.datetime.today()][selection_list])
+		st.dataframe(picks_dates_styled[pd.to_datetime(picks_dates.game_date) >= datetime.datetime.today()].hide([columns_to_hide]))
 	elif option == "Today":
 		st.dataframe(picks_dates_styled[(pd.to_datetime(picks_dates.game_date) >= datetime.datetime.today()) 
-        			& (pd.to_datetime(picks_dates.game_date) == min(pd.to_datetime(picks_dates.game_date)))][selection_list])
+        			& (pd.to_datetime(picks_dates.game_date) == min(pd.to_datetime(picks_dates.game_date)))].hide([columns_to_hide]))
 
 with tab_mbcc_12:
 	
@@ -205,7 +205,7 @@ with tab_mbcc_12:
 	complex_tracker_df = complex_tracker_df[column_list].apply(pd.to_numeric)
 	
 	
-	tracker_list = toggle_list("b")
+	tracker_list, detracker_list = toggle_list("b")
 	st.header("Correct Picks")
 	st.bar_chart(current_scores_df.iloc[0:1][tracker_list].T)
 
