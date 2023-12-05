@@ -63,13 +63,13 @@ def highlight_cells(x, winners):
   				font-weight: bold"""
 	return format_code
 
-def reset_tbd(x):
-	#compare columns
-	mask = x['winner] == 'TBD'
-	#DataFrame with same index and columns names as original filled empty strings
-	#modify values of df1 column by boolean mask
-	x.loc[mask] = ''
-	return x
+# def reset_tbd(x):
+# 	#compare columns
+# 	mask = x['winner] == 'TBD'
+# 	#DataFrame with same index and columns names as original filled empty strings
+# 	#modify values of df1 column by boolean mask
+# 	x.loc[mask] = ''
+# 	return x
 
 #df.style.apply(select_col, axis=None)
 
@@ -146,7 +146,7 @@ with tab_today:
 
 	new_live_df = new_live_df[['game_date', 'time', 'game_name', 'game_venue', 'game_network', 'game_home_team', 'game_away_team', 'home_team_score', 'away_team_score', 'winner', 'game_page']]
 
-	games_without_scores = scores_df[scores_df.winner == 'TBD']['game']
+	games_without_scores = scores_df[scores_df.winner == 'TBD']['game'].to_list()
 	# bringing in picks
 	picks_df = pd.DataFrame(run_query(f'SELECT * FROM "{picks}"'))
 	picks_dates = picks_df.merge(new_live_df[["game_name", "game_date", "winner"]], left_on = "Game", right_on = "game_name")
@@ -175,8 +175,7 @@ with tab_today:
 		st.dataframe(picks_dates[selection_list].style
 			     .map(highlight_cells, subset = selection_list_p
 				  , winners = picks_dates['winner'].to_list())
-			     .apply(reset_tbd))
-			     #.style.apply(lambda x: [''))
+			     .style.apply(lambda x: ['' if x.Game in games_without_scores for i in x], axis = 1))
 	elif option == "Future":
 		st.dataframe(picks_dates[pd.to_datetime(picks_dates.game_date) >= datetime.datetime.today()][selection_list])
 	elif option == "Today":
