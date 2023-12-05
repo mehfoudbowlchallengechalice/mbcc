@@ -65,10 +65,7 @@ def highlight_cells(x, winners, games):
   				font-weight: bold"""
 	return format_code
 
-def reset_tbd(x):
-	if x.any() == 'TBD':
-		format_code = ''
-	return format_code
+
 
 
 current_scores = st.secrets["current_pick_success"]
@@ -171,8 +168,7 @@ with tab_today:
 		st.dataframe(picks_dates.style
 			     .map(highlight_cells, subset = selection_list_p
 				  , winners = picks_dates['winner'].to_list()
-				  , games = ['CFP NATIONAL CHAMPIONSHIP GAME Presented by AT&T'])
-			     .apply(reset_tbd, axis=None))
+				  , games = ['CFP NATIONAL CHAMPIONSHIP GAME Presented by AT&T']))
 	elif option == "Future":
 		st.dataframe(picks_dates[pd.to_datetime(picks_dates.game_date) >= datetime.datetime.today()][selection_list])
 	elif option == "Today":
