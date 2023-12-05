@@ -60,11 +60,11 @@ def highlight_cells(x):
 	if x == x.iloc['winner']:
 		format_code = """color: green;
   				font-weight: bold"""
-    elif x == x.iloc['loser']:
+    	elif x == x.iloc['loser']:
 		format_code = """color: red;
   				font-weight: bold"""
-    else:
-        format_code = ""
+    	else:
+        	format_code = ""
 	return format_code
 
 # def reset_tbd(x):
