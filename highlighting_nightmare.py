@@ -6,11 +6,7 @@ import streamlit as st
 ### data frame conditioning
 def highlight_all_names(x):
   color_codes = pd.DataFrame('', index=x.index, columns=x.columns)
-  st.dataframe(color_codes)
-  st.dataframe(x)
-  st.write(x.iloc[2]['Christopher'])
-  st.write(x.iloc[2]['winner'])
-  color_codes['Christopher'] = np.where(x['Christopher'] == x['winner'], "background_color: green", 
+  color_codes['Christopher'] = np.where(x['Christopher'] == x['winner'], "color: green", 
                                         np.where(x['Christopher'] == x['loser'], "color:red", ""))
   color_codes['Nicholas'] = np.where(x['Nicholas'] == x['winner'], "color: green", 
                                         np.where(x['Nicholas'] == x['loser'], "color:red", ""))
@@ -30,5 +26,4 @@ def highlight_all_names(x):
                                         np.where(x['PSmurf'] == x['loser'], "color:red", ""))
   color_codes['Jen'] = np.where(x['Jen'] == x['winner'], "color: green", 
                                         np.where(x['Jen'] == x['loser'], "color:red", ""))
-  st.dataframe(color_codes)
   return color_codes
