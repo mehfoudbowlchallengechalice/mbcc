@@ -190,8 +190,8 @@ with tab_today:
 	elif option == "Future":
 		st.dataframe(picks_dates_styled[pd.to_datetime(picks_dates.game_date) >= datetime.datetime.today()][selection_list])
 	elif option == "Today":
-		st.dataframe(picks_dates_styled[(pd.to_datetime(picks_dates_styled.game_date) >= datetime.datetime.today()) 
-        			& (pd.to_datetime(picks_dates_styled.game_date) == min(pd.to_datetime(picks_dates_styled.game_date)))][selection_list])
+		st.dataframe(picks_dates_styled[(pd.to_datetime(picks_dates.game_date) >= datetime.datetime.today()) 
+        			& (pd.to_datetime(picks_dates.game_date) == min(pd.to_datetime(picks_dates.game_date)))][selection_list])
 
 with tab_mbcc_12:
 	
