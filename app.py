@@ -117,14 +117,14 @@ with tab_today:
 	live_df = pd.DataFrame(run_query(f'SELECT * FROM "{unlive_games}"'))
 
 	live_df['game_page'] = "https://www.espn.com/college-football/game?gameId="+live_df['game_id'].astype(int).astype(str)
-	live_df['game_time'] = pd.to_datetime(live_df['game_time'], format = '%I:%M%p')
+	live_df['time'] = pd.to_datetime(live_df['game_time'], format = '%I:%M%p')
 	
 	scores_df = pd.DataFrame(run_query(f'SELECT * FROM "{unlive_scores}"'))
 	scores_df = scores_df.fillna(0)
 	
 	new_live_df = live_df.merge(scores_df, left_on = "game_name", right_on = "game")
 
-	new_live_df = new_live_df[['game_date', 'game_time', 'game_name', 'game_venue', 'game_network', 'game_home_team', 'game_away_team', 'home_team_score', 'away_team_score', 'winner', 'game_page']]
+	new_live_df = new_live_df[['game_date', 'time', 'game_name', 'game_venue', 'game_network', 'game_home_team', 'game_away_team', 'home_team_score', 'away_team_score', 'winner', 'game_page']]
 	
 	# bringing in picks
 	picks_df = pd.DataFrame(run_query(f'SELECT * FROM "{picks}"'))
