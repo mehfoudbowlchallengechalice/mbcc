@@ -62,7 +62,7 @@ picks = st.secrets["picks"]
 unlive_games = st.secrets["unlive_games"]
 live_tracker_binary = st.secrets["live_tracker_binary"]
 live_tracker_complex = st.secrets["live_tracker_complex"]
-scores = st.secrets["tournament_scores"]
+unlive_scores = st.secrets["tournament_scores"]
 #full_score_matrix = st.secrets["full_pick_summary"]
 
 
@@ -118,7 +118,12 @@ with tab_today:
 
 	live_df['game_page'] = "https://www.espn.com/college-football/game?gameId="+live_df['game_id'].astype(int).astype(str)
 
-	new_live_df = live_df.merge
+	scores_df = pd.DataFrame(run_query(f'SELECT * FROM "{unlive_scores}"'))
+	scores_df = scores_df.fillna(0)
+	
+	new_live_df = live_df.merge(scores_df, left_on = "game_name", right_on = "game")
+
+	new_live_df = new_live_df[['game_date', 'game_time', 'game_name', 'game_venue', 'game_network', 'game_home_team', 'game_away_team', 'home_team_score', 'away_team_score', 'winner', 'game_page']]
 	
 	# bringing in picks
 	picks_df = pd.DataFrame(run_query(f'SELECT * FROM "{picks}"'))
@@ -128,12 +133,12 @@ with tab_today:
 	option = st.selectbox("Select Games to See", ("Today", "Future", "All"))
 	
 	if option == "All":
-		st.dataframe(live_df, column_config={"game_page": st.column_config.LinkColumn()}, hide_index=True)
+		st.dataframe(new_live_df, column_config={"game_page": st.column_config.LinkColumn()}, hide_index=True)
 	elif option == "Future":
-		st.dataframe(live_df[pd.to_datetime(live_df.game_date) >= datetime.datetime.today()], column_config={"game_page": st.column_config.LinkColumn()}, hide_index=True)
+		st.dataframe(new_live_df[pd.to_datetime(new_live_df.game_date) >= datetime.datetime.today()], column_config={"game_page": st.column_config.LinkColumn()}, hide_index=True)
 	elif option == "Today":
-		st.dataframe(live_df[(pd.to_datetime(live_df.game_date) >= datetime.datetime.today()) 
-        			& (pd.to_datetime(live_df.game_date) == min(pd.to_datetime(live_df.game_date)))], column_config={"game_page": st.column_config.LinkColumn()}, hide_index=True)
+		st.dataframe(new_live_df[(pd.to_datetime(new_live_df.game_date) >= datetime.datetime.today()) 
+        			& (pd.to_datetime(new_live_df.game_date) == min(pd.to_datetime(new_live_df.game_date)))], column_config={"game_page": st.column_config.LinkColumn()}, hide_index=True)
 	
 	st.markdown("""---""")
 	st.header("Picks")
