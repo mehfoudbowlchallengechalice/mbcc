@@ -62,6 +62,7 @@ picks = st.secrets["picks"]
 unlive_games = st.secrets["unlive_games"]
 live_tracker_binary = st.secrets["live_tracker_binary"]
 live_tracker_complex = st.secrets["live_tracker_complex"]
+scores = st.secrets["tournament_scores"]
 #full_score_matrix = st.secrets["full_pick_summary"]
 
 
@@ -117,6 +118,7 @@ with tab_today:
 
 	live_df['game_page'] = "https://www.espn.com/college-football/game?gameId="+live_df['game_id'].astype(int).astype(str)
 
+	new_live_df = live_df.merge
 	
 	# bringing in picks
 	picks_df = pd.DataFrame(run_query(f'SELECT * FROM "{picks}"'))
