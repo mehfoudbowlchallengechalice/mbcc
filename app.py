@@ -65,7 +65,7 @@ def highlight_cells(x, winners):
 
 def reset_tbd(x):
 	#compare columns
-	mask = x['game'] == 'TBD'
+	mask = x['winner] == 'TBD'
 	#DataFrame with same index and columns names as original filled empty strings
 	#modify values of df1 column by boolean mask
 	x.loc[mask] = ''
@@ -172,10 +172,11 @@ with tab_today:
 	
 	
 	if option == "All":
-		st.dataframe(picks_dates.style
+		st.dataframe(picks_dates[selection_list].style
 			     .map(highlight_cells, subset = selection_list_p
 				  , winners = picks_dates['winner'].to_list())
 			     .apply(reset_tbd))
+			     #.style.apply(lambda x: [''))
 	elif option == "Future":
 		st.dataframe(picks_dates[pd.to_datetime(picks_dates.game_date) >= datetime.datetime.today()][selection_list])
 	elif option == "Today":
