@@ -117,18 +117,6 @@ with tab_today:
 
 	live_df['game_page'] = "https://www.espn.com/college-football/game?gameId="+live_df['game_id'].astype(int).astype(str)
 
-	st.data_editor(
-    		live_df,
-    		column_config={
-        	"game_page": st.column_config.LinkColumn(
-            		"Trending apps",
-            		help="Link for the games included",
-            		validate="^https://www.espn.com/college-football/game?gameId=[0-9]+",
-            		max_chars=100,
-        		)
-    		},
-    		hide_index=True,
-		)
 	
 	# bringing in picks
 	picks_df = pd.DataFrame(run_query(f'SELECT * FROM "{picks}"'))
@@ -138,12 +126,31 @@ with tab_today:
 	option = st.selectbox("Select Games to See", ("Today", "Future", "All"))
 	
 	if option == "All":
-		st.dataframe(live_df, hide_index=True)
+		st.dataframe(live_df, 
+			     st.column_config.LinkColumn(
+            			"game_page",
+            			help="Link for the games included",
+            			validate="^https://www.espn.com/college-football/game?gameId=[0-9]+",
+            			max_chars=100,
+        			), 
+			     hide_index=True)
 	elif option == "Future":
-		st.dataframe(live_df[pd.to_datetime(live_df.game_date) >= datetime.datetime.today()], hide_index=True)
+		st.dataframe(live_df[pd.to_datetime(live_df.game_date) >= datetime.datetime.today()], 
+			     st.column_config.LinkColumn(
+            			"game_page",
+            			help="Link for the games included",
+            			validate="^https://www.espn.com/college-football/game?gameId=[0-9]+",
+            			max_chars=100,
+        			),  hide_index=True)
 	elif option == "Today":
 		st.dataframe(live_df[(pd.to_datetime(live_df.game_date) >= datetime.datetime.today()) 
-        			& (pd.to_datetime(live_df.game_date) == min(pd.to_datetime(live_df.game_date)))], hide_index=True)
+        			& (pd.to_datetime(live_df.game_date) == min(pd.to_datetime(live_df.game_date)))], 
+			     st.column_config.LinkColumn(
+            			"game_page",
+            			help="Link for the games included",
+            			validate="^https://www.espn.com/college-football/game?gameId=[0-9]+",
+            			max_chars=100,
+        			),  hide_index=True)
 	
 	st.markdown("""---""")
 	st.header("Picks")
