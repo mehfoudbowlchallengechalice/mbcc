@@ -54,8 +54,10 @@ def bring_in_live_games():
 
 
 ### data frame conditioning
-def highlight_cells(x, winners):
-	if x in winners:
+def highlight_cells(x, winners, games):
+	if x in games:
+		format_code = ''
+	elif x in winners:
 		format_code = """color: green;
   				font-weight: bold"""
 	else:
@@ -63,7 +65,10 @@ def highlight_cells(x, winners):
   				font-weight: bold"""
 	return format_code
 
-
+def reset_tbd(x,column):
+	is_tbd = pd.Series(data=False, index=x.index)
+	is_tbd[column] = s.loc[column] == 'TBD'
+	return ['' if is_tbd.any() for v in is_tbd]
 
 
 current_scores = st.secrets["current_pick_success"]
@@ -163,7 +168,9 @@ with tab_today:
 	
 	
 	if option == "All":
-		st.dataframe(picks_dates[selection_list].style.map(highlight_cells, subset = selection_list_p, winners = picks_dates['winner'].to_list()))
+		st.dataframe(picks_dates[selection_list].style
+			     .map(highlight_cells, subset = selection_list_p, winners = picks_dates['winner'].to_list())
+			     .apply(reset_tbd, column = ['winner'], axis=1)
 	elif option == "Future":
 		st.dataframe(picks_dates[pd.to_datetime(picks_dates.game_date) >= datetime.datetime.today()][selection_list])
 	elif option == "Today":
