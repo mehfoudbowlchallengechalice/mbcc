@@ -57,10 +57,10 @@ def bring_in_live_games():
 ####https://stackoverflow.com/questions/41203959/conditionally-format-python-pandas-cell
 ### data frame conditioning
 def highlight_cells(x):
-	if x == x.loc['winner']:
+	if x == x.iloc[13]:
 		format_code = """color: green;
   				font-weight: bold"""
-	elif x == x.loc['loser']:
+	elif x == x.iloc[14]:
 		format_code = """color: red;
   				font-weight: bold"""
 	else:
