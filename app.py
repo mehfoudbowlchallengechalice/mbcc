@@ -129,27 +129,27 @@ with tab_today:
 		st.dataframe(live_df, 
 			     st.column_config.LinkColumn(
             			"game_page",
-            			help="Link for the games included",
-            			validate="^https://www.espn.com/college-football/game?gameId=[0-9]+",
-            			max_chars=100,
+            			#help="Link for the games included",
+            			#validate="^https://www.espn.com/college-football/game?gameId=[0-9]+",
+            			#max_chars=100,
         			), 
 			     hide_index=True)
 	elif option == "Future":
 		st.dataframe(live_df[pd.to_datetime(live_df.game_date) >= datetime.datetime.today()], 
 			     st.column_config.LinkColumn(
             			"game_page",
-            			help="Link for the games included",
-            			validate="^https://www.espn.com/college-football/game?gameId=[0-9]+",
-            			max_chars=100,
+            			#help="Link for the games included",
+            			#validate="^https://www.espn.com/college-football/game?gameId=[0-9]+",
+            			#max_chars=100,
         			),  hide_index=True)
 	elif option == "Today":
 		st.dataframe(live_df[(pd.to_datetime(live_df.game_date) >= datetime.datetime.today()) 
         			& (pd.to_datetime(live_df.game_date) == min(pd.to_datetime(live_df.game_date)))], 
 			     st.column_config.LinkColumn(
             			"game_page",
-            			help="Link for the games included",
-            			validate="^https://www.espn.com/college-football/game?gameId=[0-9]+",
-            			max_chars=100,
+            			#help="Link for the games included",
+            			#validate="^https://www.espn.com/college-football/game?gameId=[0-9]+",
+            			#max_chars=100,
         			),  hide_index=True)
 	
 	st.markdown("""---""")
