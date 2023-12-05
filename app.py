@@ -55,7 +55,7 @@ def bring_in_live_games():
 
 ### data frame conditioning
 def highlight_cells(x, winners, games):
-	if x in games:
+	if x['Game'] in games:
 		format_code = ''
 	elif x in winners:
 		format_code = """color: green;
