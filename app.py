@@ -117,7 +117,8 @@ with tab_today:
 	live_df = pd.DataFrame(run_query(f'SELECT * FROM "{unlive_games}"'))
 
 	live_df['game_page'] = "https://www.espn.com/college-football/game?gameId="+live_df['game_id'].astype(int).astype(str)
-
+	live_df['game_time'] = pd.to_datetime(live_df['game_time'], format = '%I:%M%p')
+	
 	scores_df = pd.DataFrame(run_query(f'SELECT * FROM "{unlive_scores}"'))
 	scores_df = scores_df.fillna(0)
 	
