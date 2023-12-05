@@ -3,7 +3,7 @@ import pandas as pd
 ### this will help, because damn
 ####https://stackoverflow.com/questions/41203959/conditionally-format-python-pandas-cell
 ### data frame conditioning
-def highlight_all(x):
+def highlight_all_names(x):
   color_codes = pd.DataFrame('', index=x.index, columns=x.columns)
   color_codes['Christopher'] = np.where(x['Christopher'] == x['winner'], "color: green", 
                                         np.where(x['Christopher'] == x['loser'], "color:red", ""))
