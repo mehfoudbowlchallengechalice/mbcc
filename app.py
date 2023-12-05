@@ -56,13 +56,15 @@ def bring_in_live_games():
 ### this will help, because damn
 ####https://stackoverflow.com/questions/41203959/conditionally-format-python-pandas-cell
 ### data frame conditioning
-def highlight_cells(x, winners):
-	if x in winners:
+def highlight_cells(x):
+	if x == x.iloc['winner']:
 		format_code = """color: green;
   				font-weight: bold"""
-	else:
+    elif x == x.iloc['loser']:
 		format_code = """color: red;
   				font-weight: bold"""
+    else:
+        format_code = ""
 	return format_code
 
 # def reset_tbd(x):
@@ -151,8 +153,9 @@ with tab_today:
 	games_without_scores = scores_df[scores_df.winner == 'TBD']['game'].to_list()
 	# bringing in picks
 	picks_df = pd.DataFrame(run_query(f'SELECT * FROM "{picks}"'))
-	picks_dates = picks_df.merge(new_live_df[["game_name", "game_date", "winner"]], left_on = "Game", right_on = "game_name")
+	picks_dates = picks_df.merge(new_live_df[["game_name", "game_date", "game_home_team", "game_away_team", "winner"]], left_on = "Game", right_on = "game_name")
 	
+    picks_dates["loser"] = np.where(picks_dates["game_home_team"] == picks_dates["winner"], picks_dates["game_away_team"], picks_dates["game_home_team"])
 	### today, future, all drop down to show picks
 	option = st.selectbox("Select Games to See", ("Today", "Future", "All"))
 	
@@ -170,19 +173,21 @@ with tab_today:
 	selection_list_p = toggle_list("a")
 	selection_list = np.insert(selection_list_p, 0, 'Game')
 
-
-	
+    picks_dates_styled = picks_dates.style.map(highlight_cells, subset = selection_list_p)
+                            #.apply(lambda x: ['color:green' if v == x.iloc[13] else '' for v in x], axis = 1)
+                            #.apply(lambda x: ['color:red' if v == x.iloc[14] else '' for v in x], axis = 1)
 	
 	if option == "All":
-		st.dataframe(picks_dates[selection_list].style
-			     .map(highlight_cells, subset = selection_list_p
-				  , winners = picks_dates['winner'].to_list())
-			    )#.style.apply(lambda x, games_without_scores: ['' if x.Game in games_without_scores], axis = 1))
+		#st.dataframe(picks_dates[selection_list].style
+		#	     .map(highlight_cells, subset = selection_list_p
+		#		  , winners = picks_dates['winner'].to_list())
+		#	    )#.style.apply(lambda x, games_without_scores: ['' if x.Game in games_without_scores], axis = 1))
+        st.dataframe(picks_dates_styled[selection_list])
 	elif option == "Future":
-		st.dataframe(picks_dates[pd.to_datetime(picks_dates.game_date) >= datetime.datetime.today()][selection_list])
+		st.dataframe(picks_dates_styled[pd.to_datetime(picks_dates.game_date) >= datetime.datetime.today()][selection_list])
 	elif option == "Today":
-		st.dataframe(picks_dates[(pd.to_datetime(picks_dates.game_date) >= datetime.datetime.today()) 
-        			& (pd.to_datetime(picks_dates.game_date) == min(pd.to_datetime(picks_dates.game_date)))][selection_list])
+		st.dataframe(picks_dates_styled[(pd.to_datetime(picks_dates_styled.game_date) >= datetime.datetime.today()) 
+        			& (pd.to_datetime(picks_dates_styled.game_date) == min(pd.to_datetime(picks_dates_styled.game_date)))][selection_list])
 
 with tab_mbcc_12:
 	
