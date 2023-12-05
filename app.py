@@ -65,7 +65,7 @@ def highlight_cells(x, winners):
 
 def reset_tbd(x):
 	#compare columns
-	mask = x['Game'] == 'TBD'
+	mask = x['game'] == 'TBD'
 	#DataFrame with same index and columns names as original filled empty strings
 	#modify values of df1 column by boolean mask
 	x.loc[mask] = ''
