@@ -153,7 +153,7 @@ with tab_today:
 
 	picks_dates_styled = picks_dates.style.apply(highlight_all)
 
-	st.dataframe(picks_dates_styled)
+	st.dataframe(picks_dates_styled.to_frame())
 	
 	columns_to_hide = ["game_date", "game_home_team", "game_away_team", "winner", "loser"]+deselection_list_p
 	
