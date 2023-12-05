@@ -55,13 +55,14 @@ def bring_in_live_games():
 
 ### data frame 
 def winner_green_loser_red(val, winner):
-    if val != winner:
-	color = 'red'
-    elif val == winner:
-	color = 'green'
-    else: 
-	'black'
-    return 'color: %s' % color
+	if val != winner:
+		color = 'red'
+	elif val == winner:
+		color = 'green'
+	else: 
+		color = 'black'
+	
+	return 'color: %s' % color
 
 
 current_scores = st.secrets["current_pick_success"]
