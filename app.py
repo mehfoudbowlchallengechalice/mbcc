@@ -151,7 +151,7 @@ with tab_today:
 	selection_list_p, deselection_list_p = toggle_list("a")
 	selection_list = np.insert(selection_list_p, 0, 'Game')
 
-	picks_dates_styled = picks_dates.style.applymap(highlight_all)
+	picks_dates_styled = picks_dates.style.map(highlight_all)
 
 	st.dataframe(picks_dates_styled)
 	
