@@ -162,7 +162,7 @@ with tab_today:
 	
 	
 	if option == "All":
-		st.dataframe(picks_dates[selection_list].style.applymap(winner_green_loser_red, subset = pd.IndexSlice[:, [selection_list_p]], winner = picks_dates['winner'])
+		st.dataframe(picks_dates[selection_list].style.applymap(winner_green_loser_red, subset = pd.IndexSlice[:, [selection_list_p]], winner = picks_dates['winner']))
 	elif option == "Future":
 		st.dataframe(picks_dates[pd.to_datetime(picks_dates.game_date) >= datetime.datetime.today()][selection_list])
 	elif option == "Today":
