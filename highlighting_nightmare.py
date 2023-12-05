@@ -24,5 +24,4 @@ def highlight_all(x):
                                         np.where(x['PSmurf'] == x['loser'], "color:red", ""))
   color_codes['Jen'] = np.where(x['Jen'] == x['winner'], "color: green", 
                                         np.where(x['Jen'] == x['loser'], "color:red", ""))
-  
-	return color_codes
+  return color_codes
