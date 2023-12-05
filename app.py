@@ -54,8 +54,8 @@ def bring_in_live_games():
 
 
 ### data frame conditioning
-def highlight_cells(picker, winner):
-	if picker == winner:
+def highlight_cells(x, winner):
+	if x == winner:
 		format_code = """color: green;
   				font-weight: bold"""
 	elif winner == 'TBD':
@@ -165,7 +165,7 @@ with tab_today:
 	
 	
 	if option == "All":
-		st.dataframe(picks_dates[selection_list].style.apply(highlight_cells, axis = 1, winner = picks_dates['winner']))
+		st.dataframe(picks_dates[selection_list].style.apply(highlight_cells, subset = ['Christopher'], axis = 1, winner = picks_dates['winner']))
 	elif option == "Future":
 		st.dataframe(picks_dates[pd.to_datetime(picks_dates.game_date) >= datetime.datetime.today()][selection_list])
 	elif option == "Today":
