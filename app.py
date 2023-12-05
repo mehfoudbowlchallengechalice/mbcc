@@ -53,6 +53,16 @@ def bring_in_live_games():
     return get_schedule()
 
 
+### data frame 
+def winner_green_loser_red(val, winner):
+    if val <> winner:
+	color = 'red'
+    elif val == winner:
+	color = 'green'
+    else: 
+	'black'
+    return 'color: %s' % color
+
 
 current_scores = st.secrets["current_pick_success"]
 history_sheet = st.secrets["history_sheet"]
@@ -128,7 +138,7 @@ with tab_today:
 	
 	# bringing in picks
 	picks_df = pd.DataFrame(run_query(f'SELECT * FROM "{picks}"'))
-	picks_dates = picks_df.merge(live_df[["game_name", "game_date"]], left_on = "Game", right_on = "game_name")
+	picks_dates = picks_df.merge(new_live_df[["game_name", "game_date", "winner"]], left_on = "Game", right_on = "game_name")
 	
 	### today, future, all drop down to show picks
 	option = st.selectbox("Select Games to See", ("Today", "Future", "All"))
@@ -144,11 +154,14 @@ with tab_today:
 	st.markdown("""---""")
 	st.header("Picks")
 	####TODO: CONDITIONAL FORMATTING POSSIBLE HERE????????
-	selection_list = toggle_list("a")
-	selection_list = np.insert(selection_list, 0, 'Game')
+	selection_list_p = toggle_list("a")
+	selection_list = np.insert(selection_list_p, 0, 'Game')
 
+
+	
+	
 	if option == "All":
-		st.dataframe(picks_dates[selection_list])
+		st.dataframe(picks_dates[selection_list].style.applymap(winner_green_loser_red, subset = pd.IndexSlice[:, [selection_list_p]], winner = picks_dates['winner'])
 	elif option == "Future":
 		st.dataframe(picks_dates[pd.to_datetime(picks_dates.game_date) >= datetime.datetime.today()][selection_list])
 	elif option == "Today":
