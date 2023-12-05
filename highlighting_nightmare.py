@@ -8,6 +8,8 @@ def highlight_all_names(x):
   color_codes = pd.DataFrame('', index=x.index, columns=x.columns)
   st.dataframe(color_codes)
   st.dataframe(x)
+  st.write(x[2]['Christopher'])
+  st.write(x[2]['winner'])
   color_codes['Christopher'] = np.where(x['Christopher'] == x['winner'], "background_color: green", 
                                         np.where(x['Christopher'] == x['loser'], "color:red", ""))
   color_codes['Nicholas'] = np.where(x['Nicholas'] == x['winner'], "color: green", 
