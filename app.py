@@ -60,11 +60,12 @@ def highlight_cells(x):
 	if x == x.iloc['winner']:
 		format_code = """color: green;
   				font-weight: bold"""
-    	elif x == x.iloc['loser']:
+	elif x == x.iloc['loser']:
 		format_code = """color: red;
   				font-weight: bold"""
-    	else:
-        	format_code = ""
+	else:
+		format_code = ""
+	
 	return format_code
 
 # def reset_tbd(x):
@@ -182,7 +183,7 @@ with tab_today:
 		#	     .map(highlight_cells, subset = selection_list_p
 		#		  , winners = picks_dates['winner'].to_list())
 		#	    )#.style.apply(lambda x, games_without_scores: ['' if x.Game in games_without_scores], axis = 1))
-        st.dataframe(picks_dates_styled[selection_list])
+		st.dataframe(picks_dates_styled[selection_list])
 	elif option == "Future":
 		st.dataframe(picks_dates_styled[pd.to_datetime(picks_dates.game_date) >= datetime.datetime.today()][selection_list])
 	elif option == "Today":
