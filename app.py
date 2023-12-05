@@ -168,7 +168,7 @@ with tab_today:
 	
 	
 	if option == "All":
-		st.dataframe(picks_dates[selection_list].style
+		st.dataframe(picks_dates.style
 			     .map(highlight_cells, subset = selection_list_p
 				  , winners = picks_dates['winner'].to_list()
 				  , games = ['CFP NATIONAL CHAMPIONSHIP GAME Presented by AT&T'])
