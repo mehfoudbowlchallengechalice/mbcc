@@ -163,7 +163,7 @@ with tab_today:
 	selection_list_p, deselection_list_p = toggle_list("a")
 	selection_list = np.insert(selection_list_p, 0, 'Game')
 
-	picks_dates_styled = picks_dates.style.apply(highlight_all, subset = selection_list_p)
+	picks_dates_styled = picks_dates.style.apply(highlight_all)
 	
 	columns_to_hide = ["game_date", "game_home_team", "game_away_team", "winner", "loser"]+deselection_list_p
 	
