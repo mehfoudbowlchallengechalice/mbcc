@@ -115,6 +115,21 @@ with tab_today:
 	#live_df = bring_in_live_games()
 	live_df = pd.DataFrame(run_query(f'SELECT * FROM "{unlive_games}"'))
 
+	live_df['game_page'] = "https://www.espn.com/college-football/game?gameId="+live_df['game_id']
+
+	st.data_editor(
+    		live_df,
+    		column_config={
+        	"game_page": st.column_config.LinkColumn(
+            		"Trending apps",
+            		help="Link for the games included",
+            		validate="^https://www.espn.com/college-football/game?gameId=[0-9]+",
+            		max_chars=100,
+        		)
+    		},
+    		hide_index=True,
+		)
+	
 	# bringing in picks
 	picks_df = pd.DataFrame(run_query(f'SELECT * FROM "{picks}"'))
 	picks_dates = picks_df.merge(live_df[["game_name", "game_date"]], left_on = "Game", right_on = "game_name")
