@@ -153,19 +153,18 @@ with tab_today:
 
 	picks_dates_styled = picks_dates.style.apply(highlight_all_names, axis=None)
 
-	columns_to_hide = ["game_date", "game_home_team", "game_away_team", "winner", "loser"]+deselection_list_p
+	columns_to_hide = ["game_date", "game_home_team", "game_away_team", "game_name", "winner", "loser"]+deselection_list_p
 	none_list = [None]*len(columns_to_hide)
 	column_hide_dict = dict(zip(columns_to_hide, none_list))
 	
 	if option == "All":
-		#picks_dates = picks_dates[selection_list]
 		st.dataframe(picks_dates.style.apply(highlight_all_names, axis=None), hide_index = True, column_config = column_hide_dict)
 	elif option == "Future":
-		picks_dates = picks_dates[pd.to_datetime(picks_dates.game_date) >= datetime.datetime.today()]#[selection_list]
+		picks_dates = picks_dates[pd.to_datetime(picks_dates.game_date) >= datetime.datetime.today()]
 		st.dataframe(picks_dates.style.apply(highlight_all_names, axis=None), hide_index = True, column_config = column_hide_dict)
 	elif option == "Today":
 		picks_dates = picks_dates[(pd.to_datetime(picks_dates.game_date) >= datetime.datetime.today()) 
-        			& (pd.to_datetime(picks_dates.game_date) == min(pd.to_datetime(picks_dates.game_date)))]#[selection_list]
+        			& (pd.to_datetime(picks_dates.game_date) == min(pd.to_datetime(picks_dates.game_date)))]
 		st.dataframe(picks_dates.style.apply(highlight_all_names, axis=None), hide_index = True, column_config = column_hide_dict)
 
 
