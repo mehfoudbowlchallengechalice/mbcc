@@ -152,7 +152,7 @@ with tab_today:
 	selection_list = np.insert(selection_list_p, 0, 'Game')
 
 	st.dataframe(picks_dates)
-	st.dataframe(pick_dates.style.apply(highlight_all_names))
+	st.dataframe(picks_dates.style.apply(highlight_all_names))
 	picks_dates_styled = picks_dates.style.apply(highlight_all_names)
 
 	st.dataframe(picks_dates_styled)
