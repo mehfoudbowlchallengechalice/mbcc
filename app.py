@@ -60,7 +60,7 @@ def highlight_cells(picker, winner):
   				font-weight: bold"""
 	elif winner == 'TBD':
 		format_code = ''
-	else picker <> winner:
+	else:
 		format_code = """color: red;
   				font-weight: bold"""
 	return format_code
