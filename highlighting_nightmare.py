@@ -5,6 +5,7 @@ import pandas as pd
 ### data frame conditioning
 def highlight_all_names(x):
   color_codes = pd.DataFrame('', index=x.index, columns=x.columns)
+  st.dataframe(color_codes)
   color_codes['Christopher'] = np.where(x['Christopher'] == x['winner'], "color: green", 
                                         np.where(x['Christopher'] == x['loser'], "color:red", ""))
   color_codes['Nicholas'] = np.where(x['Nicholas'] == x['winner'], "color: green", 
@@ -25,4 +26,5 @@ def highlight_all_names(x):
                                         np.where(x['PSmurf'] == x['loser'], "color:red", ""))
   color_codes['Jen'] = np.where(x['Jen'] == x['winner'], "color: green", 
                                         np.where(x['Jen'] == x['loser'], "color:red", ""))
+  st.dataframe(color_codes)
   return color_codes
