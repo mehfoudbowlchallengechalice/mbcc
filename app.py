@@ -156,7 +156,8 @@ with tab_today:
 	picks_df = pd.DataFrame(run_query(f'SELECT * FROM "{picks}"'))
 	picks_dates = picks_df.merge(new_live_df[["game_name", "game_date", "game_home_team", "game_away_team", "winner"]], left_on = "Game", right_on = "game_name")
 	
-    picks_dates["loser"] = np.where(picks_dates["game_home_team"] == picks_dates["winner"], picks_dates["game_away_team"], picks_dates["game_home_team"])
+	picks_dates["loser"] = np.where(picks_dates["game_home_team"] == picks_dates["winner"], picks_dates["game_away_team"], picks_dates["game_home_team"])
+	
 	### today, future, all drop down to show picks
 	option = st.selectbox("Select Games to See", ("Today", "Future", "All"))
 	
@@ -174,7 +175,7 @@ with tab_today:
 	selection_list_p = toggle_list("a")
 	selection_list = np.insert(selection_list_p, 0, 'Game')
 
-    picks_dates_styled = picks_dates.style.map(highlight_cells, subset = selection_list_p)
+	picks_dates_styled = picks_dates.style.map(highlight_cells, subset = selection_list_p)
                             #.apply(lambda x: ['color:green' if v == x.iloc[13] else '' for v in x], axis = 1)
                             #.apply(lambda x: ['color:red' if v == x.iloc[14] else '' for v in x], axis = 1)
 	
