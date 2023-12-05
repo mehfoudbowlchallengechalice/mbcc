@@ -66,7 +66,7 @@ def highlight_cells(x, winners, games):
 	return format_code
 
 def reset_tbd(x):
-	if x['winner'] == 'TBD':
+	if x.any() == 'TBD':
 		format_code = ''
 	return format_code
 
