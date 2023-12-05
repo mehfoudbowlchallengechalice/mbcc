@@ -186,7 +186,7 @@ with tab_today:
 		#	     .map(highlight_cells, subset = selection_list_p
 		#		  , winners = picks_dates['winner'].to_list())
 		#	    )#.style.apply(lambda x, games_without_scores: ['' if x.Game in games_without_scores], axis = 1))
-		st.dataframe(picks_dates_styled.hide(columns_to_hide)) #[selection_list])
+		st.dataframe(picks_dates_styled.hide([columns_to_hide])) #[selection_list])
 	elif option == "Future":
 		st.dataframe(picks_dates_styled[pd.to_datetime(picks_dates.game_date) >= datetime.datetime.today()][selection_list])
 	elif option == "Today":
