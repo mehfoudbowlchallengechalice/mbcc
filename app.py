@@ -174,7 +174,7 @@ with tab_today:
 			     .map(highlight_cells, subset = selection_list_p
 				  , winners = picks_dates['winner'].to_list()
 				  , games = ['CFP NATIONAL CHAMPIONSHIP GAME Presented by AT&T'])
-			     .apply(reset_tbd, axis=None)
+			     .apply(reset_tbd, axis=None))
 	elif option == "Future":
 		st.dataframe(picks_dates[pd.to_datetime(picks_dates.game_date) >= datetime.datetime.today()][selection_list])
 	elif option == "Today":
