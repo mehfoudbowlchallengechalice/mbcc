@@ -9,7 +9,7 @@ import plotly.express as px
 import plotly.graph_objs as go
 from live_results_scrape import get_schedule
 from toggles import toggle_list
-from highlighting_nightmare import highlight_all
+from highlighting_nightmare import highlight_all_names
 from people_list import people_list
 from plotly.subplots import make_subplots
 from sklearn.linear_model import LogisticRegression
@@ -151,7 +151,9 @@ with tab_today:
 	selection_list_p, deselection_list_p = toggle_list("a")
 	selection_list = np.insert(selection_list_p, 0, 'Game')
 
-	picks_dates_styled = picks_dates.style.map(highlight_all)
+	st.dataframe(picks_dates)
+	st.dataframe(pick_dates.style.apply(highlight_all_names)
+	picks_dates_styled = picks_dates.style.apply(highlight_all_names)
 
 	st.dataframe(picks_dates_styled)
 	
