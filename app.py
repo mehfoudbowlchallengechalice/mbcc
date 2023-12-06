@@ -360,7 +360,7 @@ with need_to_know:
 	st.markdown("**Last Year's Winner:**")
 	image = Image.open("last_years_winner.png")
 
-	st.image(image, caption = "Last years winner - Lauren!", width = 300)
+	st.image(image, caption = "Last year's winner - Lauren!", width = 300)
 
 
 
