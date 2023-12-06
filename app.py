@@ -82,9 +82,9 @@ games_left_s = str(games_left)
 col1,col2 = st.columns(2)
 
 #main score
-main_score_df = current_scores_df[current_scores_df["Situation"]=="mbcc_score"].T.rename_axis('Situation').reset_index()
+main_score_df = current_scores_df[(current_scores_df["Situation"]=="mbcc_score") | (current_scores_df["Situation"]=="Correct")].T.rename_axis('Situation').reset_index()
 main_score_df = main_score_df[1:]
-main_score_df.columns = ["Player", "Correct", "Overall Score"]
+main_score_df.columns = ["Player", "Picks Correct", "Overall Score"]
 
 main_score_df["Overall Rank"] = main_score_df["Overall Score"].rank(ascending = False)
 main_score_df.sort_values(by=["Overall Rank"])
