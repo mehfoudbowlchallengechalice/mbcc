@@ -153,6 +153,7 @@ with tab_today:
         
         
 	st.write("* upset picks are :blue[blue] and unanimous picks are :grey[grey].")
+    
 	st.markdown("""---""")
 	st.header("Picks")
 	
