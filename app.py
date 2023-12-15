@@ -151,6 +151,7 @@ with tab_today:
         			& (pd.to_datetime(new_live_df.game_date) == min(pd.to_datetime(new_live_df.game_date)))] 
 		st.dataframe(new_live_df.style.apply(highlight_all_games, axis=None), column_config={"game_page": st.column_config.LinkColumn()}, hide_index=True)
 	
+    st.write("* upset picks are :blue[blue] and unanimous picks are :grey[grey].")
 	st.markdown("""---""")
 	st.header("Picks")
 	
