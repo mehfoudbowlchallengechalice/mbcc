@@ -126,7 +126,7 @@ with tab_today:
 	new_live_df = live_df.merge(scores_df, left_on = "game_name", right_on = "game")
 	new_live_df = new_live_df[['game_date', 'time', 'game_name', 'game_venue', 'game_network', 'game_home_team', 'game_away_team', 'home_team_score', 'away_team_score', 'winner', 'game_page', 'upset_indicator', 'unanimous_indicator']]
 
-	new_live_df['time'] = pd.datetime(new_live_df['time']).dt.strftime('%H:%M %p')
+	new_live_df['time'] = pd.to_datetime(new_live_df['time']).dt.strftime('%H:%M %p')
 	
 	games_without_scores = scores_df[scores_df.winner == 'TBD']['game'].to_list()
 	# bringing in picks
