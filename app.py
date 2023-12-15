@@ -144,10 +144,12 @@ with tab_today:
 	if option == "All":
 		st.dataframe(new_live_df.style.apply(highlight_all_games, axis=None), column_config={"game_page": st.column_config.LinkColumn()}, hide_index=True)
 	elif option == "Future":
-		st.dataframe(new_live_df[pd.to_datetime(new_live_df.game_date) >= datetime.datetime.today()], column_config={"game_page": st.column_config.LinkColumn()}, hide_index=True)
+		new_live_df = new_live_df[pd.to_datetime(new_live_df.game_date) >= datetime.datetime.today()]
+		st.dataframe(new_live_df.style.apply(highlight_all_games, axis=None), column_config={"game_page": st.column_config.LinkColumn()}, hide_index=True)
 	elif option == "Today":
-		st.dataframe(new_live_df[(pd.to_datetime(new_live_df.game_date) >= datetime.datetime.today()) 
-        			& (pd.to_datetime(new_live_df.game_date) == min(pd.to_datetime(new_live_df.game_date)))], column_config={"game_page": st.column_config.LinkColumn()}, hide_index=True)
+		new_live_df = new_live_df[(pd.to_datetime(new_live_df.game_date) >= datetime.datetime.today()) 
+        			& (pd.to_datetime(new_live_df.game_date) == min(pd.to_datetime(new_live_df.game_date)))] 
+		st.dataframe(new_live_df.style.apply(highlight_all_games, axis=None), column_config={"game_page": st.column_config.LinkColumn()}, hide_index=True)
 	
 	st.markdown("""---""")
 	st.header("Picks")
