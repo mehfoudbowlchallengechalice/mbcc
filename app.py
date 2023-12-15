@@ -74,8 +74,8 @@ current_scores_df = pd.DataFrame(run_query(f'SELECT * FROM "{current_scores}"'))
 games_in = current_scores_df.iloc[4]['Christopher']
 games_left = current_scores_df.iloc[5]['Christopher']
 
-games_in_s = str(games_in)
-games_left_s = str(games_left)
+games_in_s = str(int(games_in))
+games_left_s = str(int(games_left))
 
 
 ### creation of the columns
