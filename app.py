@@ -95,7 +95,7 @@ point_diff_score_df = point_diff_score_df[1:]
 point_diff_score_df.columns = ["Player", "Point Difference"]
 
 point_diff_score_df["Point Difference Rank"] = point_diff_score_df["Point Difference"].rank(ascending = False)
-point_diff_score_df.sort_values(by=["Point Difference Rank"])
+point_diff_score_df = point_diff_score_df.sort_values(by=["Point Difference Rank"])
 
 with col1:
 	st.header("Overall Score")
