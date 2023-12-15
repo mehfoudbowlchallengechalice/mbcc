@@ -27,3 +27,9 @@ def highlight_all_names(x):
   color_codes['Jen'] = np.where(x['Jen'] == x['winner'], "color: green", 
                                         np.where(x['Jen'] == x['loser'], "color:red", ""))
   return color_codes
+
+def highlight_all_games(x):
+  font_codes = pd.DataFrame('', index=x.index, columns=x.columns)
+  font_codes = np.where(x['Game'] == x['upset_indicator'], "font-weight: bold", "")
+  return font_codes
+
