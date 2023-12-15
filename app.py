@@ -124,7 +124,7 @@ with tab_today:
 	scores_df = scores_df.fillna(0)
 
 	new_live_df = live_df.merge(scores_df, left_on = "game_name", right_on = "game")
-	new_live_df = new_live_df[['game_date', 'time', 'game_name', 'game_venue', 'game_network', 'game_home_team', 'game_away_team', 'home_team_score', 'away_team_score', 'winner', 'game_page', 'upset_indicator', 'unanimous_indicator']]
+	new_live_df = new_live_df[['game_date', 'time', 'game_name', 'game_venue', 'game_network', 'game_home_team', 'game_away_team', 'home_team_score', 'away_team_score', 'winner', 'game_page', 'upset_indicator', 'unanimous_indicator', 'team_focus_indicator']]
 
 	new_live_df['upset_indicator'] = np.where(new_live_df.upset_indicator == 1, True, False)
 	new_live_df['unanimous_indicator'] = np.where(new_live_df.unanimous_indicator == 1, True, False)
@@ -142,14 +142,14 @@ with tab_today:
 	option = st.selectbox("Select Games to See", ("Today", "Future", "All"))
 	
 	if option == "All":
-		st.dataframe(new_live_df.style.apply(highlight_all_games, axis=None), column_config={"game_page": st.column_config.LinkColumn()}, hide_index=True)
+		st.dataframe(new_live_df.style.apply(highlight_all_games, axis=None), column_config={"game_page": st.column_config.LinkColumn()},  column_config = {"team_focus_indicator" = None}, hide_index=True)
 	elif option == "Future":
 		new_live_df = new_live_df[pd.to_datetime(new_live_df.game_date) >= datetime.datetime.today()]
-		st.dataframe(new_live_df.style.apply(highlight_all_games, axis=None), column_config={"game_page": st.column_config.LinkColumn()}, hide_index=True)
+		st.dataframe(new_live_df.style.apply(highlight_all_games, axis=None), column_config={"game_page": st.column_config.LinkColumn()},  column_config = {"team_focus_indicator" = None}, hide_index=True)
 	elif option == "Today":
 		new_live_df = new_live_df[(pd.to_datetime(new_live_df.game_date) >= datetime.datetime.today()) 
         			& (pd.to_datetime(new_live_df.game_date) == min(pd.to_datetime(new_live_df.game_date)))] 
-		st.dataframe(new_live_df.style.apply(highlight_all_games, axis=None), column_config={"game_page": st.column_config.LinkColumn()}, hide_index=True)
+		st.dataframe(new_live_df.style.apply(highlight_all_games, axis=None), column_config={"game_page": st.column_config.LinkColumn()}, column_config = {"team_focus_indicator" = None}, hide_index=True)
         
         
 	st.markdown("* upset pick games are :blue[blue] and unanimously picked games are :grey[grey].")
