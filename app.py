@@ -142,7 +142,7 @@ with tab_today:
 	option = st.selectbox("Select Games to See", ("Today", "Future", "All"))
 	
 	if option == "All":
-		st.dataframe(new_live_df, column_config={"game_page": st.column_config.LinkColumn()}, hide_index=True)
+		st.dataframe(new_live_df.style.apply(highlight_all_games, axis=None), column_config={"game_page": st.column_config.LinkColumn()}, hide_index=True)
 	elif option == "Future":
 		st.dataframe(new_live_df[pd.to_datetime(new_live_df.game_date) >= datetime.datetime.today()], column_config={"game_page": st.column_config.LinkColumn()}, hide_index=True)
 	elif option == "Today":
