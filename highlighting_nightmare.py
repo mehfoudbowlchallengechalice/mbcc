@@ -30,8 +30,8 @@ def highlight_all_names(x):
 
 def highlight_all_games(x):
   font_codes = pd.DataFrame('', index=x.index, columns=x.columns)
-  font_codes['Games'] = np.where(x['upset_indicator'] == 1, "font-weight: bold", "")
-  font_codes['Games'] = np.where(x['unanimous_indicator'] == 1, "color: gray", "")
+  font_codes['game_name'] = np.where(x['upset_indicator'] == 1, "font-weight: bold", "")
+  font_codes['game_name'] = np.where(x['unanimous_indicator'] == 1, "color: gray", "")
   
   return font_codes
 
