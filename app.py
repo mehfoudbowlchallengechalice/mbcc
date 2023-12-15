@@ -25,9 +25,9 @@ st.header ("""
 MBCC 12 in 2023-24
 """)
 
-pick_url = 'https://forms.gle/QBjfisMMErnJsajg9'
-st.header ("Make your [picks](%s) before December 15th at 12 PM!" % pick_url)
-
+#pick_url = 'https://forms.gle/QBjfisMMErnJsajg9'
+#st.header ("Make your [picks](%s) before December 15th at 12 PM!" % pick_url)
+st.header("The Picks are IN! - HERE WE GO!")
 
 
 ##TODO drop down here for players (create player tab?)
@@ -87,7 +87,7 @@ main_score_df = main_score_df[1:]
 main_score_df.columns = ["Player", "Picks Correct", "Overall Score"]
 
 main_score_df["Overall Rank"] = main_score_df["Overall Score"].rank(ascending = False)
-main_score_df.sort_values(by=["Overall Rank"])
+main_score_df = main_score_df.sort_values(by=["Overall Rank"])
 
 #point difference score
 point_diff_score_df = current_scores_df[current_scores_df["Situation"]=="point_difference"].T.rename_axis('Situation').reset_index()
