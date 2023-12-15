@@ -9,7 +9,7 @@ import plotly.express as px
 import plotly.graph_objs as go
 from live_results_scrape import get_schedule
 from toggles import toggle_list
-from highlighting_nightmare import highlight_all_names
+from highlighting_nightmare import highlight_all_names, highlight_all_games
 from people_list import people_list
 from plotly.subplots import make_subplots
 from sklearn.linear_model import LogisticRegression
@@ -124,11 +124,13 @@ with tab_today:
 	scores_df = scores_df.fillna(0)
 
 	new_live_df = live_df.merge(scores_df, left_on = "game_name", right_on = "game")
+	new_live_df = new_live_df[['game_date', 'time', 'game_name', 'game_venue', 'game_network', 'game_home_team', 'game_away_team', 'home_team_score', 'away_team_score', 'winner', 'game_page', 'upset_indicator', 'unanimous_indicator']]
 
-	new_live_df = new_live_df[['game_date', 'time', 'game_name', 'game_venue', 'game_network', 'game_home_team', 'game_away_team', 'home_team_score', 'away_team_score', 'winner', 'game_page']]
+	#new_live_df = new_live_df.style.apply(highlight_all_games, axis=None)
 
-	new_live_df = new_live_df.style.apply(highlight_all_games, axis=None)
+	#new_live_df = new_live_df[['game_date', 'time', 'game_name', 'game_venue', 'game_network', 'game_home_team', 'game_away_team', 'home_team_score', 'away_team_score', 'winner', 'game_page']]
 
+	
 	games_without_scores = scores_df[scores_df.winner == 'TBD']['game'].to_list()
 	# bringing in picks
 	picks_df = pd.DataFrame(run_query(f'SELECT * FROM "{picks}"'))
@@ -149,11 +151,11 @@ with tab_today:
 	
 	st.markdown("""---""")
 	st.header("Picks")
-	####TODO: CONDITIONAL FORMATTING POSSIBLE HERE????????
+	
 	selection_list_p, deselection_list_p = toggle_list("a")
 	selection_list = np.insert(selection_list_p, 0, 'Game')
 
-	picks_dates_styled = picks_dates.style.apply(highlight_all_names, axis=None)
+	#picks_dates_styled = picks_dates.style.apply(highlight_all_names, axis=None)
 
 	columns_to_hide = ["game_date", "game_home_team", "game_away_team", "game_name", "winner", "loser"]+deselection_list_p
 	none_list = [None]*len(columns_to_hide)
