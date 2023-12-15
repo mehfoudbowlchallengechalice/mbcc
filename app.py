@@ -127,6 +127,8 @@ with tab_today:
 
 	new_live_df = new_live_df[['game_date', 'time', 'game_name', 'game_venue', 'game_network', 'game_home_team', 'game_away_team', 'home_team_score', 'away_team_score', 'winner', 'game_page']]
 
+	new_live_df = new_live_df.style.apply(highlight_all_games, axis=None)
+
 	games_without_scores = scores_df[scores_df.winner == 'TBD']['game'].to_list()
 	# bringing in picks
 	picks_df = pd.DataFrame(run_query(f'SELECT * FROM "{picks}"'))
