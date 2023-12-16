@@ -146,7 +146,7 @@ with tab_today:
 	if option == "All":
 		st.dataframe(new_live_df.style.apply(highlight_all_games, axis=None), column_config={"game_page": st.column_config.LinkColumn(), "team_focus_indicator": None}, hide_index=True)
 	elif option == "Future":
-		new_live_df = new_live_df[pd.to_datetime(new_live_df.game_date) >= actual_today)]
+		new_live_df = new_live_df[pd.to_datetime(new_live_df.game_date) >= actual_today]
 		st.dataframe(new_live_df.style.apply(highlight_all_games, axis=None), column_config={"game_page": st.column_config.LinkColumn(), "team_focus_indicator": None}, hide_index=True)
 	elif option == "Today":
 		new_live_df = new_live_df[(pd.to_datetime(new_live_df.game_date) >= actual_today) 
