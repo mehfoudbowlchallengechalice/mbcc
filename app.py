@@ -27,8 +27,8 @@ MBCC 12 in 2023-24
 
 #pick_url = 'https://forms.gle/QBjfisMMErnJsajg9'
 #st.header ("Make your [picks](%s) before December 15th at 12 PM!" % pick_url)
-st.header("The Picks are IN! - HERE WE GO!")
-
+#st.header("The Picks are IN! - HERE WE GO!")
+st.header("Day 1 - 7 games - Upset Pick City!")
 
 ##TODO drop down here for players (create player tab?)
 ## set option to have current winner in bold
