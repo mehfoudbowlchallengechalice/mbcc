@@ -126,6 +126,9 @@ with tab_today:
 	new_live_df = live_df.merge(scores_df, left_on = "game_name", right_on = "game")
 	new_live_df = new_live_df[['game_date', 'time', 'game_name', 'game_venue', 'game_network', 'game_home_team', 'game_away_team', 'home_team_score', 'away_team_score', 'winner', 'game_page', 'upset_indicator', 'unanimous_indicator', 'team_focus_indicator']]
 
+	new_live_df['home_team_score'] = int(new_live_df['home_team_score'])
+	new_live_df['away_team_score'] = int(new_live_df['away_team_score'])
+	
 	new_live_df['upset_indicator'] = np.where(new_live_df.upset_indicator == 1, True, False)
 	new_live_df['unanimous_indicator'] = np.where(new_live_df.unanimous_indicator == 1, True, False)
 	# adding time formatting for nemo... does nothing for the visuals and use of the app; but hey, Nemo might be happy?
