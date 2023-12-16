@@ -129,7 +129,7 @@ with tab_today:
 	new_live_df['upset_indicator'] = np.where(new_live_df.upset_indicator == 1, True, False)
 	new_live_df['unanimous_indicator'] = np.where(new_live_df.unanimous_indicator == 1, True, False)
 	# adding time formatting for nemo... does nothing for the visuals and use of the app; but hey, Nemo might be happy?
-	new_live_df['time'] = pd.to_datetime(new_live_df['time']).dt.strftime('%H:%M %p')
+	new_live_df['time'] = pd.to_datetime(new_live_df['time']).dt.strftime('%h:%M %p')
 	
 	games_without_scores = scores_df[scores_df.winner == 'TBD']['game'].to_list()
 	# bringing in picks
