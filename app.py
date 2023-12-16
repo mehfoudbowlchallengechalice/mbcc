@@ -139,7 +139,7 @@ with tab_today:
 	picks_dates["loser"] = np.where(picks_dates["winner"] == 'TBD', 'TBD', np.where(picks_dates["game_home_team"] == picks_dates["winner"], picks_dates["game_away_team"], picks_dates["game_home_team"]))
 
 	actual_today = (datetime.datetime.today()-pd.Timedelta(hours=5)).strftime('%Y-%m-%d')
-	#st.write(actual_today)
+	st.write(actual_today)
 	### today, future, all drop down to show picks
 	option = st.selectbox("Select Games to See", ("Today", "Future", "All"))
 	
