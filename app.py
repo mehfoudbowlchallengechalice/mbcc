@@ -140,7 +140,8 @@ with tab_today:
 
 	actual_today = (datetime.datetime.today()-pd.Timedelta(hours=5)).strftime('%Y-%m-%d')
 	st.write(actual_today)
-	st.write(new_live_df.game_date)
+	st.write(new_live_df.game_date[0])
+	st.write(actual_today == new_live_df.game_date[0])
 	### today, future, all drop down to show picks
 	option = st.selectbox("Select Games to See", ("Today", "Future", "All"))
 	
