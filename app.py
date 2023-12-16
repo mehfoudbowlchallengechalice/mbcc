@@ -138,7 +138,7 @@ with tab_today:
 	
 	picks_dates["loser"] = np.where(picks_dates["winner"] == 'TBD', 'TBD', np.where(picks_dates["game_home_team"] == picks_dates["winner"], picks_dates["game_away_team"], picks_dates["game_home_team"]))
 
-	actual_today = (datetime.datetime.today()-pd.Timedelta(hours=5)).strftime('%Y-%m-%d')
+	actual_today = pd.to_datetime((datetime.datetime.today()-pd.Timedelta(hours=5)).strftime('%Y-%m-%d'))
 	st.write(actual_today)
 	st.write(new_live_df.game_date[0])
 	st.write(actual_today == new_live_df.game_date[0])
