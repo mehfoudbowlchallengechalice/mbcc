@@ -222,8 +222,10 @@ with tab_elimination:
 		# setting the potential correct picks based on the player
 		potential_correct_picks = set(remaining_df[remaining_df['gametracker']==0]["Game"]+remaining_df[remaining_df['gametracker']==0][player])
 		# adding in the current correct picks
+		
 		st.dataframe(main_score_df)
-		st.write(main_score_df.iloc[player]["Correct Picks"])
+		st.write(main_score_df[main_score_df["Player"] == player]["Correct Picks"])
+		
 		comparison_dict = {}
 		for compare_player in the_people_list:
 			player_picks = set(remaining_df[remaining_df['gametracker']==0]["Game"]+remaining_df[remaining_df['gametracker']==0][compare_player])
