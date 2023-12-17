@@ -212,15 +212,17 @@ with tab_elimination:
 	tracker_only = pd.DataFrame(run_query(f'SELECT * FROM "{live_tracker_binary}"'))[['gametracker']].tail(-1).reset_index()
 
 	# build data frame for representation of picks
-	st.dataframe(tracker_only)
+	# st.dataframe(tracker_only)
 	remaining_df = pd.concat([picks_df, tracker_only], axis = 1)
 	
 	
 	player_elimination_check = []
 	full_elimination_matrix = {}
 	for player in the_people_list:
-		# setting the correct picks based on the player
+		# setting the potential correct picks based on the player
 		potential_correct_picks = set(remaining_df[remaining_df['gametracker']==0]["Game"]+remaining_df[remaining_df['gametracker']==0][player])
+		# adding in the current correct picks
+		st.write(potential_correct_picks)
 		comparison_dict = {}
 		for compare_player in the_people_list:
 			player_picks = set(remaining_df[remaining_df['gametracker']==0]["Game"]+remaining_df[remaining_df['gametracker']==0][compare_player])
