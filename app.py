@@ -223,12 +223,14 @@ with tab_elimination:
 		potential_correct_picks = set(remaining_df[remaining_df['gametracker']==0]["Game"]+remaining_df[remaining_df['gametracker']==0][player])
 		# adding in the current correct picks
 		
-		player_current_picks = main_score_df[main_score_df["Player"] == player]["Picks Correct"].values.astype(int)
-		st.write(player_current_picks)
+		player_current_picks = main_score_df[main_score_df["Player"] == player]["Picks Correct"].values
+		# st.write(player_current_picks)
+		
 		comparison_dict = {}
 		for compare_player in the_people_list:
 			player_picks = set(remaining_df[remaining_df['gametracker']==0]["Game"]+remaining_df[remaining_df['gametracker']==0][compare_player])
-			comparison_dict[compare_player] = len(player_picks & potential_correct_picks)+player_current_picks
+			# checks to see if the player's potential picks line up comparing players
+			comparison_dict[compare_player] = len(player_picks & potential_correct_picks)+player_current_picks.astype(int)
 
 		full_elimination_matrix[player] = comparison_dict
 
