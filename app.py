@@ -212,7 +212,7 @@ with tab_elimination:
 	tracker_only = pd.DataFrame(run_query(f'SELECT * FROM "{live_tracker_binary}"'))[['gametracker']].tail(-1).reset_index()
 
 	# build data frame for representation of picks
-	# st.dataframe(tracker_only)
+	st.dataframe(tracker_only)
 	remaining_df = pd.concat([picks_df, tracker_only], axis = 1)
 	
 	
