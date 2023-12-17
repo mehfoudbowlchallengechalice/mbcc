@@ -153,8 +153,8 @@ with tab_today:
 		new_live_df = new_live_df[pd.to_datetime(new_live_df.game_date) >= actual_today]
 		st.dataframe(new_live_df.style.apply(highlight_all_games, axis=None), column_config={"game_page": st.column_config.LinkColumn(), "team_focus_indicator": None}, hide_index=True)
 	elif option == "Today":
-		new_live_df = new_live_df[(pd.to_datetime(new_live_df.game_date) >= actual_today) 
-        			& (pd.to_datetime(new_live_df.game_date) == min(pd.to_datetime(new_live_df.game_date)))] 
+		new_live_df = new_live_df[(pd.to_datetime(new_live_df.game_date) >= actual_today)] 
+        	new_live_df = new_live_df[(pd.to_datetime(new_live_df.game_date) == min(pd.to_datetime(new_live_df.game_date)))] 
 		st.dataframe(new_live_df.style.apply(highlight_all_games, axis=None), column_config={"game_page": st.column_config.LinkColumn(), "team_focus_indicator": None}, hide_index=True)
         
         
@@ -178,8 +178,8 @@ with tab_today:
 		picks_dates = picks_dates[pd.to_datetime(picks_dates.game_date) >= actual_today]
 		st.dataframe(picks_dates.style.apply(highlight_all_names, axis=None), hide_index = True, column_config = column_hide_dict)
 	elif option == "Today":
-		picks_dates = picks_dates[(pd.to_datetime(picks_dates.game_date) >= actual_today) 
-        			& (pd.to_datetime(picks_dates.game_date) == min(pd.to_datetime(picks_dates.game_date)))]
+		picks_dates = picks_dates[(pd.to_datetime(picks_dates.game_date) >= actual_today)] 
+        	picks_dates = picks_dates[(pd.to_datetime(picks_dates.game_date) == min(pd.to_datetime(picks_dates.game_date)))]
 		st.dataframe(picks_dates.style.apply(highlight_all_names, axis=None), hide_index = True, column_config = column_hide_dict)
 
 
