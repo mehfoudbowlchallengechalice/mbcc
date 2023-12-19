@@ -134,7 +134,7 @@ with tab_today:
 	new_live_df['unanimous_indicator'] = np.where(new_live_df.unanimous_indicator == 1, True, False)
 	# adding time formatting for nemo... does nothing for the visuals and use of the app; but hey, Nemo might be happy?
 	### this could be a bug with streamlit sorting dataframes??? 
-	new_live_df['time'] = pd.to_datetime(new_live_df['time']).dt.strftime('%H:%M')
+	#new_live_df['time'] = pd.to_datetime(new_live_df['time']).dt.strftime('%H:%M')
 	
 	games_without_scores = scores_df[scores_df.winner == 'TBD']['game'].to_list()
 	# bringing in picks
