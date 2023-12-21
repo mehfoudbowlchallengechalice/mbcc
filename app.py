@@ -29,7 +29,8 @@ MBCC 12 in 2023-24
 #st.header ("Make your [picks](%s) before December 15th at 12 PM!" % pick_url)
 #st.header("The Picks are IN! - HERE WE GO!")
 #st.header("Day 1 - 7 games - Upset Pick City!")
-st.header("Day 2 - What a comeback win to cut the first place cluster down to two!")
+#st.header("Day 2 - What a comeback win to cut the first place cluster down to two!")
+st.header("Day 3 - Is Papa Smurf bringing Emma down?")
 
 ##TODO drop down here for players (create player tab?)
 ## set option to have current winner in bold
