@@ -30,7 +30,9 @@ MBCC 12 in 2023-24
 #st.header("The Picks are IN! - HERE WE GO!")
 #st.header("Day 1 - 7 games - Upset Pick City!")
 #st.header("Day 2 - What a comeback win to cut the first place cluster down to two!")
-st.header("Day 3 - Is Papa Smurf bringing Emma down?")
+#st.header("Day 3 - Is Papa Smurf bringing Emma down?")
+st.header("Day 4 - When it rains, it pours... even on roofs, even if for a short time. It's still early.")
+
 
 ##TODO drop down here for players (create player tab?)
 ## set option to have current winner in bold
