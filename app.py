@@ -32,7 +32,8 @@ MBCC 12 in 2023-24
 #st.header("Day 2 - What a comeback win to cut the first place cluster down to two!")
 #st.header("Day 3 - Is Papa Smurf bringing Emma down?")
 #st.header("Day 4 - When it rains, it pours... even on roofs, even if for a short time. It's still early.")
-st.header("Day 5 - Florida again?! Georgia Tech and Gregory say NOPE!")
+#st.header("Day 5 - Florida again?! Georgia Tech and Gregory say NOPE!")
+st.header("Day 6 - A lotta Bowls Bonanza in Alabama - big night for Nemo?!")
 
 
 ##TODO drop down here for players (create player tab?)
