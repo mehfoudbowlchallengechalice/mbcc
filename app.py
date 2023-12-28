@@ -232,7 +232,7 @@ with tab_elimination:
 		
 		player_current_picks = main_score_df[main_score_df["Player"] == player]["Picks Correct"].values
 		st.write(potential_correct_picks)
-		# st.write(player_current_picks)
+		st.write(player_current_picks)
 		
 		comparison_dict = {}
 		for compare_player in the_people_list:
