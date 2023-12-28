@@ -237,7 +237,10 @@ with tab_elimination:
 		comparison_dict = {}
 		for compare_player in the_people_list:
 			player_picks = set(remaining_df[remaining_df['gametracker']==0]["Game"]+remaining_df[remaining_df['gametracker']==0][compare_player])
+			st.write(player_picks)
 			# checks to see if the player's potential picks line up comparing players
+			comparison_array = player_picks & potential_correct_picks
+			st.write(comparison_array)
 			comparison_dict[compare_player] = len(player_picks & potential_correct_picks)+player_current_picks.astype(int)
 
 		full_elimination_matrix[player] = comparison_dict
