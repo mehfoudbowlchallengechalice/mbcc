@@ -239,14 +239,15 @@ with tab_elimination:
 		for compare_player in the_people_list:
 			player_picks = set(remaining_df[remaining_df['gametracker']==0]["Game"]+remaining_df[remaining_df['gametracker']==0][compare_player])
 			# st.write(player_picks)
+			compare_player_current_picks = main_score_df[main_score_df["Player"] == compare_player]["Picks Correct"].values
 			# checks to see if the player's potential picks line up comparing players
 			comparison_array = player_picks & potential_correct_picks
 			# st.write(comparison_array)
 			st.write("picks in common with another person")
 			st.write(len(comparison_array))
-			st.write(player_current_picks)
-			st.write(len(comparison_array)+player_current_picks)
-			comparison_dict[compare_player] = len(player_picks & potential_correct_picks)+player_current_picks.astype(int)
+			st.write(compare_player_current_picks)
+			st.write(len(comparison_array)+compare_player_current_picks)
+			comparison_dict[compare_player] = len(comparison_array)+compare_player_current_picks
 
 		full_elimination_matrix[player] = comparison_dict
 
