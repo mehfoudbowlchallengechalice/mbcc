@@ -241,7 +241,7 @@ with tab_elimination:
 
 		full_elimination_matrix[player] = comparison_dict
 
-		st.write(comparison_dict.values())
+		st.write(max(omparison_dict.values()))
 		### can calculate whether someone is eliminated here
 		player_elimination_check.append(comparison_dict[player] == max(comparison_dict.values()))
 
