@@ -245,6 +245,7 @@ with tab_elimination:
 		player_elimination_check.append(comparison_dict[player] == max(comparison_dict.values()))
 
 
+	st.write(player_elimination_check)
 
 	player_select = st.selectbox('Checking the elimination of which player?', the_people_list)
 	player_index = the_people_list.index(player_select)
