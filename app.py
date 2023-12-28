@@ -35,7 +35,8 @@ MBCC 12 in 2023-24
 #st.header("Day 5 - Florida again?! Georgia Tech and Gregory say NOPE!")
 #st.header("Day 6 - A lotta Bowls Bonanza in Alabama - big night for Nemo?!")
 #st.header("Day 7 - Room for improvement - throw away those old, worn-out, bad picks and get those shiny, freshly unwrapped, new picks some sun!")
-st.header("Day 8 - Go Hokies!")
+#st.header("Day 8 - Go Hokies!")
+st.header("Day 9 - Then there were Nine - cuz like, day 9 and 9 people left?")
 
 ##TODO drop down here for players (create player tab?)
 ## set option to have current winner in bold
