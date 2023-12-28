@@ -244,7 +244,7 @@ with tab_elimination:
 		### can calculate whether someone is eliminated here
 		player_elimination_check.append(comparison_dict[player] == max(comparison_dict.values()))
 
-	st.write(full_elimination_matrix)
+	# st.write(full_elimination_matrix)
 	
 	
 	# st.write(player_elimination_check)
@@ -265,7 +265,7 @@ with tab_elimination:
 	for player in the_people_list:
 		elimination_matrix_creation[player] = full_elimination_matrix[player].values()
 
-	st.write(elimination_matrix_creation)
+	# st.write(elimination_matrix_creation)
 	
 	## create the elimination matrix for display
 	elim_mat_complete = pd.concat([pd.Series(the_people_list),pd.DataFrame.from_dict(elimination_matrix_creation)], axis=1)
