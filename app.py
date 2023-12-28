@@ -231,7 +231,7 @@ with tab_elimination:
 		# adding in the current correct picks
 		
 		player_current_picks = main_score_df[main_score_df["Player"] == player]["Picks Correct"].values
-		# st.write(player_current_picks)
+		st.write(player_current_picks)
 		
 		comparison_dict = {}
 		for compare_player in the_people_list:
@@ -244,8 +244,10 @@ with tab_elimination:
 		### can calculate whether someone is eliminated here
 		player_elimination_check.append(comparison_dict[player] == max(comparison_dict.values()))
 
+	st.write(full_elimination_matrix)
 
-	st.write(player_elimination_check)
+	
+	# st.write(player_elimination_check)
 
 	player_select = st.selectbox('Checking the elimination of which player?', the_people_list)
 	player_index = the_people_list.index(player_select)
