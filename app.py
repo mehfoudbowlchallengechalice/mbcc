@@ -38,7 +38,8 @@ MBCC 12 in 2023-24
 #st.header("Day 8 - Go Hokies!")
 #st.header("Day 9 - Then there were Nine - cuz like, day 9 and 9 people left?")
 #st.header("Day 10 - The first place curse strikes again")
-st.header("Day 11 - The points race is heating up, you want your pick to win BIG")
+#st.header("Day 11 - The points race is heating up, you want your pick to win BIG")
+st.header("Day 12 - The Hokie Prize is still in reach for everyone!")
 
 ##TODO drop down here for players (create player tab?)
 ## set option to have current winner in bold
