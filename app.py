@@ -40,7 +40,8 @@ MBCC 12 in 2023-24
 #st.header("Day 10 - The first place curse strikes again")
 #st.header("Day 11 - The points race is heating up, you want your pick to win BIG")
 #st.header("Day 12 - The Hokie Prize is still in reach for everyone!")
-st.header("Day 13 - Christopher takes the Crown before the Championship, but there's still a reason to watch!")
+#st.header("Day 13 - Christopher takes the Crown before the Championship, but there's still a reason to watch!")
+st.header("MBCC 12 Champion - Christopher; MBCC 12 Second Place - Joseph")
 
 ##TODO drop down here for players (create player tab?)
 ## set option to have current winner in bold
@@ -157,7 +158,7 @@ with tab_today:
 	actual_today = pd.to_datetime((datetime.datetime.today()-pd.Timedelta(hours=5)).strftime('%Y-%m-%d'))
 	#st.write(actual_today)
 	### today, future, all drop down to show picks
-	option = st.selectbox("Select Games to See", ("Today", "Future", "All"))
+	option = st.selectbox("Select Games to See", ("All", "Today", "Future"))
 	
 	if option == "All":
 		st.dataframe(new_live_df.style.apply(highlight_all_games, axis=None), column_config={"game_page": st.column_config.LinkColumn(), "team_focus_indicator": None}, hide_index=True)
