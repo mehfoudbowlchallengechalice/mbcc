@@ -407,11 +407,11 @@ with need_to_know:
   	3. Hokie Prize $300 split between those who beat Papa Smurf's number of wins  \n
 	""")
 
-	st.markdown("**Last Year's Winner:**")
-	image = Image.open("last_years_winner.png")
+	#st.markdown("**Last Year's Winner:**")
+	#image = Image.open("last_years_winner.png")
 
 	st.image(image, caption = "Last year's winner - Lauren!", width = 300)
 
 
 
-st.write("MBCC 11 Winner was Lauren -- got problems with that, email mehfoudbowlchallengechalice@gmail.com -- check out the Information")
+st.write("MBCC 11 Winner was Lauren -- got problems with that, email mehfoudbowlchallengechalice@gmail.com -- check out the Information; almost as cool, this year's winner (MBCC 12) was Christopher")
