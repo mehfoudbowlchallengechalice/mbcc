@@ -16,7 +16,7 @@ from sklearn.linear_model import LogisticRegression
 import datetime
 import streamlit as st
 from google.oauth2 import service_account
-from gsheetsdb import connect
+from shillelagh.backends.apsw.db import connect
 from PIL import Image
 
 st.set_page_config(layout="wide")
