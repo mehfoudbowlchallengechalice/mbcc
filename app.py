@@ -16,7 +16,8 @@ from sklearn.linear_model import LogisticRegression
 import datetime
 import streamlit as st
 from google.oauth2 import service_account
-from shillelagh.backends.apsw.db import connect
+#from shillelagh.backends.apsw.db import connect
+from streamlit_gsheets import GSheetsConnection
 from PIL import Image
 
 st.set_page_config(layout="wide")
@@ -54,7 +55,7 @@ credentials = service_account.Credentials.from_service_account_info(
         "https://www.googleapis.com/auth/spreadsheets",
     ],
 )
-conn = connect(credentials=credentials)
+conn = st.connection("gsheets", type=GSheetsConnection)
 
 st.cache_data(ttl=600)
 def run_query(query):
@@ -68,16 +69,24 @@ def bring_in_live_games():
     return get_schedule()
 
 
-
-current_scores = st.secrets["current_pick_success"]
-history_sheet = st.secrets["history_sheet"]
-agg_history = st.secrets["agg_history"]
-season_history = st.secrets["season_history"]
-picks = st.secrets["picks"]
-unlive_games = st.secrets["unlive_games"]
-live_tracker_binary = st.secrets["live_tracker_binary"]
-live_tracker_complex = st.secrets["live_tracker_complex"]
-unlive_scores = st.secrets["tournament_scores"]
+#current_scores = st.secrets["current_pick_success"]
+current_scores = conn.read(worksheet="current_pick_success",ttl="60m")
+#history_sheet = st.secrets["history_sheet"]
+history_sheet = conn.read(worksheet="history_sheet",ttl="60m")
+#agg_history = st.secrets["agg_history"]
+agg_history = conn.read(worksheet="agg_history",ttl="60m")
+#season_history = st.secrets["season_history"]
+season_history = conn.read(worksheet="season_history",ttl="60m")
+#picks = st.secrets["picks"]
+picks = conn.read(worksheet="picks",ttl="60m")
+#unlive_games = st.secrets["unlive_games"]
+unlive_games = conn.read(worksheet="unlive_games",ttl="60m")
+#live_tracker_binary = st.secrets["live_tracker_binary"]
+live_tracker_binary = conn.read(worksheet="live_tracker_binary",ttl="60m")
+#live_tracker_complex = st.secrets["live_tracker_complex"]
+live_tracker_complex = conn.read(worksheet="live_tracker_complex",ttl="60m")
+#unlive_scores = st.secrets["tournament_scores"]
+unlive_scores = conn.read(worksheet="tournament_scores",ttl="60m")
 #full_score_matrix = st.secrets["full_pick_summary"]
 
 
