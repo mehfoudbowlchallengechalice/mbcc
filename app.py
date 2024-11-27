@@ -72,7 +72,7 @@ def bring_in_live_games():
 #current_scores = st.secrets["current_pick_success"]
 current_scores = conn.read(worksheet="current_pick_success",ttl="60m")
 #history_sheet = st.secrets["history_sheet"]
-history_sheet = conn.read(worksheet="history_sheet",ttl="60m")
+history_sheet = conn.read(worksheet="basic_history",ttl="60m")
 #agg_history = st.secrets["agg_history"]
 agg_history = conn.read(worksheet="agg_history",ttl="60m")
 #season_history = st.secrets["season_history"]
@@ -86,7 +86,7 @@ live_tracker_binary = conn.read(worksheet="live_tracker_binary",ttl="60m")
 #live_tracker_complex = st.secrets["live_tracker_complex"]
 live_tracker_complex = conn.read(worksheet="live_tracker_complex",ttl="60m")
 #unlive_scores = st.secrets["tournament_scores"]
-unlive_scores = conn.read(worksheet="tournament_scores",ttl="60m")
+unlive_scores = conn.read(worksheet="scores",ttl="60m")
 #full_score_matrix = st.secrets["full_pick_summary"]
 
 
