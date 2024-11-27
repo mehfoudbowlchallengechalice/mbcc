@@ -15,7 +15,7 @@ from plotly.subplots import make_subplots
 from sklearn.linear_model import LogisticRegression
 import datetime
 import streamlit as st
-from google.oauth2 import service_account
+#from google.oauth2 import service_account
 #from shillelagh.backends.apsw.db import connect
 from streamlit_gsheets import GSheetsConnection
 from PIL import Image
@@ -49,12 +49,12 @@ st.header("LET THE PLAYOFFS BEGIN!")
 ## set option to have current winner in bold
 
 # Create a connection object.
-credentials = service_account.Credentials.from_service_account_info(
-    st.secrets["gcp_service_account"],
-    scopes=[
-        "https://www.googleapis.com/auth/spreadsheets",
-    ],
-)
+# credentials = service_account.Credentials.from_service_account_info(
+#     st.secrets["gcp_service_account"],
+#     scopes=[
+#         "https://www.googleapis.com/auth/spreadsheets",
+#     ],
+# )
 conn = st.connection("gsheets", type=GSheetsConnection)
 
 st.cache_data(ttl=600)
