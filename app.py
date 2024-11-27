@@ -92,7 +92,8 @@ unlive_scores = conn.read(worksheet="scores",ttl="60m")
 
 starting_people_list = people_list()
 the_people_list = people_list()
-current_scores_df = pd.DataFrame(run_query(f'SELECT * FROM "{current_scores}"'))
+#current_scores_df = pd.DataFrame(run_query(f'SELECT * FROM "{current_scores}"'))
+current_scores_df = current_scores
 
 games_in = current_scores_df.iloc[4]['Christopher']
 games_left = current_scores_df.iloc[5]['Christopher']
@@ -138,12 +139,15 @@ tab_today, tab_mbcc_12, tab_elimination, tab_history, need_to_know = st.tabs(["L
 with tab_today:
 	st.header("Games")
 	#live_df = bring_in_live_games()
-	live_df = pd.DataFrame(run_query(f'SELECT * FROM "{unlive_games}"'))
+	#live_df = pd.DataFrame(run_query(f'SELECT * FROM "{unlive_games}"'))
+	live_df = unlive_games
 
+	
 	live_df['game_page'] = "https://www.espn.com/college-football/game?gameId="+live_df['game_id'].astype(int).astype(str)
 	live_df['time'] = live_df['game_time'].dt.strftime('%I:%M %p')
 	
-	scores_df = pd.DataFrame(run_query(f'SELECT * FROM "{unlive_scores}"'))
+	#scores_df = pd.DataFrame(run_query(f'SELECT * FROM "{unlive_scores}"'))
+	scores_df = unlive_scores
 	scores_df = scores_df.fillna(0)
 
 	new_live_df = live_df.merge(scores_df, left_on = "game_name", right_on = "game")
@@ -160,7 +164,8 @@ with tab_today:
 	
 	games_without_scores = scores_df[scores_df.winner == 'TBD']['game'].to_list()
 	# bringing in picks
-	picks_df = pd.DataFrame(run_query(f'SELECT * FROM "{picks}"'))
+	#picks_df = pd.DataFrame(run_query(f'SELECT * FROM "{picks}"'))
+	picks_df = picks
 	picks_dates = picks_df.merge(new_live_df[["game_name", "game_date", "game_home_team", "game_away_team", "winner"]], left_on = "Game", right_on = "game_name")
 	
 	picks_dates["loser"] = np.where(picks_dates["winner"] == 'TBD', 'TBD', np.where(picks_dates["game_home_team"] == picks_dates["winner"], picks_dates["game_away_team"], picks_dates["game_home_team"]))
@@ -211,8 +216,11 @@ with tab_mbcc_12:
 	#### all charts (bar and 2 argyle)
 	column_list = starting_people_list
 	column_list.append('gametracker')
-	binary_tracker_df = pd.DataFrame(run_query(f'SELECT * FROM "{live_tracker_binary}"'))
-	complex_tracker_df = pd.DataFrame(run_query(f'SELECT * FROM "{live_tracker_complex}"'))
+	
+	# binary_tracker_df = pd.DataFrame(run_query(f'SELECT * FROM "{live_tracker_binary}"'))
+	binary_tracker_df = live_tracker_binary
+	# complex_tracker_df = pd.DataFrame(run_query(f'SELECT * FROM "{live_tracker_complex}"'))
+	complex_tracker_df = live_tracker_complex
 
 	binary_tracker_df = binary_tracker_df[column_list].apply(pd.to_numeric)
 	complex_tracker_df = complex_tracker_df[column_list].apply(pd.to_numeric)
@@ -232,7 +240,8 @@ with tab_mbcc_12:
 
 with tab_elimination:
 	#full_score_df = pd.DataFrame(run_query(f'SELECT * FROM "{full_score_matrix}"'))
-	tracker_only = pd.DataFrame(run_query(f'SELECT * FROM "{live_tracker_binary}"'))[['gametracker']].tail(-1).reset_index()
+	#tracker_only = pd.DataFrame(run_query(f'SELECT * FROM "{live_tracker_binary}"'))[['gametracker']].tail(-1).reset_index()
+	tracker_only = live_tracker_binary[['gametracker']].tail(-1).reset_index()
 
 	# build data frame for representation of picks
 	# st.dataframe(tracker_only)
@@ -303,7 +312,8 @@ with tab_elimination:
 
 with tab_history:
 	st.header("Mehfoud Bowl Challenge Chalice History")
-	history_df = pd.DataFrame(run_query(f'SELECT * FROM "{history_sheet}"'))
+	#history_df = pd.DataFrame(run_query(f'SELECT * FROM "{history_sheet}"'))
+	history_df = history_sheet
 	player_list = history_df.Player.unique()
 	player_list = np.insert(player_list, 0, 'All Players')
 	history_df['Percentage Correct'] = history_df['Percentage_Correct'].apply(lambda x: x*100).map('{:.2f}%'.format)
@@ -311,12 +321,14 @@ with tab_history:
 	not_winner = st.checkbox('show more than winners')
 	option = st.selectbox('Select a Player', player_list)
 
-	agg_history = pd.DataFrame(run_query(f'SELECT * FROM "{agg_history}"'))
+	#agg_history = pd.DataFrame(run_query(f'SELECT * FROM "{agg_history}"'))
+	agg_history = agg_history
 	agg_history = agg_history[agg_history.Active == True]
 	agg_history['Percentage Correct'] = agg_history['Live_Percentage'].apply(lambda x: x*100).map('{:.2f}%'.format)
 	agg_history = agg_history[['Player', 'Live_Wins', 'Live_Losses', 'Percentage Correct']]
 
-	season_history = pd.DataFrame(run_query(f'SELECT * FROM "{season_history}"'))
+	#season_history = pd.DataFrame(run_query(f'SELECT * FROM "{season_history}"'))
+	season_history = season_history
 	season_history['Percentage Correct'] = season_history['Percentage'].apply(lambda x: x*100).map('{:.2f}%'.format)
 	season_history= season_history[['Season', 'Total_Wins', 'Total_Losses', 'Percentage Correct']]
 	
