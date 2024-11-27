@@ -130,7 +130,7 @@ with col2:
 	st.dataframe(point_diff_score_df, hide_index=True)
 
 
-st.write("We are currently ", games_in_s, " games in, which means we have ", games_left_s, " games left. We've completed ", str(round(100*games_in/(games_in+games_left),2)), "% of MBCC12.")
+st.write("We are currently ", games_in_s, " games in, which means we have ", games_left_s, " games left. We've completed ", str(round(100*games_in/(games_in+games_left),2)), "% of MBCC13.")
 ### creation of the tabs
 #tab_today, tab_mbcc_12, tab_elimination, tab_history, sql_learning = st.tabs(["Live", "MBCC 12", "Elimination Check", "History", "Click Here Gregory"])
 tab_today, tab_mbcc_12, tab_elimination, tab_history, need_to_know = st.tabs(["Live", "MBCC 12", "Elimination Check", "History", "Information"])
@@ -143,7 +143,7 @@ with tab_today:
 	live_df = unlive_games
 
 	
-	live_df['game_page'] = "https://www.espn.com/college-football/game?gameId="+live_df['game_id'].astype(int).astype(str)
+	live_df['game_page'] = "https://www.espn.com/college-football/game?gameId="#+live_df['game_id'].astype(int).astype(str)
 	live_df['time'] = live_df['game_time'].dt.strftime('%I:%M %p')
 	
 	#scores_df = pd.DataFrame(run_query(f'SELECT * FROM "{unlive_scores}"'))
