@@ -329,7 +329,7 @@ with tab_history:
 	#agg_history = pd.DataFrame(run_query(f'SELECT * FROM "{agg_history}"'))
 	agg_history = agg_history
 	agg_history = agg_history[agg_history.Active == True]
-	agg_history['Percentage Correct'] = agg_history['Live_Percentage'].apply(lambda x: x*100).map('{:.2f}%'.format)
+	agg_history['Percentage Correct'] = agg_history['LivePercentage'].apply(lambda x: x*100).map('{:.2f}%'.format)
 	agg_history = agg_history[['Player', 'Live_Wins', 'Live_Losses', 'Percentage Correct']]
 
 	#season_history = pd.DataFrame(run_query(f'SELECT * FROM "{season_history}"'))
