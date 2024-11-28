@@ -315,6 +315,7 @@ with tab_history:
 	st.header("Mehfoud Bowl Challenge Chalice History")
 	#history_df = pd.DataFrame(run_query(f'SELECT * FROM "{history_sheet}"'))
 	history_df = history_sheet
+	st.dataframe(history_df)
 	player_list = history_df.Player.unique()
 	player_list = np.insert(player_list, 0, 'All Players')
 	history_df['Percentage Correct'] = history_df['Percentage_Correct'].apply(lambda x: x*100).map('{:.2f}%'.format)
