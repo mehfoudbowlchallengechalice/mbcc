@@ -337,7 +337,9 @@ with tab_history:
 	#season_history = pd.DataFrame(run_query(f'SELECT * FROM "{season_history}"'))
 	season_history = season_history
 	season_history['Percentage Correct'] = season_history['Percentage'].apply(lambda x: x*100).map('{:.2f}%'.format)
-	season_history= season_history[['Season', 'Total_Wins', 'Total_Losses', 'Percentage Correct']]
+	season_history['Total Wins'] = season_history['TotalWins']
+	season_history['Total Losses'] = season_history['TotalLosses']
+	season_history= season_history[['Season', 'Total Wins', 'Total Losses', 'Percentage Correct']]
 	
 	if not_current:
 		if not_winner:
