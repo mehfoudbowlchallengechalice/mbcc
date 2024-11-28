@@ -317,8 +317,10 @@ with tab_history:
 	history_df = history_sheet
 	st.dataframe(history_df)
 	st.write(history_df.columns.tolist())
+	
 	player_list = history_df.Player.unique()
 	player_list = np.insert(player_list, 0, 'All Players')
+	
 	history_df['Percentage Correct'] = history_df['Percentage_Correct'].apply(lambda x: x*100).map('{:.2f}%'.format)
 	not_current = st.checkbox('show all players')
 	not_winner = st.checkbox('show more than winners')
