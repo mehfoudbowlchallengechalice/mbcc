@@ -315,8 +315,6 @@ with tab_history:
 	st.header("Mehfoud Bowl Challenge Chalice History")
 	#history_df = pd.DataFrame(run_query(f'SELECT * FROM "{history_sheet}"'))
 	history_df = history_sheet
-	st.dataframe(history_df)
-	st.write(history_df.columns.tolist())
 	
 	player_list = history_df.Player.unique()
 	player_list = np.insert(player_list, 0, 'All Players')
