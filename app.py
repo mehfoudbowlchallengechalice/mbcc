@@ -144,7 +144,7 @@ with tab_today:
 	unlive_games['game_date'] = pd.to_datetime(unlive_games['game_date']).dt.date
 	unlive_games['game_time'] = pd.to_datetime(unlive_games['game_time'])
 	
-	live_df['game_page'] = "https://www.espn.com/college-football/game?gameId="#+live_df['game_id'].astype(int).astype(str)
+	live_df['game_page'] = "https://www.espn.com/college-football/game?gameId="+live_df['game_id'].astype(int).astype(str)
 	live_df['time'] = live_df['game_time'].dt.strftime('%I:%M %p')
 	
 	#scores_df = pd.DataFrame(run_query(f'SELECT * FROM "{unlive_scores}"'))
