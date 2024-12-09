@@ -26,8 +26,8 @@ st.header ("""
 MBCC 13 in 2024-25
 """)
 
-pick_url = 'https://forms.gle/QBjfisMMErnJsajg9'
-st.header ("Make your [picks](%s) before December 15th at 12 PM!" % pick_url)
+pick_url = 'https://forms.gle/W8HCNsmgwr1oWYoR6'
+st.header ("Make your [picks](%s) before December 12th at 12 PM!" % pick_url)
 #st.header("The Picks are IN! - HERE WE GO!")
 #st.header("Day 1 - 7 games - Upset Pick City!")
 #st.header("Day 2 - What a comeback win to cut the first place cluster down to two!")
