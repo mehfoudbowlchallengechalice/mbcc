@@ -27,7 +27,7 @@ MBCC 13 in 2024-25
 """)
 
 pick_url = 'https://forms.gle/W8HCNsmgwr1oWYoR6'
-st.header ("Make your [picks](%s) before December 12th at 12 PM!" % pick_url)
+st.header ("Make your [picks](%s) before December 13th at 13:00!" % pick_url)
 #st.header("The Picks are IN! - HERE WE GO!")
 #st.header("Day 1 - 7 games - Upset Pick City!")
 #st.header("Day 2 - What a comeback win to cut the first place cluster down to two!")
@@ -57,36 +57,36 @@ st.header("LET THE PLAYOFFS BEGIN!")
 # )
 conn = st.connection("gsheets", type=GSheetsConnection)
 
-st.cache_data(ttl=600)
+st.cache_data(ttl=60)
 def run_query(query):
     rows = conn.execute(query, headers=1)
     rows = rows.fetchall()
     return rows
 
 ### change this in december!!!
-st.cache_data(ttl=60000)
+st.cache_data(ttl=60)
 def bring_in_live_games():
     return get_schedule()
 
 
 #current_scores = st.secrets["current_pick_success"]
-current_scores = conn.read(worksheet="current_pick_success",ttl="60m")
+current_scores = conn.read(worksheet="current_pick_success",ttl="1m")
 #history_sheet = st.secrets["history_sheet"]
-history_sheet = conn.read(worksheet="basic_history",ttl="60m")
+history_sheet = conn.read(worksheet="basic_history",ttl="600m")
 #agg_history = st.secrets["agg_history"]
-agg_history = conn.read(worksheet="agg_history",ttl="60m")
+agg_history = conn.read(worksheet="agg_history",ttl="600m")
 #season_history = st.secrets["season_history"]
-season_history = conn.read(worksheet="season_history",ttl="60m")
+season_history = conn.read(worksheet="season_history",ttl="600m")
 #picks = st.secrets["picks"]
-picks = conn.read(worksheet="picks",ttl="60m")
+picks = conn.read(worksheet="picks",ttl="1m")
 #unlive_games = st.secrets["unlive_games"]
-unlive_games = conn.read(worksheet="unlive_games",ttl="60m")
+unlive_games = conn.read(worksheet="unlive_games",ttl="1m")
 #live_tracker_binary = st.secrets["live_tracker_binary"]
-live_tracker_binary = conn.read(worksheet="live_tracker_binary",ttl="60m")
+live_tracker_binary = conn.read(worksheet="live_tracker_binary",ttl="1m")
 #live_tracker_complex = st.secrets["live_tracker_complex"]
-live_tracker_complex = conn.read(worksheet="live_tracker_complex",ttl="60m")
+live_tracker_complex = conn.read(worksheet="live_tracker_complex",ttl="1m")
 #unlive_scores = st.secrets["tournament_scores"]
-unlive_scores = conn.read(worksheet="scores",ttl="60m")
+unlive_scores = conn.read(worksheet="scores",ttl="1m")
 #full_score_matrix = st.secrets["full_pick_summary"]
 
 
