@@ -71,7 +71,7 @@ def bring_in_live_games():
 
 
 #current_scores = st.secrets["current_pick_success"]
-current_scores = conn.read(worksheet="current_pick_success",ttl="10m")
+current_scores = conn.read(worksheet="current_pick_success",ttl="8m")
 #history_sheet = st.secrets["history_sheet"]
 history_sheet = conn.read(worksheet="basic_history",ttl="600m")
 #agg_history = st.secrets["agg_history"]
@@ -79,15 +79,15 @@ agg_history = conn.read(worksheet="agg_history",ttl="600m")
 #season_history = st.secrets["season_history"]
 season_history = conn.read(worksheet="season_history",ttl="600m")
 #picks = st.secrets["picks"]
-picks = conn.read(worksheet="picks",ttl="10m")
+picks = conn.read(worksheet="picks",ttl="60m")
 #unlive_games = st.secrets["unlive_games"]
-unlive_games = conn.read(worksheet="unlive_games",ttl="10m")
+unlive_games = conn.read(worksheet="unlive_games",ttl="60m")
 #live_tracker_binary = st.secrets["live_tracker_binary"]
-live_tracker_binary = conn.read(worksheet="live_tracker_binary",ttl="10m")
+live_tracker_binary = conn.read(worksheet="live_tracker_binary",ttl="15m")
 #live_tracker_complex = st.secrets["live_tracker_complex"]
-live_tracker_complex = conn.read(worksheet="live_tracker_complex",ttl="10m")
+live_tracker_complex = conn.read(worksheet="live_tracker_complex",ttl="20m")
 #unlive_scores = st.secrets["tournament_scores"]
-unlive_scores = conn.read(worksheet="scores",ttl="10m")
+unlive_scores = conn.read(worksheet="scores",ttl="12m")
 #full_score_matrix = st.secrets["full_pick_summary"]
 
 
