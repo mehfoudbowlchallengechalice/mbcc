@@ -73,11 +73,11 @@ def bring_in_live_games():
 #current_scores = st.secrets["current_pick_success"]
 current_scores = conn.read(worksheet="current_pick_success",ttl="8m")
 #history_sheet = st.secrets["history_sheet"]
-history_sheet = conn.read(worksheet="basic_history",ttl="600m")
+history_sheet = conn.read(worksheet="basic_history",ttl="603m")
 #agg_history = st.secrets["agg_history"]
-agg_history = conn.read(worksheet="agg_history",ttl="600m")
+agg_history = conn.read(worksheet="agg_history",ttl="607m")
 #season_history = st.secrets["season_history"]
-season_history = conn.read(worksheet="season_history",ttl="600m")
+season_history = conn.read(worksheet="season_history",ttl="612m")
 #picks = st.secrets["picks"]
 picks = conn.read(worksheet="picks",ttl="60m")
 #unlive_games = st.secrets["unlive_games"]
