@@ -32,7 +32,7 @@ MBCC 13 in 2024-25
 #st.header("Day 1 - Best Day of the Year! Maybe?")
 #st.header("Day 2 - Almost Heaven?")
 #st.header("Day 3 - Double Header and a chance for Nemo, Gregory, and Emma to pull back into the group and Elise to take the lead!")
-st.header("Day 4 - A new chance at first place?")
+#st.header("Day 4 - A new chance at first place?")
 st.header("Day 5 - New best Day of the year! Playoffs!?!")
 #st.header("The Picks are IN! - HERE WE GO!")
 #st.header("Day 1 - 7 games - Upset Pick City!")
