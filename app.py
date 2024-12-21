@@ -274,17 +274,17 @@ with tab_elimination:
 	remaining_df = pd.concat([picks_df, tracker_only], axis = 1)
 
 	unset_cfp_games = []
+	
 	# remove impossible picks
 	full_game_set = set(live_df["game_name"]+live_df["game_home_team"])|set(live_df["game_name"]+live_df["game_away_team"])
 	
-
 	for i in full_game_set:
 		if "TBD" in i:
 			unset_cfp_games.append(i[:50])
 	
 	
 	
-	st.write(unset_cfp_games)
+	#st.write(unset_cfp_games)
 	
 	player_elimination_check = []
 	full_elimination_matrix = {}
@@ -293,18 +293,18 @@ with tab_elimination:
 		potential_correct_picks = set(remaining_df[remaining_df['gametracker']==0]["Game"]+remaining_df[remaining_df['gametracker']==0][player])
 
 		impossible_games = []
-		
+		# remove games that can't be won since the competitor got eliminated in an earlier round
 		for i in potential_correct_picks:
 			if i[:50] not in unset_cfp_games:
 				if i not in full_game_set:
 					impossible_games.append(i)
 
-		st.write(impossible_games)
+		#st.write(impossible_games)
 
 		for k in impossible_games:
 			potential_correct_picks.remove(k)
 		
-		st.write(potential_correct_picks)
+		#st.write(potential_correct_picks)
 					
 		
 		
