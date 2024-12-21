@@ -275,7 +275,7 @@ with tab_elimination:
 
 	unset_cfp_games = []
 	# remove impossible picks
-	full_game_set = set(new_live_df["game_name"]+new_live_df["game_home_team"])|set(new_live_df["game_name"]+new_live_df["game_away_team"])
+	full_game_set = set(live_df["game_name"]+new_live_df["game_home_team"])|set(live_df["game_name"]+new_live_df["game_away_team"])
 	st.write(full_game_set)
 
 	for i in full_game_set:
