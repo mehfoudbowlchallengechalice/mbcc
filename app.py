@@ -33,7 +33,8 @@ MBCC 13 in 2024-25
 #st.header("Day 2 - Almost Heaven?")
 #st.header("Day 3 - Double Header and a chance for Nemo, Gregory, and Emma to pull back into the group and Elise to take the lead!")
 #st.header("Day 4 - A new chance at first place?")
-st.header("Day 5 - New best Day of the year! Playoffs!?!")
+#st.header("Day 5 - New best Day of the year! Playoffs!?!")
+st.header("Day 6 - Shake up at the top of the MBCC and the quarterfinals decided tonight!")
 #st.header("The Picks are IN! - HERE WE GO!")
 #st.header("Day 1 - 7 games - Upset Pick City!")
 #st.header("Day 2 - What a comeback win to cut the first place cluster down to two!")
@@ -63,36 +64,54 @@ st.header("LET THE PLAYOFFS ACTUALLY BEGIN!")
 # )
 conn = st.connection("gsheets", type=GSheetsConnection)
 
-st.cache_data(ttl=60)
-def run_query(query):
-    rows = conn.execute(query, headers=1)
-    rows = rows.fetchall()
-    return rows
+st.cache_data(ttl="603m")
+def run_query_history(worksheet_name):
+    df = conn.read(worksheet=worksheet_name)
+    return df
 
-### change this in december!!!
-st.cache_data(ttl=60)
-def bring_in_live_games():
-    return get_schedule()
+
+st.cache_data(ttl=240)
+def run_query_current_1(worksheet_name):
+    df = conn.read(worksheet=worksheet_name)
+    return df
+
+
+st.cache_data(ttl=300)
+def run_query_current_2(worksheet_name):
+    df = conn.read(worksheet=worksheet_name)
+    return df
+
+
+st.cache_data(ttl="60m")
+def run_query_delayed(worksheet_name):
+    df = conn.read(worksheet=worksheet_name)
+    return df
+
+
+### change this in december!!! old code to pull in data from ESPN directly, they change their json html too often
+# st.cache_data(ttl=60)
+# def bring_in_live_games():
+#     return get_schedule()
 
 
 #current_scores = st.secrets["current_pick_success"]
-current_scores = conn.read(worksheet="current_pick_success",ttl="8m")
+current_scores = run_query_current_1("current_pick_success")
 #history_sheet = st.secrets["history_sheet"]
-history_sheet = conn.read(worksheet="basic_history",ttl="603m")
+history_sheet = run_query_history("basic_history")
 #agg_history = st.secrets["agg_history"]
-agg_history = conn.read(worksheet="agg_history",ttl="607m")
+agg_history = run_query_history("agg_history")
 #season_history = st.secrets["season_history"]
-season_history = conn.read(worksheet="season_history",ttl="612m")
+season_history = run_query_history("season_history")
 #picks = st.secrets["picks"]
-picks = conn.read(worksheet="picks",ttl="60m")
+picks = run_query_delayed("picks")
 #unlive_games = st.secrets["unlive_games"]
-unlive_games = conn.read(worksheet="unlive_games",ttl="60m")
+unlive_games = run_query_delayed("unlive_games")
 #live_tracker_binary = st.secrets["live_tracker_binary"]
-live_tracker_binary = conn.read(worksheet="live_tracker_binary",ttl="15m")
+live_tracker_binary = run_query_current_2("live_tracker_binary")
 #live_tracker_complex = st.secrets["live_tracker_complex"]
-live_tracker_complex = conn.read(worksheet="live_tracker_complex",ttl="20m")
+live_tracker_complex = run_query_current_2("live_tracker_complex")
 #unlive_scores = st.secrets["tournament_scores"]
-unlive_scores = conn.read(worksheet="scores",ttl="12m")
+unlive_scores = run_query_current_1("scores")
 #full_score_matrix = st.secrets["full_pick_summary"]
 
 
