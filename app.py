@@ -287,7 +287,6 @@ with tab_elimination:
 	
 	st.write(unset_cfp_games)
 	print(full_game_set)
-	print(remaining_df[player].head())
 	print(potential_correct_picks)
 
 	
