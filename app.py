@@ -272,7 +272,24 @@ with tab_elimination:
 	# build data frame for representation of picks
 	# st.dataframe(tracker_only)
 	remaining_df = pd.concat([picks_df, tracker_only], axis = 1)
+
+	unset_cfp_games = []
+	# remove impossible picks
+	full_game_set = set(new_live_df["game_name"]+new_live_df["game_home_team"])+set(new_live_df["game_name"]+new_live_df["game_away_team"])
+	st.write(full_game_set)
+
+	for i in full_game_set:
+		st.write(i)
+		if "TBD" in i:
+			unset_cfp_games.append(i[:-3])
 	
+	
+	
+	st.write(unset_cfp_games)
+	print(full_game_set)
+	print(remaining_df[player].head())
+	print(potential_correct_picks)
+
 	
 	player_elimination_check = []
 	full_elimination_matrix = {}
@@ -281,11 +298,6 @@ with tab_elimination:
 		potential_correct_picks = set(remaining_df[remaining_df['gametracker']==0]["Game"]+remaining_df[remaining_df['gametracker']==0][player])
 		
 		
-		# remove impossible picks
-		full_game_set = set(new_live_df["game_name"]+new_live_df["game_home_team"])+set(new_live_df["game_name"]+new_live_df["game_away_team"])
-		print(full_game_set)
-		print(remaining_df[player].head())
-		print(potential_correct_picks)
 		
 		
 		# adding in the current correct picks
