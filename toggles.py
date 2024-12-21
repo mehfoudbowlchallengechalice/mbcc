@@ -20,10 +20,10 @@ def toggle_list(i):
 		option_ln = st.toggle("Lauren", value = True, key = "ln"+i)
 	with checks[4]:
 		option_ns = st.toggle("Nicholas", value = True, key = "ns"+i)
-		option_pf = st.toggle("PSmurf", value = True, key = "pf"+i)
+		option_pi = st.toggle("Poppi", value = True, key = "pi"+i)
 
 	set_people_list = people_list()
-	collection_df = pd.DataFrame(list(zip(set_people_list, [option_cr, option_ee, option_ea, option_gy, option_jn, option_jh, option_la, option_ln, option_ns, option_pf])))
+	collection_df = pd.DataFrame(list(zip(set_people_list, [option_cr, option_ee, option_ea, option_gy, option_jn, option_jh, option_la, option_ln, option_ns, option_pi])))
 	selection_list = collection_df[collection_df[1] == True][0].values.tolist()
 	deselection_list = collection_df[collection_df[1] == False][0].values.tolist()
 	
