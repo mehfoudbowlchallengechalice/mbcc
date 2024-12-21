@@ -285,7 +285,7 @@ with tab_elimination:
 	
 	
 	
-
+	st.write(unset_cfp_games)
 	
 	player_elimination_check = []
 	full_elimination_matrix = {}
