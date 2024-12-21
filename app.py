@@ -291,13 +291,19 @@ with tab_elimination:
 	for player in the_people_list:
 		# setting the potential correct picks based on the player
 		potential_correct_picks = set(remaining_df[remaining_df['gametracker']==0]["Game"]+remaining_df[remaining_df['gametracker']==0][player])
+
+		impossible_games = []
 		
 		for i in potential_correct_picks:
 			if i[:50] not in unset_cfp_games:
 				if i not in full_game_set:
-					potential_correct_picks.remove(i)
+					impossible_games.append(i)
 
+		st.write(impossible_games)
 
+		for k in impossible_games:
+			potential_correct_picks.remove(k)
+		
 		st.write(potential_correct_picks)
 					
 		
