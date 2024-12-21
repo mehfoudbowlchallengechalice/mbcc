@@ -22,8 +22,8 @@ def highlight_all_names(x):
                                         np.where(x['Laura'] == x['loser'], "color:red", ""))
   color_codes['Lauren'] = np.where(x['Lauren'] == x['winner'], "color: green", 
                                         np.where(x['Lauren'] == x['loser'], "color:red", ""))
-  color_codes['PSmurf'] = np.where(x['PSmurf'] == x['winner'], "color: green", 
-                                        np.where(x['PSmurf'] == x['loser'], "color:red", ""))
+  color_codes['Poppi'] = np.where(x['Poppi'] == x['winner'], "color: green", 
+                                        np.where(x['Poppi'] == x['loser'], "color:red", ""))
   color_codes['Jen'] = np.where(x['Jen'] == x['winner'], "color: green", 
                                         np.where(x['Jen'] == x['loser'], "color:red", ""))
   return color_codes
