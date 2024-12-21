@@ -276,18 +276,15 @@ with tab_elimination:
 	unset_cfp_games = []
 	# remove impossible picks
 	full_game_set = set(live_df["game_name"]+live_df["game_home_team"])|set(live_df["game_name"]+live_df["game_away_team"])
-	st.write(full_game_set)
+	
 
 	for i in full_game_set:
 		st.write(i)
 		if "TBD" in i:
-			unset_cfp_games.append(i[:-3])
+			unset_cfp_games.append(i[40:])
 	
 	
 	
-	st.write(unset_cfp_games)
-	print(full_game_set)
-	print(potential_correct_picks)
 
 	
 	player_elimination_check = []
@@ -296,7 +293,9 @@ with tab_elimination:
 		# setting the potential correct picks based on the player
 		potential_correct_picks = set(remaining_df[remaining_df['gametracker']==0]["Game"]+remaining_df[remaining_df['gametracker']==0][player])
 		
-		
+		for i in potential_correct_picks:
+			print(i)
+					
 		
 		
 		# adding in the current correct picks
