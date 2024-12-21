@@ -294,7 +294,12 @@ with tab_elimination:
 		potential_correct_picks = set(remaining_df[remaining_df['gametracker']==0]["Game"]+remaining_df[remaining_df['gametracker']==0][player])
 		
 		for i in potential_correct_picks:
-			print(i)
+			if i[:50] not in unset_cfp_games:
+				if i not in full_game_set:
+					potential_correct_picks.remove(i)
+
+
+		st.write(potential_correct_picks)
 					
 		
 		
