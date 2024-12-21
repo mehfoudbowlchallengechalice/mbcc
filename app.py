@@ -282,6 +282,8 @@ with tab_elimination:
 		
 		
 		# remove impossible picks
+		full_game_set = set(new_live_df["game_name"]+new_live_df["game_home_team"])+set(new_live_df["game_name"]+new_live_df["game_away_team"])
+		print(full_game_set)
 		print(remaining_df[player].head())
 		print(potential_correct_picks)
 		
