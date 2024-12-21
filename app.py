@@ -279,7 +279,6 @@ with tab_elimination:
 	
 
 	for i in full_game_set:
-		st.write(i)
 		if "TBD" in i:
 			unset_cfp_games.append(i[:50])
 	
