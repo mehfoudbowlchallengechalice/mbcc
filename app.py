@@ -70,13 +70,13 @@ def run_query_history(worksheet_name):
     return df
 
 
-st.cache_data(ttl=240)
+st.cache_data(ttl="240s")
 def run_query_current_1(worksheet_name):
     df = conn.read(worksheet=worksheet_name)
     return df
 
 
-st.cache_data(ttl=300)
+st.cache_data(ttl="300s")
 def run_query_current_2(worksheet_name):
     df = conn.read(worksheet=worksheet_name)
     return df
