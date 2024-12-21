@@ -279,6 +279,7 @@ with tab_elimination:
 	for player in the_people_list:
 		# setting the potential correct picks based on the player
 		potential_correct_picks = set(remaining_df[remaining_df['gametracker']==0]["Game"]+remaining_df[remaining_df['gametracker']==0][player])
+		print(potential_current_picks)
 		# adding in the current correct picks
 		
 		player_current_picks = main_score_df[main_score_df["Player"] == player]["Picks Correct"].values
