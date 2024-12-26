@@ -53,7 +53,7 @@ st.header("Day 9 - The ramp up begins!")
 #st.header("Day 12 - The Hokie Prize is still in reach for everyone!")
 #st.header("Day 13 - Christopher takes the Crown before the Championship, but there's still a reason to watch!")
 #st.header("MBCC 12 Champion - Christopher; MBCC 12 Second Place - Joseph")
-#st.header("LET THE PLAYOFFS ACTUALLY BEGIN!")
+#st.header("LET THE PLAYOFFS CONTINUE!")
 
 ##TODO drop down here for players (create player tab?)
 ## set option to have current winner in bold
