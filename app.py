@@ -42,7 +42,7 @@ MBCC 13 in 2024-25
 #st.header("Day 11 - Official best day of the year!")
 #st.header("Day 14 - Playoffs Continue!")
 #st.header("Day 15 - Let's Go Hokies!")
-st.header("Day 17 & 18 - Playoffs Continue!")
+st.header("Day 17 & 18 - Semifinals - for MBCC and the CFP!")
 #st.header("The Picks are IN! - HERE WE GO!")
 #st.header("Day 1 - 7 games - Upset Pick City!")
 #st.header("Day 2 - What a comeback win to cut the first place cluster down to two!")
