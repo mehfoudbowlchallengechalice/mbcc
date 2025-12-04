@@ -211,7 +211,7 @@ with tab_today:
 	#st.write(actual_today)
 	### today, future, all drop down to show picks
 	option = st.selectbox("Select Games to See", ("Today", "Future", "All"))
-	
+	print(min(pd.to_datetime(new_live_df.game_date)))
 	if option == "All":
 		st.dataframe(new_live_df.style.apply(highlight_all_games, axis=None), column_config={"game_page": st.column_config.LinkColumn(), "team_focus_indicator": None}, hide_index=True)
 	elif option == "Future":
