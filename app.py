@@ -217,9 +217,12 @@ with tab_today:
 	elif option == "Future":
 		new_live_df = new_live_df[pd.to_datetime(new_live_df.game_date) >= actual_today]
 		st.dataframe(new_live_df.style.apply(highlight_all_games, axis=None), column_config={"game_page": st.column_config.LinkColumn(), "team_focus_indicator": None}, hide_index=True)
-	elif option == "Today":
-		new_live_df = new_live_df[(pd.to_datetime(new_live_df.game_date) >= actual_today)] 
-		new_live_df = new_live_df[(pd.to_datetime(new_live_df.game_date) == min(pd.to_datetime(new_live_df.game_date)))] 
+	elif option == "Today" and actual_today < '2026-01-20': # setting the last day of possible games
+		new_live_df = new_live_df[(pd.to_datetime(new_live_df.game_date) >= actual_today)]
+		try: 
+			new_live_df = new_live_df[(pd.to_datetime(new_live_df.game_date) == min(pd.to_datetime(new_live_df.game_date)))] 
+		except:
+			new_live_df
 		st.dataframe(new_live_df.style.apply(highlight_all_games, axis=None), column_config={"game_page": st.column_config.LinkColumn(), "team_focus_indicator": None}, hide_index=True)
         
         
