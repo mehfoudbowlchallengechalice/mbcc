@@ -190,7 +190,7 @@ with tab_today:
 
 	new_live_df['home_team_score'] = new_live_df['home_team_score'].astype(int)
 	new_live_df['away_team_score'] = new_live_df['away_team_score'].astype(int)
-	
+	print(new_live_df)
 	new_live_df['upset_indicator'] = np.where(new_live_df.upset_indicator == 1, True, False)
 	new_live_df['unanimous_indicator'] = np.where(new_live_df.unanimous_indicator == 1, True, False)
 	# adding time formatting for nemo... does nothing for the visuals and use of the app; but hey, Nemo might be happy?
@@ -209,7 +209,7 @@ with tab_today:
 	#st.write(actual_today)
 	### today, future, all drop down to show picks
 	option = st.selectbox("Select Games to See", ("Today", "Future", "All"))
-	
+	print(new_live_df)
 	if option == "All":
 		st.dataframe(new_live_df.style.apply(highlight_all_games, axis=None), column_config={"game_page": st.column_config.LinkColumn(), "team_focus_indicator": None}, hide_index=True)
 	elif option == "Future":
