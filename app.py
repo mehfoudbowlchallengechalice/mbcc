@@ -208,48 +208,56 @@ with tab_today:
 	picks_dates["loser"] = np.where(picks_dates["winner"] == 'TBD', 'TBD', np.where(picks_dates["game_home_team"] == picks_dates["winner"], picks_dates["game_away_team"], picks_dates["game_home_team"]))
 
 	actual_today = pd.to_datetime((datetime.datetime.today()-pd.Timedelta(hours=5)).strftime('%Y-%m-%d'))
-	#st.write(actual_today)
-	### today, future, all drop down to show picks
-	option = st.selectbox("Select Games to See", ("Today", "Future", "All"))
-	print(min(pd.to_datetime(new_live_df.game_date)))
-	if option == "All":
-		st.dataframe(new_live_df.style.apply(highlight_all_games, axis=None), column_config={"game_page": st.column_config.LinkColumn(), "team_focus_indicator": None}, hide_index=True)
-	elif option == "Future":
-		new_live_df = new_live_df[pd.to_datetime(new_live_df.game_date) >= actual_today]
-		st.dataframe(new_live_df.style.apply(highlight_all_games, axis=None), column_config={"game_page": st.column_config.LinkColumn(), "team_focus_indicator": None}, hide_index=True)
-	elif option == "Today" and actual_today < '2026-01-20': # setting the last day of possible games
-		new_live_df = new_live_df[(pd.to_datetime(new_live_df.game_date) >= actual_today)]
-		try: 
-			new_live_df = new_live_df[(pd.to_datetime(new_live_df.game_date) == min(pd.to_datetime(new_live_df.game_date)))] 
-		except:
-			new_live_df
-		st.dataframe(new_live_df.style.apply(highlight_all_games, axis=None), column_config={"game_page": st.column_config.LinkColumn(), "team_focus_indicator": None}, hide_index=True)
-        
-        
-	st.markdown("* upset pick games are :blue[blue] with the underdog seen in :blue[blue] and unanimously picked games are :grey[grey] with the favorite in :green[green].")
-    
-	st.markdown("""---""")
-	st.header("Picks")
 	
-	selection_list_p, deselection_list_p = toggle_list("a")
-	selection_list = np.insert(selection_list_p, 0, 'Game')
-
-	#picks_dates_styled = picks_dates.style.apply(highlight_all_names, axis=None)
-
-	columns_to_hide = ["game_date", "game_home_team", "game_away_team", "game_name", "winner", "loser"]+deselection_list_p
-	none_list = [None]*len(columns_to_hide)
-	column_hide_dict = dict(zip(columns_to_hide, none_list))
+	st.write("Today:", actual_today)
+	if actual_today < '2025-01-20':
+		### today, future, all drop down to show picks
+		option = st.selectbox("Select Games to See", ("Today", "Future", "All"))
+		if option == "All":
+			st.dataframe(new_live_df.style.apply(highlight_all_games, axis=None), column_config={"game_page": st.column_config.LinkColumn(), "team_focus_indicator": None}, hide_index=True)
+		elif option == "Future":
+			new_live_df = new_live_df[pd.to_datetime(new_live_df.game_date) >= actual_today]
+			st.dataframe(new_live_df.style.apply(highlight_all_games, axis=None), column_config={"game_page": st.column_config.LinkColumn(), "team_focus_indicator": None}, hide_index=True)
+		elif option == "Today" and actual_today < '2026-01-20': # setting the last day of possible games
+			new_live_df = new_live_df[(pd.to_datetime(new_live_df.game_date) >= actual_today)]
+			try: 
+				new_live_df = new_live_df[(pd.to_datetime(new_live_df.game_date) == min(pd.to_datetime(new_live_df.game_date)))] 
+			except:
+				new_live_df
+			st.dataframe(new_live_df.style.apply(highlight_all_games, axis=None), column_config={"game_page": st.column_config.LinkColumn(), "team_focus_indicator": None}, hide_index=True)
+	        
+	        
+		st.markdown("* upset pick games are :blue[blue] with the underdog seen in :blue[blue] and unanimously picked games are :grey[grey] with the favorite in :green[green].")
+	    
+		st.markdown("""---""")
+		st.header("Picks")
+		
+		selection_list_p, deselection_list_p = toggle_list("a")
+		selection_list = np.insert(selection_list_p, 0, 'Game')
 	
-	if option == "All":
-		st.dataframe(picks_dates.style.apply(highlight_all_names, axis=None), hide_index = True, column_config = column_hide_dict)
-	elif option == "Future":
-		picks_dates = picks_dates[pd.to_datetime(picks_dates.game_date) >= actual_today]
-		st.dataframe(picks_dates.style.apply(highlight_all_names, axis=None), hide_index = True, column_config = column_hide_dict)
-	elif option == "Today":
-		picks_dates = picks_dates[(pd.to_datetime(picks_dates.game_date) >= actual_today)] 
-		picks_dates = picks_dates[(pd.to_datetime(picks_dates.game_date) == min(pd.to_datetime(picks_dates.game_date)))]
-		st.dataframe(picks_dates.style.apply(highlight_all_names, axis=None), hide_index = True, column_config = column_hide_dict)
+		#picks_dates_styled = picks_dates.style.apply(highlight_all_names, axis=None)
+	
+		columns_to_hide = ["game_date", "game_home_team", "game_away_team", "game_name", "winner", "loser"]+deselection_list_p
+		none_list = [None]*len(columns_to_hide)
+		column_hide_dict = dict(zip(columns_to_hide, none_list))
+		
+		if option == "All":
+			st.dataframe(picks_dates.style.apply(highlight_all_names, axis=None), hide_index = True, column_config = column_hide_dict)
+		elif option == "Future":
+			picks_dates = picks_dates[pd.to_datetime(picks_dates.game_date) >= actual_today]
+			st.dataframe(picks_dates.style.apply(highlight_all_names, axis=None), hide_index = True, column_config = column_hide_dict)
+		elif option == "Today":
+			picks_dates = picks_dates[(pd.to_datetime(picks_dates.game_date) >= actual_today)] 
+			picks_dates = picks_dates[(pd.to_datetime(picks_dates.game_date) == min(pd.to_datetime(picks_dates.game_date)))]
+			st.dataframe(picks_dates.style.apply(highlight_all_names, axis=None), hide_index = True, column_config = column_hide_dict)
 
+	else:
+		st.dataframe(new_live_df.style.apply(highlight_all_games, axis=None), column_config={"game_page": st.column_config.LinkColumn(), "team_focus_indicator": None}, hide_index=True)
+	    st.markdown("* upset pick games are :blue[blue] with the underdog seen in :blue[blue] and unanimously picked games are :grey[grey] with the favorite in :green[green].")
+	    
+		st.markdown("""---""")
+		st.header("Picks")
+		st.dataframe(picks_dates.style.apply(highlight_all_names, axis=None), hide_index = True, column_config = column_hide_dict)
 
 with tab_mbcc_13:
 	
