@@ -28,6 +28,10 @@ MBCC 14 in 2025-26
 
 #pick_url = 'https://forms.gle/W8HCNsmgwr1oWYoR6'
 #st.header("Make your [picks](%s) before this Friday the 13th at 13:00!" % pick_url)
+
+st.header("Waiting for the bowl games to be announced")
+
+#### 13
 #st.header("'twas the night before bowl season...")
 #st.header("Day 1 - Best Day of the Year! Maybe?")
 #st.header("Day 2 - Almost Heaven?")
@@ -43,7 +47,9 @@ MBCC 14 in 2025-26
 #st.header("Day 14 - Playoffs Continue!")
 #st.header("Day 15 - Let's Go Hokies!")
 #st.header("Day 17 & 18 - Semifinals - for MBCC and the CFP!")
-st.header("Day 19 - CFP Final & MBCC Decided")
+#st.header("Day 19 - CFP Final & MBCC Decided")
+
+#### 12
 #st.header("The Picks are IN! - HERE WE GO!")
 #st.header("Day 1 - 7 games - Upset Pick City!")
 #st.header("Day 2 - What a comeback win to cut the first place cluster down to two!")
@@ -59,7 +65,8 @@ st.header("Day 19 - CFP Final & MBCC Decided")
 #st.header("Day 12 - The Hokie Prize is still in reach for everyone!")
 #st.header("Day 13 - Christopher takes the Crown before the Championship, but there's still a reason to watch!")
 #st.header("MBCC 12 Champion - Christopher; MBCC 12 Second Place - Joseph")
-st.header("LET THE PLAYOFFS END!")
+#st.header("LET THE PLAYOFFS END!")
+
 
 ##TODO drop down here for players (create player tab?)
 ## set option to have current winner in bold
