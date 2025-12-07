@@ -250,6 +250,12 @@ with tab_today:
 			st.dataframe(picks_dates.style.apply(highlight_all_names, axis=None), hide_index = True, column_config = column_hide_dict)
 
 	else:
+
+		columns_to_hide = ["game_date", "game_home_team", "game_away_team", "game_name", "winner", "loser"]+deselection_list_p
+		none_list = [None]*len(columns_to_hide)
+		column_hide_dict = dict(zip(columns_to_hide, none_list))
+
+		
 		st.dataframe(new_live_df.style.apply(highlight_all_games, axis=None), column_config={"game_page": st.column_config.LinkColumn(), "team_focus_indicator": None}, hide_index=True)
 		st.markdown("* upset pick games are :blue[blue] with the underdog seen in :blue[blue] and unanimously picked games are :grey[grey] with the favorite in :green[green].")
 
