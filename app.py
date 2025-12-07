@@ -23,7 +23,7 @@ from PIL import Image
 st.set_page_config(layout="wide")
 
 st.header ("""
-MBCC 13 in 2024-25
+MBCC 14 in 2025-26
 """)
 
 #pick_url = 'https://forms.gle/W8HCNsmgwr1oWYoR6'
@@ -514,8 +514,8 @@ with need_to_know:
 	
 
 	st.markdown("""**Winnings:**  \n
-	1. First place gets $300 and their name on the trophy (determined by most picks correct and tiebreaker if needed)  \n
- 	2. Second place gets about $150 (whatever is in the change jar) (determined by best point spread)  \n
+	1. First place gets $500 and their name on the trophy (determined by most picks correct and tiebreaker if needed)  \n
+ 	2. Second place gets about $200 (whatever is in the change jar) (determined by best point spread)  \n
   	3. Hokie Prize $300 split between those who beat Papa Smurf's number of wins  \n
 	""")
 
