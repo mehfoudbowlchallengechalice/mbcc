@@ -251,6 +251,9 @@ with tab_today:
 
 	else:
 
+		selection_list_p, deselection_list_p = toggle_list("a")
+		selection_list = np.insert(selection_list_p, 0, 'Game')
+		
 		columns_to_hide = ["game_date", "game_home_team", "game_away_team", "game_name", "winner", "loser"]+deselection_list_p
 		none_list = [None]*len(columns_to_hide)
 		column_hide_dict = dict(zip(columns_to_hide, none_list))
