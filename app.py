@@ -225,10 +225,8 @@ with tab_today:
 			except:
 				new_live_df
 			st.dataframe(new_live_df.style.apply(highlight_all_games, axis=None), column_config={"game_page": st.column_config.LinkColumn(), "team_focus_indicator": None}, hide_index=True)
-            
         st.markdown("* upset pick games are :blue[blue] with the underdog seen in :blue[blue] and unanimously picked games are :grey[grey] with the favorite in :green[green].")
-	    
-		st.markdown("""---""")
+	    st.markdown("""---""")
 		st.header("Picks")
 		
 		selection_list_p, deselection_list_p = toggle_list("a")
