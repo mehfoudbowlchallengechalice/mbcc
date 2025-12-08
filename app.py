@@ -29,7 +29,8 @@ MBCC 14 in 2025-26
 pick_url = 'https://forms.gle/FF3gHebHe2MS92QB7'
 st.header("Make your [picks](%s) before this Thursday the 11th at 12:00!" % pick_url)
 
-st.header("Bowl games have been announced! check them out below and use the links to visit the ESPN Gamecast, this year's MBCC app is brought to you by NO ONE, but I'm lazy and ESPN is the first site I landed on for it")
+st.header("Bowl games have been announced!")
+st.write("Check the games out below and use the links to visit the ESPN Gamecast; this year's MBCC app is brought to you by NO ONE, but I'm lazy and ESPN is the first site I landed on for it")
 
 #### 13
 #st.header("'twas the night before bowl season...")
