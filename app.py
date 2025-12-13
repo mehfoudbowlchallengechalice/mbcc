@@ -27,9 +27,9 @@ MBCC 14 in 2025-26
 """)
 
 pick_url = 'https://forms.gle/FF3gHebHe2MS92QB7'
-st.header("Make your [picks](%s) before this Friday the 12th at 12:00 PM!" % pick_url)
+#st.header("Make your [picks](%s) before this Friday the 12th at 12:00 PM!" % pick_url)
 
-st.header("Bowl games have been announced!")
+st.header("Picks are in - email tomorrow!")
 st.write("Check the games out below and use the links to visit the ESPN Gamecast; this year's MBCC app is brought to you by NO ONE, but I'm lazy and ESPN is the first site I landed on for it")
 
 #### 13
