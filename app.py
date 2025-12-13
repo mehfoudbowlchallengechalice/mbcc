@@ -218,7 +218,7 @@ with tab_today:
 	actual_today = pd.to_datetime((datetime.datetime.today()-pd.Timedelta(hours=5)).strftime('%Y-%m-%d'))
 	
 	st.write("Today:", actual_today)
-	if actual_today < pd.to_datetime('2025-01-20'):
+	if actual_today < pd.to_datetime('2026-01-20'):
 		### today, future, all drop down to show picks
 		option = st.selectbox("Select Games to See", ("Today", "Future", "All"))
 		if option == "All":
