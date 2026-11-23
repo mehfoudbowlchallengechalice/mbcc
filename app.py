@@ -17,7 +17,7 @@ from backend.sheets_adapter import WORKSHEETS, build_snapshot
 from web_app import data
 
 ROOT = Path(__file__).resolve().parent
-PAGES = ["Live", "Standings", "Season", "History", "Info"]
+PAGES = ["Live", "Standings", "Bracket", "Season", "History", "Info"]
 COLORS = ["#387bc4", "#bb612d", "#248363", "#8764ae", "#c2527a", "#248b96", "#5b68af", "#8a674b", "#c34b46", "#4d94ae"]
 TROPHY = '<svg viewBox="0 0 24 28" aria-hidden="true"><path d="M6 2h12v8c0 5-2.5 8-6 8s-6-3-6-8V2Zm0 2H2v5c0 4 2 6 6 6M18 4h4v5c0 4-2 6-6 6M12 18v6M7 26h10" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>'
 
@@ -109,7 +109,7 @@ def load_data(source, endpoint, season):
         st.session_state.source_identity = identity
         st.session_state.pop("last_snapshot", None)
         st.session_state.pop("detail", None)
-        for key in ("game_filter", "season_players", "game_players", "elimination_player", "history_player"):
+        for key in ("game_filter", "season_players", "game_players", "elimination_player", "history_player", "bracket_player", "bracket_saved_player", "bracket_game"):
             st.session_state.pop(key, None)
     try:
         snapshot = fetch_snapshot(source, endpoint, season)
@@ -214,7 +214,8 @@ def player_filter(snapshot, key):
 
 
 def game_view(snapshot, identifier, zone):
-    if st.button("← Back to Live", key="back_game"):
+    origin = st.session_state.get("primary_nav_value", "Live")
+    if st.button(f"← Back to {origin}", key="back_game"):
         st.session_state.pop("detail", None)
         st.rerun()
     st.title("Game details")
@@ -292,6 +293,62 @@ def live_view(snapshot, zone):
         with card(f'game_{game["id"]}'):
             game_card(game, zone)
             st.button("Everyone’s picks →", key=f'game_{game["id"]}', on_click=open_detail, args=("game", game["id"]), width="stretch")
+
+
+def bracket_view(snapshot, zone):
+    st.subheader("The road to the championship")
+    st.caption(snapshot["season"])
+    rounds = data.playoff_games(snapshot)
+    games = [game for _, entries in rounds for game in entries]
+    if not games:
+        st.info("The playoff bracket isn’t available yet. Games will appear here when the schedule includes playoff rounds.")
+        return
+    players = snapshot["players"]
+    if "bracket_player" not in st.session_state:
+        st.session_state.bracket_player = st.session_state.get("bracket_saved_player", "")
+    if st.session_state.get("bracket_player") not in [""] + players:
+        st.session_state.pop("bracket_player", None)
+    player = st.selectbox("Show picks for", [""] + players, format_func=lambda value: value or "Results only", key="bracket_player")
+    st.session_state.bracket_saved_player = player
+    completed = sum(data.is_final(game) for game in games)
+    st.caption(f"{completed} of {len(games)} playoff games complete · Swipe or scroll sideways to see every round.")
+    # The source has rounds, but no seed or feeder-game relationships. Keep
+    # games in kickoff order; do not draw invented game-to-game connections.
+    columns = []
+    for index, (title, entries) in enumerate(rounds):
+        cards = []
+        for game in entries:
+            status = (game.get("live") or {}).get("status", "final" if data.is_final(game) else "scheduled").upper()
+            lines = [f'<article class="bracket-game"><p class="eyebrow">{esc(status)}</p><h3>{esc(game["name"])}</h3>']
+            for side in ("away", "home"):
+                team = game[side + "Team"]
+                won = data.is_final(game) and team == game.get("winner")
+                lines.append(f'<div class="bracket-team {"bracket-winner" if won else ""}"><span>{esc(team)}{" <span aria-label=Winner>✓</span>" if won else ""}</span><strong>{esc(data.score(game.get(side + "Score")))}</strong></div>')
+            lines.append(f'<p class="small muted">{esc(data.kickoff_label(game, zone))}</p>')
+            lines.append(verification_badge(game))
+            if player:
+                pick = game.get("picks", {}).get(player)
+                result, style = "", ""
+                if pick and data.is_final(game):
+                    correct = pick == game["winner"]
+                    result, style = (" · ✓ Correct", "correct") if correct else (" · ✕ Incorrect", "incorrect")
+                lines.append(f'<p class="bracket-pick {style}">Pick: <strong>{esc(pick or "No pick")}</strong>{result}</p>')
+            lines.append('</article>')
+            cards.append(''.join(lines))
+        if not entries:
+            cards.append('<div class="bracket-game muted">Awaiting the schedule</div>')
+        columns.append(f'<section class="bracket-round"><div class="bracket-round-heading" role="heading" aria-level="2"><p class="eyebrow">ROUND {index + 1}</p><p class="bracket-round-title">{esc(title)}</p></div><div class="bracket-matchups">{"".join(cards)}</div></section>')
+    st.markdown(f'<div class="bracket-scroll" role="region" aria-label="Playoff bracket by round" tabindex="0"><div class="playoff-bracket">{"".join(columns)}</div></div>', unsafe_allow_html=True)
+    st.caption("Matchups update with the published schedule. Games are shown in kickoff order within each round.")
+    final = rounds[-1][1]
+    if len(final) == 1 and data.is_final(final[0]):
+        st.success(f'🏆 National champion: {final[0]["winner"]}')
+    st.subheader("Explore a game")
+    by_id = {game["id"]: game for game in games}
+    if st.session_state.get("bracket_game") not in by_id:
+        st.session_state.pop("bracket_game", None)
+    identifier = st.selectbox("Playoff game", list(by_id), format_func=lambda value: by_id[value]["name"], key="bracket_game")
+    st.button("Game details and everyone’s picks →", key="bracket_details", on_click=open_detail, args=("game", identifier), width="stretch")
 
 
 def standings_view(snapshot):
@@ -440,6 +497,8 @@ def current_screen(source, endpoint, season, zone):
         live_view(snapshot, zone)
     elif page == "Standings":
         standings_view(snapshot)
+    elif page == "Bracket":
+        bracket_view(snapshot, zone)
     elif page == "Season":
         season_view(snapshot)
     elif page == "History":
