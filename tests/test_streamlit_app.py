@@ -224,7 +224,7 @@ class StreamlitAppTests(unittest.TestCase):
         ]
         connection = Mock()
         def read_sheet(worksheet, ttl, **options):
-            if worksheet == "playoff_history":
+            if worksheet == "playoff_picks":
                 self.assertEqual(options["spreadsheet"], "https://docs.google.com/spreadsheets/d/1Iwl1WEzLEXu05ZtFcfZovWwQsECNy8LH3II760C-w2E/edit")
                 self.assertIsNone(options["header"])
                 self.assertEqual(options["nrows"], 3)

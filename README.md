@@ -124,7 +124,7 @@ schedule and does not require a new worksheet.
 
 At the bottom of Bracket, **All-time playoff standings** lists every historical
 user, correct playoff games all time, and correct unknown playoff games all
-time. The source is the **`playoff_history`** tab in the separate history workbook
+time. The source is the **`playoff_picks`** tab in the separate history workbook
 (`1Iwl1WEzLEXu05ZtFcfZovWwQsECNy8LH3II760C-w2E`). Only its first three rows are
 read: user names across row 1, `Overall` in the first column of one total row,
 and `Overall Unknown` in the first column of the other. Those totals are used
@@ -212,7 +212,7 @@ The owner confirmed that **all worksheets read by Streamlit are in the challenge
 file**, including `basic_history`, `agg_history`, and `season_history`. Both
 spreadsheet variables in `backend/.env.example` and `cloudrun/env.yaml` therefore
 point to the challenge file. The separate history file is now queried only for
-`playoff_history`; the three existing overall history tabs stay in the challenge
+`playoff_picks`; the three existing overall history tabs stay in the challenge
 file.
 
 The backend reads the private challenge file using the dedicated runtime service

@@ -35,7 +35,8 @@ def worksheet_titles():
         for key, value in titles.items()
     ):
         raise ValueError("Worksheet mapping requires known aliases and nonempty tab names")
-    return {name: titles.get(name, name) for name in WORKSHEETS + OPTIONAL_WORKSHEETS + UPDATE_WORKSHEETS + PLAYOFF_HISTORY_WORKSHEETS}
+    return {name: titles.get(name, "playoff_picks" if name == "playoff_history" else name)
+            for name in WORKSHEETS + OPTIONAL_WORKSHEETS + UPDATE_WORKSHEETS + PLAYOFF_HISTORY_WORKSHEETS}
 
 
 def sheet_range(title):

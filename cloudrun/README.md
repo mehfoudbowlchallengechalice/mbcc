@@ -35,7 +35,7 @@ and the “Game not verified” / “Scores not verified” labels.
 
 The current configuration also sets `MBCC_PLAYOFF_HISTORY_ENABLED=1` and
 `MBCC_PLAYOFF_HISTORY_SHEET_ID=1Iwl1WEzLEXu05ZtFcfZovWwQsECNy8LH3II760C-w2E`.
-The API reads only rows 1–3 of `playoff_history`: user names, `Overall`, and
+The API reads only rows 1–3 of `playoff_picks`: user names, `Overall`, and
 `Overall Unknown`, and returns the two per-user counts in `playoffStandings`.
 The runtime reader account needs Viewer access to this separate workbook.
 Existing overall history tabs keep their current challenge-workbook routing.

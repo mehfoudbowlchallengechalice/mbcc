@@ -48,7 +48,7 @@ if snapshot.get("todaysUpdate") != (updates[0] if updates else None):
 print("Source confirmed: live_scores_and_games;", len(games), "games.")
 print("Published blog posts:", len(updates))
 if snapshot.get("playoffStandingsError"):
-    raise SystemExit("The API is running, but playoff history could not load. Check Viewer access to the separate history workbook and the playoff_history tab.")
+    raise SystemExit("The API is running, but playoff history could not load. Check Viewer access to the separate history workbook and the playoff_picks tab.")
 playoff_standings = snapshot.get("playoffStandings")
 if not isinstance(playoff_standings, list):
     raise SystemExit("The service did not return playoff standings; check the backend and MBCC_PLAYOFF_HISTORY_ENABLED configuration.")

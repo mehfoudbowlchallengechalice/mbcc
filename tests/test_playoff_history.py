@@ -62,7 +62,7 @@ class PlayoffHistoryTests(unittest.TestCase):
             urls.append(request.full_url)
             query = parse_qs(urlsplit(request.full_url).query)
             if "/history-file/" in request.full_url:
-                self.assertEqual(query["ranges"], ["'playoff_history'!1:3"])
+                self.assertEqual(query["ranges"], ["'playoff_picks'!1:3"])
                 if fail:
                     raise OSError("private upstream token details")
                 values = [{"values": ROWS[:3]}]

@@ -333,22 +333,22 @@ def playoff_history_standings(values):
     users = values[0]
     totals = {text(row[0]).casefold(): row for row in values[1:3] if row}
     if not {"overall", "overall unknown"}.issubset(totals):
-        raise ValueError("playoff_history needs Overall and Overall Unknown in the first column of rows 2 and 3")
+        raise ValueError("playoff_picks needs Overall and Overall Unknown in the first column of rows 2 and 3")
     standings, names = [], set()
     for column, value in enumerate(users[1:], start=1):
         player = text(value)
         if not player:
             continue
         if player in names:
-            raise ValueError("playoff_history contains duplicate users")
+            raise ValueError("playoff_picks contains duplicate users")
         names.add(player)
         entry = {"player": player}
         for label, key in (("overall", "correctPlayoff"), ("overall unknown", "correctUnknownPlayoff")):
             row = totals[label]
             value = row[column] if column < len(row) else None
-            count = integer(value, field=f"playoff_history.{label}.{player}") if text(value) else None
+            count = integer(value, field=f"playoff_picks.{label}.{player}") if text(value) else None
             if count is not None and count < 0:
-                raise ValueError("playoff_history totals must be nonnegative")
+                raise ValueError("playoff_picks totals must be nonnegative")
             entry[key] = count
         standings.append(entry)
     return standings

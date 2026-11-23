@@ -65,7 +65,7 @@ def fetch_snapshot(source, endpoint, season):
         from backend.sheets_adapter import playoff_history_standings
         history_id = setting("mbcc_playoff_history_sheet_id", PLAYOFF_HISTORY_SHEET_ID)
         history_url = history_id if history_id.startswith("https://") else f"https://docs.google.com/spreadsheets/d/{history_id}/edit"
-        frame = connection.read(spreadsheet=history_url, worksheet=titles.get("playoff_history", "playoff_history"),
+        frame = connection.read(spreadsheet=history_url, worksheet=titles.get("playoff_history", "playoff_picks"),
                                 ttl=60, header=None, nrows=3)
         frame = frame.astype(object).where(pd.notna(frame), None)
         snapshot["playoffStandings"] = playoff_history_standings(frame.values.tolist())
