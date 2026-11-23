@@ -91,6 +91,7 @@ def main():
                     return
                 page.locator("button").filter(has_text="keyboard_double_arrow_right").click()
                 sidebar = page.get_by_test_id("stSidebar")
+                sidebar.get_by_text("Current players only", exact=True).click()
                 sidebar.get_by_text("iPhone backend", exact=True).click()
                 endpoint = sidebar.get_by_role("textbox", name="Snapshot URL")
                 endpoint.fill(f"http://127.0.0.1:{server.server_port}/api/snapshot")

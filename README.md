@@ -28,6 +28,15 @@ picks with the spreadsheet’s MBCC score in smaller parentheses; ranking keeps
 the MBCC score ordering, including shared ranks. The Info screen includes full
 and half championship trophies from the same history rules as the iPhone app.
 
+The sidebar also has a **Current players only** filter, enabled by default.
+It applies to every tab and game details, including standings, player choices,
+season charts and elimination, historical records, all-time playoff standings,
+and the trophy cabinet. Turn it off to include former players. Current status
+uses `agg_history.Active`, then `basic_history.Current` when no career record
+exists; new players without either record use the current season roster.
+History keeps its individual player and winner filters. Season-wide historical
+totals retain the spreadsheet's original aggregate calculations.
+
 Open **Data Connection** using the sidebar control at the upper left:
 
 - **Google Sheets** reuses the existing `[connections.gsheets]` Streamlit secrets.

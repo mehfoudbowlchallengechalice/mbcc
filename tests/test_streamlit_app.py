@@ -58,7 +58,7 @@ class StreamlitAppTests(unittest.TestCase):
         self.assert_clean()
         self.assertTrue(any("Choose players" in item.value for item in self.app.info))
         self.page("History")
-        self.app.toggle(key="history_former").set_value(True).run()
+        self.app.sidebar.toggle(key="current_players_only").set_value(False).run()
         self.app.toggle(key="history_more").set_value(True).run()
         self.assert_clean()
         self.assertIn("Player career breakdown", [heading.value for heading in self.app.subheader])
@@ -119,6 +119,7 @@ class StreamlitAppTests(unittest.TestCase):
             {"player": "Elise", "correctPlayoff": None, "correctUnknownPlayoff": 2},
         ]
         st.cache_data.clear()
+        self.app.sidebar.toggle(key="current_players_only").set_value(False).run()
         self.page("Bracket")
         self.assertIn("All-time playoff standings", [item.value for item in self.app.subheader])
         text = self.text()
@@ -133,6 +134,63 @@ class StreamlitAppTests(unittest.TestCase):
         self.app.selectbox(key="bracket_player").set_value("Christopher").run()
         self.assert_clean()
         self.assertIn("Former &lt;player&gt;", self.text())
+
+    def test_sidebar_current_player_filter_applies_across_tabs_and_details(self):
+        self.snapshot.update(playoff_fixture(self.snapshot))
+        for row in self.snapshot["history"]:
+            if row["player"] == "Christopher":
+                row["current"] = False
+        for row in self.snapshot["careers"]:
+            if row["player"] == "Christopher":
+                row["active"] = False
+        self.snapshot["standings"][0].update(player="Christopher", correct=999, overallScore=999)
+        self.snapshot["playoffStandings"] = [
+            {"player": name, "correctPlayoff": 12, "correctUnknownPlayoff": 4}
+            for name in ("Christopher", "Elise", "Former")
+        ]
+        st.cache_data.clear()
+        self.app.run()
+        self.assertNotIn("Christopher", self.text())  # Live leader
+        self.assertTrue(self.app.sidebar.toggle(key="current_players_only").value)
+        self.page("Standings")
+        self.assertNotIn("Christopher", self.text())
+        self.page("Bracket")
+        self.assertNotIn("Christopher", self.app.selectbox(key="bracket_player").options)
+        self.assertNotIn('<th scope="row">Former', self.text())
+        self.app.sidebar.toggle(key="current_players_only").set_value(False).run()
+        self.assertIn('<th scope="row">Former', self.text())
+        self.app.selectbox(key="bracket_player").set_value("Christopher").run()
+        self.app.sidebar.toggle(key="current_players_only").set_value(True).run()
+        self.assert_clean()
+        self.assertEqual(self.app.selectbox(key="bracket_player").value, "")
+        self.app.button(key="bracket_details").click().run()
+        self.assertNotIn("Christopher", self.app.multiselect(key="game_players").options)
+        self.app.sidebar.toggle(key="current_players_only").set_value(False).run()
+        self.assertIn("Christopher", self.app.multiselect(key="game_players").options)
+        self.page("Season")
+        self.app.selectbox(key="elimination_player").set_value("Christopher").run()
+        self.app.sidebar.toggle(key="current_players_only").set_value(True).run()
+        self.assert_clean()
+        self.assertNotIn("Christopher", self.app.multiselect(key="season_players").value)
+        self.assertNotIn("Christopher", self.app.selectbox(key="elimination_player").options)
+        self.assertNotIn("Christopher", self.text())
+        self.page("History")
+        self.assertNotIn("Include former players", [item.label for item in self.app.toggle])
+        self.assertNotIn("Christopher", self.app.selectbox(key="history_player").options)
+        self.app.sidebar.toggle(key="current_players_only").set_value(False).run()
+        self.app.selectbox(key="history_player").set_value("Christopher").run()
+        self.app.sidebar.toggle(key="current_players_only").set_value(True).run()
+        self.assert_clean()
+        self.assertEqual(self.app.selectbox(key="history_player").value, "All Players")
+        self.assertNotIn("Christopher", self.text())
+        self.page("Info")
+        self.assertNotIn("Christopher", self.text())
+        self.app.sidebar.toggle(key="current_players_only").set_value(False).run()
+        self.assertIn("Christopher", self.text())
+        self.page("Standings")
+        self.assertIn("Christopher", self.text())
+        self.page("Live")
+        self.assertIn("Christopher", self.text())
 
     def test_failed_live_connection_never_uses_demo_and_switching_clears_saved_data(self):
         with patch("web_app.data.fetch_api", side_effect=OSError("private upstream error")):
@@ -180,6 +238,7 @@ class StreamlitAppTests(unittest.TestCase):
         self.assertIn("Sheet briefing", [heading.value for heading in self.app.subheader])
         self.assertEqual(len(connection.read.call_args_list), 12)
         self.assertIn("Scores", self.text())
+        self.app.sidebar.toggle(key="current_players_only").set_value(False).run()
         self.page("Bracket")
         self.assertIn('<th scope="row">Former</th><td>12</td><td>0</td>', self.text())
         self.assertIn('<th scope="row">Alice</th><td>23</td><td>9</td>', self.text())

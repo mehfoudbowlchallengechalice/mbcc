@@ -89,6 +89,10 @@ def settings():
     sources = ["iPhone backend", "Google Sheets", "Demo"]
     defaults = {"api": 0, "sheets": 1, "demo": 2}
     with st.sidebar:
+        st.header("Player filters")
+        st.toggle("Current players only", value=True, key="current_players_only")
+        st.caption("Applies to every tab and game details. Turn off to include former players.")
+        st.divider()
         st.header("Data Connection")
         source = st.radio("Data source", sources, index=defaults.get(default, 0), key="data_source")
         endpoint = setting("mbcc_endpoint", data.DEFAULT_ENDPOINT)
@@ -439,6 +443,11 @@ def season_view(snapshot):
             st.info("Choose players to see the charts." if not selected else "Charts appear after the first result.")
     st.subheader("Elimination check")
     st.caption("Who can still reach the top?")
+    if not snapshot["players"]:
+        st.info("No players match the sidebar filter.")
+        return
+    if st.session_state.get("elimination_player") not in snapshot["players"]:
+        st.session_state.pop("elimination_player", None)
     with card("elimination"):
         player = st.selectbox("Player", snapshot["players"], key="elimination_player")
         result = data.elimination(snapshot, player)
@@ -456,20 +465,22 @@ def history_view(snapshot):
     st.subheader("A tradition worth keeping")
     st.caption("Mehfoud Bowl Challenge Chalice")
     with card("history_filters"):
-        player = st.selectbox("Player", ["All Players"] + sorted({row["player"] for row in snapshot["history"]}), key="history_player")
-        former = st.toggle("Include former players", key="history_former")
+        players = ["All Players"] + sorted({row["player"] for row in snapshot["history"] + snapshot["careers"]})
+        if st.session_state.get("history_player") not in players:
+            st.session_state.pop("history_player", None)
+        player = st.selectbox("Player", players, key="history_player")
         more = st.toggle("Show more than winners", key="history_more")
     st.subheader("Player season breakdown")
-    entries = [row for row in snapshot["history"] if (former or row["current"]) and (more or data.is_winner(row)) and (player == "All Players" or row["player"] == player)]
+    entries = [row for row in snapshot["history"] if (more or data.is_winner(row)) and (player == "All Players" or row["player"] == player)]
     if not entries:
-        st.info("No matching results. Try including former players or more than winners.")
+        st.info("No matching results. Try changing the sidebar player filter or showing more than winners.")
     for index, row in enumerate(sorted(entries, key=lambda row: row["season"], reverse=True)):
         with card(f"history_{index}"):
             st.markdown(f'<div class="comparison-row"><span class="eyebrow">{esc(row["season"])}</span><span class="small muted">{esc(row["award"])}</span></div><div class="list-row"><strong>{esc(row["player"])}</strong><strong class="row-value">{row["percentage"]:.1%}</strong></div><p class="small muted">{row["correct"]} correct of {row["games"]} picks</p>', unsafe_allow_html=True)
     st.subheader("Player career breakdown")
     with card("careers"):
         for row in snapshot["careers"]:
-            if (former or row["active"]) and (player == "All Players" or row["player"] == player):
+            if player == "All Players" or row["player"] == player:
                 st.markdown(f'<div class="list-row"><strong>{esc(row["player"])}</strong><div class="row-value"><strong>{row["percentage"]:.1%}</strong><small>{row["wins"]} W · {row["losses"]} L</small></div></div>', unsafe_allow_html=True)
     st.subheader("MBCC season breakdown")
     with card("seasons"):
@@ -496,7 +507,7 @@ def info_view(snapshot):
             st.write(detail)
     with card("trophies"):
         st.subheader("The trophy cabinet")
-        st.caption("Every player, past and present")
+        st.caption("Current players" if st.session_state.get("current_players_only", True) else "Every player, past and present")
         for record in data.championships(snapshot):
             trophies = TROPHY * record["fullWins"] + ''.join(f'<span class="half-trophy">{TROPHY}</span>' for _ in range(record["sharedWins"]))
             description = f'{record["fullWins"]} outright championships, {record["sharedWins"]} shared championships'
@@ -523,6 +534,7 @@ def current_screen(source, endpoint, season, zone):
         return
     if snapshot.get("isDemo") is True:
         st.info("DEMO · Sample results, not real standings")
+    snapshot = data.filter_current_players(snapshot, st.session_state.get("current_players_only", True))
     if detail and detail[0] == "updates":
         updates_view(snapshot)
     elif detail and detail[0] == "game":

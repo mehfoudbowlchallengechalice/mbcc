@@ -29,6 +29,40 @@ class WebModelTests(unittest.TestCase):
         self.snapshot = data.read_demo()
         self.now = datetime(2026, 11, 20, 2, tzinfo=timezone.utc)
 
+    def test_current_player_filter_covers_all_player_data_without_mutating_source(self):
+        self.snapshot["careers"][0]["active"] = False
+        self.snapshot["playoffStandings"] = [
+            {"player": name, "correctPlayoff": 10, "correctUnknownPlayoff": 2}
+            for name in ("Christopher", "Elise", "Former")
+        ]
+        original = copy.deepcopy(self.snapshot)
+        filtered = data.filter_current_players(self.snapshot)
+        self.assertNotIn("Christopher", filtered["players"])
+        for key in ("standings", "history", "careers", "playoffStandings"):
+            self.assertNotIn("Christopher", [row["player"] for row in filtered[key]])
+            self.assertIn("Elise", [row["player"] for row in filtered[key]])
+        self.assertNotIn("Former", [row["player"] for row in filtered["playoffStandings"]])
+        for game in filtered["games"]:
+            self.assertNotIn("Christopher", game["picks"])
+        for point in filtered["progress"]:
+            self.assertNotIn("Christopher", point["correct"])
+            self.assertNotIn("Christopher", point["pointDifference"])
+        self.assertEqual(filtered["seasons"], original["seasons"])
+        self.assertEqual(len(filtered["games"]), len(original["games"]))
+        self.assertEqual(self.snapshot, original)
+        self.assertEqual(data.filter_current_players(self.snapshot, False), original)
+
+    def test_current_player_filter_falls_back_to_history_and_roster(self):
+        self.snapshot["careers"] = []
+        self.snapshot["history"] = [
+            {"player": "Christopher", "current": False},
+            {"player": "Elise", "current": True},
+        ]
+        filtered = data.filter_current_players(self.snapshot)
+        self.assertNotIn("Christopher", filtered["players"])
+        self.assertIn("Elise", filtered["players"])
+        self.assertIn("Emma", filtered["players"])
+
     def test_shared_scores_and_competition_ranks_are_preserved(self):
         self.snapshot["standings"] = [
             {"player": "Alice", "correct": 3, "overallScore": 3.0002, "pointDifference": -7},

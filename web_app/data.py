@@ -107,6 +107,29 @@ def fetch_api(endpoint):
     return validate_snapshot(json.loads(payload))
 
 
+def filter_current_players(snapshot, current_only=True):
+    """Filter player data for every screen without changing the cached snapshot."""
+    if not current_only:
+        return snapshot
+    # Career Active is the player-level status. Fall back to History Current,
+    # then the season roster for players without a historical status yet.
+    status = {row["player"]: row["current"] for row in snapshot["history"]}
+    status.update({row["player"]: row["active"] for row in snapshot["careers"]})
+    current = {name for name, active in status.items() if active}
+    current.update(name for name in snapshot["players"] if name not in status)
+    filtered = dict(snapshot)
+    filtered["players"] = [name for name in snapshot["players"] if name in current]
+    for key in ("standings", "history", "careers", "playoffStandings"):
+        if key in snapshot and snapshot[key] is not None:
+            filtered[key] = [row for row in snapshot[key] if row["player"] in current]
+    filtered["games"] = [dict(game, picks={name: pick for name, pick in game["picks"].items() if name in current})
+                         for game in snapshot["games"]]
+    filtered["progress"] = [dict(point, **{field: {name: value for name, value in point[field].items() if name in current}
+                                          for field in ("correct", "pointDifference")})
+                            for point in snapshot["progress"]]
+    return filtered
+
+
 def read_demo():
     return validate_snapshot(json.loads((ROOT / "ios/MBCC/demo.json").read_text()))
 
