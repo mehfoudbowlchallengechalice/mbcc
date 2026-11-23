@@ -457,7 +457,7 @@ def info_view(snapshot):
     st.subheader("The winnings")
     st.caption("Rules carried over from the 2025–26 app")
     with card("winnings"):
-        for title, amount, detail in [("First place", "$500", "Most correct picks, tiebreakers if needed, and a name on the trophy."), ("Second place", "~$200", "Best point difference; prize is whatever is in the change jar."), ("Hokie Prize", "$300", "Split between those who beat Papa Smurf’s number of wins.")]:
+        for title, amount, detail in [("First place", "$300", "Most correct picks, tiebreakers if needed, and a name on the trophy."), ("Second place", "~$150", "Best point difference; prize is whatever is in the change jar."), ("Hokie Prize", "$300", "Split between those who beat Papa Smurf’s number of wins.")]:
             st.markdown(f'<div class="comparison-row"><strong>{title}</strong><strong class="prize">{amount}</strong></div>', unsafe_allow_html=True)
             st.write(detail)
     with card("trophies"):
