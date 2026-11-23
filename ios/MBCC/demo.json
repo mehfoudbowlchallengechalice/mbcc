@@ -1,0 +1,737 @@
+{
+  "isDemo": true,
+  "season": "MBCC 14 \u00b7 2025\u201326",
+  "updatedAt": "2025-12-24T23:00:00Z",
+  "players": [
+    "Christopher",
+    "Elise",
+    "Emma",
+    "Gregory",
+    "Jen",
+    "Joseph",
+    "Laura",
+    "Lauren",
+    "Nicholas",
+    "Poppi"
+  ],
+  "standings": [
+    {
+      "player": "Christopher",
+      "correct": 3,
+      "overallScore": 3,
+      "pointDifference": 7
+    },
+    {
+      "player": "Elise",
+      "correct": 2,
+      "overallScore": 2,
+      "pointDifference": -7
+    },
+    {
+      "player": "Emma",
+      "correct": 3,
+      "overallScore": 3,
+      "pointDifference": 7
+    },
+    {
+      "player": "Gregory",
+      "correct": 3,
+      "overallScore": 3,
+      "pointDifference": 7
+    },
+    {
+      "player": "Jen",
+      "correct": 2,
+      "overallScore": 2,
+      "pointDifference": -7
+    },
+    {
+      "player": "Joseph",
+      "correct": 2,
+      "overallScore": 2,
+      "pointDifference": -21
+    },
+    {
+      "player": "Laura",
+      "correct": 2,
+      "overallScore": 2,
+      "pointDifference": -7
+    },
+    {
+      "player": "Lauren",
+      "correct": 3,
+      "overallScore": 3,
+      "pointDifference": 7
+    },
+    {
+      "player": "Nicholas",
+      "correct": 3,
+      "overallScore": 3,
+      "pointDifference": 7
+    },
+    {
+      "player": "Poppi",
+      "correct": 2,
+      "overallScore": 2,
+      "pointDifference": -7
+    }
+  ],
+  "games": [
+    {
+      "id": "0",
+      "name": "Chalice Kickoff Bowl",
+      "startTime": "2025-12-20T13:00:00-05:00",
+      "venue": "Sample Stadium",
+      "network": "ESPN",
+      "homeTeam": "Virginia Tech",
+      "awayTeam": "Tulane",
+      "homeScore": 31,
+      "awayScore": 24,
+      "winner": "Virginia Tech",
+      "upset": true,
+      "unanimous": false,
+      "focusTeam": "Tulane",
+      "espnID": null,
+      "picks": {
+        "Christopher": "Virginia Tech",
+        "Elise": "Tulane",
+        "Emma": "Virginia Tech",
+        "Gregory": "Tulane",
+        "Jen": "Tulane",
+        "Joseph": "Virginia Tech",
+        "Laura": "Tulane",
+        "Lauren": "Virginia Tech",
+        "Nicholas": "Virginia Tech",
+        "Poppi": "Tulane"
+      }
+    },
+    {
+      "id": "1",
+      "name": "Holiday Bowl",
+      "startTime": "2025-12-21T16:00:00-05:00",
+      "venue": "Sample Stadium",
+      "network": "ABC",
+      "homeTeam": "Oregon",
+      "awayTeam": "Iowa",
+      "homeScore": 21,
+      "awayScore": 35,
+      "winner": "Iowa",
+      "upset": false,
+      "unanimous": false,
+      "focusTeam": null,
+      "espnID": null,
+      "picks": {
+        "Christopher": "Oregon",
+        "Elise": "Iowa",
+        "Emma": "Iowa",
+        "Gregory": "Oregon",
+        "Jen": "Iowa",
+        "Joseph": "Oregon",
+        "Laura": "Oregon",
+        "Lauren": "Iowa",
+        "Nicholas": "Oregon",
+        "Poppi": "Oregon"
+      }
+    },
+    {
+      "id": "2",
+      "name": "Citrus Bowl",
+      "startTime": "2025-12-22T19:00:00-05:00",
+      "venue": "Sample Stadium",
+      "network": "ESPN2",
+      "homeTeam": "Alabama",
+      "awayTeam": "Michigan",
+      "homeScore": 31,
+      "awayScore": 24,
+      "winner": "Alabama",
+      "upset": false,
+      "unanimous": false,
+      "focusTeam": null,
+      "espnID": null,
+      "picks": {
+        "Christopher": "Michigan",
+        "Elise": "Alabama",
+        "Emma": "Michigan",
+        "Gregory": "Alabama",
+        "Jen": "Alabama",
+        "Joseph": "Michigan",
+        "Laura": "Alabama",
+        "Lauren": "Alabama",
+        "Nicholas": "Michigan",
+        "Poppi": "Alabama"
+      }
+    },
+    {
+      "id": "3",
+      "name": "Cotton Bowl",
+      "startTime": "2025-12-23T13:00:00-05:00",
+      "venue": "Sample Stadium",
+      "network": "ESPN",
+      "homeTeam": "Texas",
+      "awayTeam": "Clemson",
+      "homeScore": 21,
+      "awayScore": 35,
+      "winner": "Clemson",
+      "upset": true,
+      "unanimous": false,
+      "focusTeam": "Clemson",
+      "espnID": null,
+      "picks": {
+        "Christopher": "Clemson",
+        "Elise": "Texas",
+        "Emma": "Texas",
+        "Gregory": "Clemson",
+        "Jen": "Texas",
+        "Joseph": "Texas",
+        "Laura": "Clemson",
+        "Lauren": "Texas",
+        "Nicholas": "Clemson",
+        "Poppi": "Clemson"
+      }
+    },
+    {
+      "id": "4",
+      "name": "Orange Bowl",
+      "startTime": "2025-12-24T16:00:00-05:00",
+      "venue": "Sample Stadium",
+      "network": "ABC",
+      "homeTeam": "Notre Dame",
+      "awayTeam": "Penn State",
+      "homeScore": 31,
+      "awayScore": 24,
+      "winner": "Notre Dame",
+      "upset": false,
+      "unanimous": false,
+      "focusTeam": null,
+      "espnID": null,
+      "picks": {
+        "Christopher": "Notre Dame",
+        "Elise": "Penn State",
+        "Emma": "Notre Dame",
+        "Gregory": "Notre Dame",
+        "Jen": "Penn State",
+        "Joseph": "Notre Dame",
+        "Laura": "Penn State",
+        "Lauren": "Penn State",
+        "Nicholas": "Notre Dame",
+        "Poppi": "Penn State"
+      }
+    },
+    {
+      "id": "5",
+      "name": "Sugar Bowl",
+      "startTime": "2025-12-25T19:00:00-05:00",
+      "venue": "Sample Stadium",
+      "network": "ESPN2",
+      "homeTeam": "Georgia",
+      "awayTeam": "Ohio State",
+      "homeScore": null,
+      "awayScore": null,
+      "winner": null,
+      "upset": false,
+      "unanimous": false,
+      "focusTeam": null,
+      "espnID": null,
+      "picks": {
+        "Christopher": "Georgia",
+        "Elise": "Georgia",
+        "Emma": "Ohio State",
+        "Gregory": "Georgia",
+        "Jen": "Ohio State",
+        "Joseph": "Ohio State",
+        "Laura": "Georgia",
+        "Lauren": "Ohio State",
+        "Nicholas": "Georgia",
+        "Poppi": "Georgia"
+      }
+    },
+    {
+      "id": "6",
+      "name": "Fiesta Bowl",
+      "startTime": "2025-12-26T13:00:00-05:00",
+      "venue": "Sample Stadium",
+      "network": "ESPN",
+      "homeTeam": "Miami",
+      "awayTeam": "BYU",
+      "homeScore": null,
+      "awayScore": null,
+      "winner": null,
+      "upset": false,
+      "unanimous": false,
+      "focusTeam": null,
+      "espnID": null,
+      "picks": {
+        "Christopher": "BYU",
+        "Elise": "Miami",
+        "Emma": "BYU",
+        "Gregory": "BYU",
+        "Jen": "Miami",
+        "Joseph": "BYU",
+        "Laura": "Miami",
+        "Lauren": "Miami",
+        "Nicholas": "BYU",
+        "Poppi": "Miami"
+      }
+    },
+    {
+      "id": "7",
+      "name": "Chalice Championship",
+      "startTime": "2025-12-27T16:00:00-05:00",
+      "venue": "Sample Stadium",
+      "network": "ABC",
+      "homeTeam": "Tennessee",
+      "awayTeam": "Duke",
+      "homeScore": null,
+      "awayScore": null,
+      "winner": null,
+      "upset": false,
+      "unanimous": false,
+      "focusTeam": null,
+      "espnID": null,
+      "picks": {
+        "Christopher": "Duke",
+        "Elise": "Duke",
+        "Emma": "Tennessee",
+        "Gregory": "Duke",
+        "Jen": "Tennessee",
+        "Joseph": "Tennessee",
+        "Laura": "Duke",
+        "Lauren": "Tennessee",
+        "Nicholas": "Tennessee",
+        "Poppi": "Duke"
+      }
+    }
+  ],
+  "progress": [
+    {
+      "gameIndex": 0,
+      "correct": {
+        "Christopher": 0,
+        "Elise": 0,
+        "Emma": 0,
+        "Gregory": 0,
+        "Jen": 0,
+        "Joseph": 0,
+        "Laura": 0,
+        "Lauren": 0,
+        "Nicholas": 0,
+        "Poppi": 0
+      },
+      "pointDifference": {
+        "Christopher": 0,
+        "Elise": 0,
+        "Emma": 0,
+        "Gregory": 0,
+        "Jen": 0,
+        "Joseph": 0,
+        "Laura": 0,
+        "Lauren": 0,
+        "Nicholas": 0,
+        "Poppi": 0
+      }
+    },
+    {
+      "gameIndex": 1,
+      "correct": {
+        "Christopher": 1,
+        "Elise": 0,
+        "Emma": 1,
+        "Gregory": 0,
+        "Jen": 0,
+        "Joseph": 1,
+        "Laura": 0,
+        "Lauren": 1,
+        "Nicholas": 1,
+        "Poppi": 0
+      },
+      "pointDifference": {
+        "Christopher": 7,
+        "Elise": -7,
+        "Emma": 7,
+        "Gregory": -7,
+        "Jen": -7,
+        "Joseph": 7,
+        "Laura": -7,
+        "Lauren": 7,
+        "Nicholas": 7,
+        "Poppi": -7
+      }
+    },
+    {
+      "gameIndex": 2,
+      "correct": {
+        "Christopher": 1,
+        "Elise": 1,
+        "Emma": 2,
+        "Gregory": 0,
+        "Jen": 1,
+        "Joseph": 1,
+        "Laura": 0,
+        "Lauren": 2,
+        "Nicholas": 1,
+        "Poppi": 0
+      },
+      "pointDifference": {
+        "Christopher": -7,
+        "Elise": 7,
+        "Emma": 21,
+        "Gregory": -21,
+        "Jen": 7,
+        "Joseph": -7,
+        "Laura": -21,
+        "Lauren": 21,
+        "Nicholas": -7,
+        "Poppi": -21
+      }
+    },
+    {
+      "gameIndex": 3,
+      "correct": {
+        "Christopher": 1,
+        "Elise": 2,
+        "Emma": 2,
+        "Gregory": 1,
+        "Jen": 2,
+        "Joseph": 1,
+        "Laura": 1,
+        "Lauren": 3,
+        "Nicholas": 1,
+        "Poppi": 1
+      },
+      "pointDifference": {
+        "Christopher": -14,
+        "Elise": 14,
+        "Emma": 14,
+        "Gregory": -14,
+        "Jen": 14,
+        "Joseph": -14,
+        "Laura": -14,
+        "Lauren": 28,
+        "Nicholas": -14,
+        "Poppi": -14
+      }
+    },
+    {
+      "gameIndex": 4,
+      "correct": {
+        "Christopher": 2,
+        "Elise": 2,
+        "Emma": 2,
+        "Gregory": 2,
+        "Jen": 2,
+        "Joseph": 1,
+        "Laura": 2,
+        "Lauren": 3,
+        "Nicholas": 2,
+        "Poppi": 2
+      },
+      "pointDifference": {
+        "Christopher": 0,
+        "Elise": 0,
+        "Emma": 0,
+        "Gregory": 0,
+        "Jen": 0,
+        "Joseph": -28,
+        "Laura": 0,
+        "Lauren": 14,
+        "Nicholas": 0,
+        "Poppi": 0
+      }
+    },
+    {
+      "gameIndex": 5,
+      "correct": {
+        "Christopher": 3,
+        "Elise": 2,
+        "Emma": 3,
+        "Gregory": 3,
+        "Jen": 2,
+        "Joseph": 2,
+        "Laura": 2,
+        "Lauren": 3,
+        "Nicholas": 3,
+        "Poppi": 2
+      },
+      "pointDifference": {
+        "Christopher": 7,
+        "Elise": -7,
+        "Emma": 7,
+        "Gregory": 7,
+        "Jen": -7,
+        "Joseph": -21,
+        "Laura": -7,
+        "Lauren": 7,
+        "Nicholas": 7,
+        "Poppi": -7
+      }
+    }
+  ],
+  "history": [
+    {
+      "season": "2023\u201324 \u00b7 MBCC 12",
+      "player": "Christopher",
+      "correct": 25,
+      "games": 42,
+      "percentage": 0.5952380952380952,
+      "award": "",
+      "current": true
+    },
+    {
+      "season": "2023\u201324 \u00b7 MBCC 12",
+      "player": "Elise",
+      "correct": 28,
+      "games": 42,
+      "percentage": 0.6666666666666666,
+      "award": "",
+      "current": true
+    },
+    {
+      "season": "2023\u201324 \u00b7 MBCC 12",
+      "player": "Emma",
+      "correct": 31,
+      "games": 42,
+      "percentage": 0.7380952380952381,
+      "award": "",
+      "current": true
+    },
+    {
+      "season": "2023\u201324 \u00b7 MBCC 12",
+      "player": "Gregory",
+      "correct": 24,
+      "games": 42,
+      "percentage": 0.5714285714285714,
+      "award": "Winner",
+      "current": true
+    },
+    {
+      "season": "2023\u201324 \u00b7 MBCC 12",
+      "player": "Jen",
+      "correct": 27,
+      "games": 42,
+      "percentage": 0.6428571428571429,
+      "award": "",
+      "current": true
+    },
+    {
+      "season": "2023\u201324 \u00b7 MBCC 12",
+      "player": "Joseph",
+      "correct": 30,
+      "games": 42,
+      "percentage": 0.7142857142857143,
+      "award": "",
+      "current": true
+    },
+    {
+      "season": "2023\u201324 \u00b7 MBCC 12",
+      "player": "Laura",
+      "correct": 23,
+      "games": 42,
+      "percentage": 0.5476190476190477,
+      "award": "",
+      "current": true
+    },
+    {
+      "season": "2023\u201324 \u00b7 MBCC 12",
+      "player": "Lauren",
+      "correct": 26,
+      "games": 42,
+      "percentage": 0.6190476190476191,
+      "award": "",
+      "current": true
+    },
+    {
+      "season": "2023\u201324 \u00b7 MBCC 12",
+      "player": "Nicholas",
+      "correct": 29,
+      "games": 42,
+      "percentage": 0.6904761904761905,
+      "award": "",
+      "current": true
+    },
+    {
+      "season": "2023\u201324 \u00b7 MBCC 12",
+      "player": "Poppi",
+      "correct": 22,
+      "games": 42,
+      "percentage": 0.5238095238095238,
+      "award": "",
+      "current": true
+    },
+    {
+      "season": "2024\u201325 \u00b7 MBCC 13",
+      "player": "Christopher",
+      "correct": 26,
+      "games": 42,
+      "percentage": 0.6190476190476191,
+      "award": "",
+      "current": true
+    },
+    {
+      "season": "2024\u201325 \u00b7 MBCC 13",
+      "player": "Elise",
+      "correct": 29,
+      "games": 42,
+      "percentage": 0.6904761904761905,
+      "award": "",
+      "current": true
+    },
+    {
+      "season": "2024\u201325 \u00b7 MBCC 13",
+      "player": "Emma",
+      "correct": 22,
+      "games": 42,
+      "percentage": 0.5238095238095238,
+      "award": "",
+      "current": true
+    },
+    {
+      "season": "2024\u201325 \u00b7 MBCC 13",
+      "player": "Gregory",
+      "correct": 25,
+      "games": 42,
+      "percentage": 0.5952380952380952,
+      "award": "",
+      "current": true
+    },
+    {
+      "season": "2024\u201325 \u00b7 MBCC 13",
+      "player": "Jen",
+      "correct": 28,
+      "games": 42,
+      "percentage": 0.6666666666666666,
+      "award": "Winner",
+      "current": true
+    },
+    {
+      "season": "2024\u201325 \u00b7 MBCC 13",
+      "player": "Joseph",
+      "correct": 31,
+      "games": 42,
+      "percentage": 0.7380952380952381,
+      "award": "",
+      "current": true
+    },
+    {
+      "season": "2024\u201325 \u00b7 MBCC 13",
+      "player": "Laura",
+      "correct": 24,
+      "games": 42,
+      "percentage": 0.5714285714285714,
+      "award": "",
+      "current": true
+    },
+    {
+      "season": "2024\u201325 \u00b7 MBCC 13",
+      "player": "Lauren",
+      "correct": 27,
+      "games": 42,
+      "percentage": 0.6428571428571429,
+      "award": "",
+      "current": true
+    },
+    {
+      "season": "2024\u201325 \u00b7 MBCC 13",
+      "player": "Nicholas",
+      "correct": 30,
+      "games": 42,
+      "percentage": 0.7142857142857143,
+      "award": "",
+      "current": true
+    },
+    {
+      "season": "2024\u201325 \u00b7 MBCC 13",
+      "player": "Poppi",
+      "correct": 23,
+      "games": 42,
+      "percentage": 0.5476190476190477,
+      "award": "",
+      "current": true
+    }
+  ],
+  "careers": [
+    {
+      "player": "Christopher",
+      "wins": 51,
+      "losses": 33,
+      "percentage": 0.6071428571428571,
+      "active": true
+    },
+    {
+      "player": "Elise",
+      "wins": 57,
+      "losses": 27,
+      "percentage": 0.6785714285714286,
+      "active": true
+    },
+    {
+      "player": "Emma",
+      "wins": 53,
+      "losses": 31,
+      "percentage": 0.6309523809523809,
+      "active": true
+    },
+    {
+      "player": "Gregory",
+      "wins": 49,
+      "losses": 35,
+      "percentage": 0.5833333333333334,
+      "active": true
+    },
+    {
+      "player": "Jen",
+      "wins": 55,
+      "losses": 29,
+      "percentage": 0.6547619047619048,
+      "active": true
+    },
+    {
+      "player": "Joseph",
+      "wins": 61,
+      "losses": 23,
+      "percentage": 0.7261904761904762,
+      "active": true
+    },
+    {
+      "player": "Laura",
+      "wins": 47,
+      "losses": 37,
+      "percentage": 0.5595238095238095,
+      "active": true
+    },
+    {
+      "player": "Lauren",
+      "wins": 53,
+      "losses": 31,
+      "percentage": 0.6309523809523809,
+      "active": true
+    },
+    {
+      "player": "Nicholas",
+      "wins": 59,
+      "losses": 25,
+      "percentage": 0.7023809523809523,
+      "active": true
+    },
+    {
+      "player": "Poppi",
+      "wins": 45,
+      "losses": 39,
+      "percentage": 0.5357142857142857,
+      "active": true
+    }
+  ],
+  "seasons": [
+    {
+      "season": "2023\u201324",
+      "wins": 265,
+      "losses": 155,
+      "percentage": 0.6309523809523809
+    },
+    {
+      "season": "2024\u201325",
+      "wins": 265,
+      "losses": 155,
+      "percentage": 0.6309523809523809
+    }
+  ]
+}

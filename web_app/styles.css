@@ -1,0 +1,73 @@
+:root { --mbcc-orange:#a64012; --mbcc-muted:#68737f; --mbcc-line:#ebe9e4; }
+html { -webkit-text-size-adjust:100%; }
+.stMainBlockContainer { max-width:750px; padding:2rem 1.4rem 8rem; }
+h1,h2,h3 { letter-spacing:-.035em; }
+h1 { font-size:2rem; font-weight:760; padding-bottom:.7rem; }
+h2 { font-size:1.55rem; } h3 { font-size:1.2rem; }
+div[class*="st-key-mbcc_card_"] { background:var(--secondary-background-color,#fff); border-radius:22px; padding:18px; box-shadow:0 2px 6px #14243404; }
+.st-key-primary_nav { position:fixed; z-index:999; bottom:0; left:50%; transform:translateX(-50%); width:min(750px,100%); padding:9px 12px calc(9px + env(safe-area-inset-bottom)); background:rgba(255,255,255,.97); border-top:1px solid var(--mbcc-line); border-radius:18px 18px 0 0; box-shadow:0 -6px 24px #17243208; }
+.st-key-primary_nav [role="radiogroup"] { display:flex; flex-wrap:nowrap; gap:0; justify-content:space-between; width:100%; }
+.st-key-primary_nav [role="radiogroup"] label { flex:1; justify-content:center; margin:0; padding:6px 0; min-width:0; color:var(--mbcc-muted); }
+.st-key-primary_nav [role="radiogroup"] label > div:first-child { display:none; }
+.st-key-primary_nav [role="radiogroup"] label p { font-size:11px; text-align:center; font-weight:600; white-space:nowrap; }
+.st-key-primary_nav [role="radiogroup"] label p::before { display:block; font-size:22px; line-height:26px; margin-bottom:3px; content:"◉"; }
+.st-key-primary_nav [role="radiogroup"] label:nth-child(2) p::before { content:"≡"; }
+.st-key-primary_nav [role="radiogroup"] label:nth-child(3) p::before { content:"↗"; }
+.st-key-primary_nav [role="radiogroup"] label:nth-child(4) p::before { content:"♜"; }
+.st-key-primary_nav [role="radiogroup"] label:nth-child(5) p::before { content:"ⓘ"; }
+.st-key-primary_nav label:has(input:checked) { color:var(--mbcc-orange); }
+.st-key-primary_nav label:focus-within { outline:2px solid var(--mbcc-orange); border-radius:10px; }
+.eyebrow { color:var(--mbcc-orange); letter-spacing:.12em; font-size:10px; font-weight:750; margin:0 0 5px; }
+.small { font-size:12px; } .muted,small { color:var(--mbcc-muted); }
+.large-score { font-size:23px; font-weight:750; letter-spacing:-.04em; font-variant-numeric:tabular-nums; }
+.secondary-score { font-size:12px; font-weight:450; color:var(--mbcc-muted); letter-spacing:0; }
+.list-row { display:flex; align-items:center; gap:12px; padding:13px 0; border-bottom:1px solid var(--mbcc-line); min-width:0; }
+.list-row:last-child { border-bottom:0; }
+.list-row > div:not(.row-value) { min-width:0; }
+.list-row strong { overflow-wrap:anywhere; }
+.list-row small { display:block; margin-top:3px; font-size:11px; }
+.row-value { margin-left:auto; text-align:right; flex-shrink:0; }
+.avatar { display:inline-flex; flex-shrink:0; align-items:center; justify-content:center; width:35px; height:35px; background:#f5e9e0; color:var(--mbcc-orange); border-radius:50%; font-weight:650; }
+.rank { font-weight:700; min-width:18px; color:var(--mbcc-muted); font-variant-numeric:tabular-nums; }
+.leading { color:var(--mbcc-orange); }
+.season-hero { background:#142434; border-radius:26px; color:white; padding:25px; margin:4px 0 12px; }
+.hero-top { display:flex; align-items:center; justify-content:space-between; font-size:10px; letter-spacing:.2em; font-weight:650; }
+.hero-top svg { color:#f1b461; width:24px; height:28px; }
+.season-hero h2 { color:white; font-size:28px; margin:14px 0 8px; padding:0; }
+.season-hero p { color:#c7cfd6; font-size:13px; margin-bottom:23px; }
+.season-totals { display:flex; align-items:baseline; justify-content:space-between; font-size:13px; color:#d4dce3; }
+.season-totals strong { font-size:33px; color:white; margin-right:5px; }
+.season-progress { height:5px; border-radius:5px; background:#ffffff25; margin-top:14px; overflow:hidden; }
+.season-progress span { display:block; height:100%; background:#f1a34a; border-radius:5px; }
+.game-heading,.game-meta,.comparison-row { display:flex; justify-content:space-between; align-items:baseline; gap:12px; }
+.game-heading { margin-bottom:18px; font-size:14px; }
+.game-status { color:var(--mbcc-muted); font-size:10px; font-weight:700; white-space:nowrap; }
+.team-row { display:flex; gap:12px; align-items:center; margin:14px 0; padding-left:10px; border-left:4px solid #c2c9cd; }
+.team-row strong { margin-left:auto; font-size:23px; font-variant-numeric:tabular-nums; }
+.team-name { font-weight:650; font-size:16px; }
+.team-focus { color:#276cb2; }
+.game-meta { color:var(--mbcc-muted); font-size:11px; margin:14px 0 8px; }
+.verification { display:block; color:var(--mbcc-muted); font-size:12px; margin-bottom:7px; }
+.verified,.correct { color:#22784f; } .mismatch,.incorrect { color:#b13a36; }
+.pick-result { display:block; font-size:11px; margin-top:3px; }
+.comparison-row { padding:8px 0; font-size:13px; }
+.rule-row { display:flex; gap:16px; padding:9px 0; font-size:14px; }
+.rule-row strong,.prize { color:var(--mbcc-orange); }
+.info-trophy svg { width:30px; height:35px; color:var(--mbcc-orange); }
+.trophy-row { display:flex; gap:3px; flex-wrap:wrap; justify-content:flex-end; max-width:60%; color:var(--mbcc-orange); }
+.trophy-row svg { display:block; width:19px; height:24px; }
+.half-trophy { display:inline-block; width:10px; height:24px; overflow:hidden; }
+.post-copy { font-size:15px; line-height:1.7; overflow-wrap:anywhere; }
+.video-card { display:block; overflow:hidden; border:1px solid var(--mbcc-line); border-radius:18px; color:inherit!important; text-decoration:none!important; margin:10px 0; }
+.video-card:focus-visible { outline:3px solid var(--mbcc-orange); outline-offset:3px; }
+.video-picture { aspect-ratio:16/9; position:relative; background:#142434; overflow:hidden; }
+.video-picture img { width:100%; height:100%; object-fit:cover; display:block; }
+.play { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); padding:17px 21px; border-radius:50%; background:#000b; color:white; font-size:23px; }
+.video-footer { display:flex; justify-content:space-between; padding:16px; font-size:14px; font-weight:650; }
+@media(max-width:480px) {
+  .stMainBlockContainer { padding:1rem 1rem 8rem; }
+  .list-row { gap:9px; } .list-row strong { font-size:14px; }
+  .row-value.large-score,.large-score { font-size:21px; }
+  .avatar { width:31px; height:31px; }
+  .season-hero { padding:22px; } .season-hero h2 { font-size:25px; }
+}
