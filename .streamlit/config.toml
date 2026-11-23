@@ -11,3 +11,9 @@ gatherUsageStats = false
 
 [client]
 toolbarMode = "minimal"
+
+[server]
+# Avoid module-unloading races while hosted source files are updated.
+# Reboot the hosted app after deploying Python changes. For local live reload,
+# start Streamlit with --server.fileWatcherType=auto.
+fileWatcherType = "none"
