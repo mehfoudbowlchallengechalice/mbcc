@@ -44,6 +44,9 @@ class StreamlitAppTests(unittest.TestCase):
     def text(self):
         return "\n".join(element.value for element in self.app.markdown)
 
+    def playoff_users(self):
+        return self.app.dataframe[0].value.iloc[:, 0].tolist() if self.app.dataframe else []
+
     def test_navigation_scores_charts_filters_history_and_trophy_cabinet(self):
         self.assertIn("Latest briefing", [heading.value for heading in self.app.subheader])
         self.assertIn("DEMO", self.app.info[0].value)
@@ -122,18 +125,17 @@ class StreamlitAppTests(unittest.TestCase):
         self.app.sidebar.toggle(key="current_players_only").set_value(False).run()
         self.page("Bracket")
         self.assertIn("All-time playoff standings", [item.value for item in self.app.subheader])
-        text = self.text()
-        self.assertIn('<table class="playoff-standings">', text)
-        self.assertIn("Former &lt;player&gt;", text)
-        self.assertIn("<td>0</td>", text)
-        self.assertIn("<td>—</td>", text)
-        self.assertLess(text.index('<th scope="row">Christopher'), text.index('<th scope="row">Former'))
+        table = self.app.dataframe[0].value
+        self.assertEqual(table.iloc[:, 0].tolist(), ["Christopher", "Former <player>", "Elise"])
+        self.assertEqual(table.iloc[0, 2], 0)
+        self.assertTrue(table.iloc[:, 1].isna().iloc[2])
+        self.assertEqual(table.iloc[:, 1].dtype.name, "Int64")
         self.snapshot.update(playoff_fixture(self.snapshot))
         st.cache_data.clear()
         self.app.run()
         self.app.selectbox(key="bracket_player").set_value("Christopher").run()
         self.assert_clean()
-        self.assertIn("Former &lt;player&gt;", self.text())
+        self.assertIn("Former <player>", self.playoff_users())
 
     def test_sidebar_current_player_filter_applies_across_tabs_and_details(self):
         self.snapshot.update(playoff_fixture(self.snapshot))
@@ -156,9 +158,9 @@ class StreamlitAppTests(unittest.TestCase):
         self.assertNotIn("Christopher", self.text())
         self.page("Bracket")
         self.assertNotIn("Christopher", self.app.selectbox(key="bracket_player").options)
-        self.assertNotIn('<th scope="row">Former', self.text())
+        self.assertNotIn("Former", self.playoff_users())
         self.app.sidebar.toggle(key="current_players_only").set_value(False).run()
-        self.assertIn('<th scope="row">Former', self.text())
+        self.assertIn("Former", self.playoff_users())
         self.app.selectbox(key="bracket_player").set_value("Christopher").run()
         self.app.sidebar.toggle(key="current_players_only").set_value(True).run()
         self.assert_clean()
@@ -199,7 +201,7 @@ class StreamlitAppTests(unittest.TestCase):
         self.assertTrue(any("Loaded 1 historical users" in item.value for item in self.app.info))
         self.app.sidebar.toggle(key="current_players_only").set_value(False).run()
         self.assert_clean()
-        self.assertIn('<th scope="row">Former', self.text())
+        self.assertIn("Former", self.playoff_users())
         old = copy.deepcopy(self.snapshot)
         old.pop("playoffStandings")
         old.update(isDemo=False, gamesSource="live_scores_and_games")
@@ -246,8 +248,10 @@ class StreamlitAppTests(unittest.TestCase):
             self.assertEqual(self.app.radio(key="data_source").options, ["iPhone backend", "Demo"])
             self.app.sidebar.toggle(key="current_players_only").set_value(False).run()
             self.page("Bracket")
-            self.assertIn('<th scope="row">Former</th><td>12</td><td>0</td>', self.text())
-            self.assertIn('<th scope="row">Christopher</th><td>23</td><td>9</td>', self.text())
+            table = self.app.dataframe[0].value
+            self.assertEqual(table.iloc[:, 0].tolist(), ["Christopher", "Former"])
+            self.assertEqual(table.iloc[:, 1].tolist(), [23, 12])
+            self.assertEqual(table.iloc[:, 2].tolist(), [9, 0])
             for name in ("Standings", "Season", "History", "Info"):
                 self.page(name)
             api.assert_called_once_with(data.DEFAULT_ENDPOINT)

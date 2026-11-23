@@ -49,11 +49,67 @@ final class MBCCUITests: XCTestCase {
 
         openTab("History")
         XCTAssertTrue(app.staticTexts["A tradition worth keeping"].exists)
-        XCTAssertTrue(app.switches["Include former players"].exists)
+        XCTAssertFalse(app.switches["Include former players"].exists)
         app.switches["Show more than winners"].tap()
 
         openTab("Info")
         XCTAssertTrue(app.staticTexts["One chalice. All the bragging rights."].exists)
+    }
+
+    func testCurrentPlayerSettingAppliesToStandingsPlayoffsAndHistory() throws {
+        app.terminate()
+        let fixture: [String: Any] = [
+            "isDemo": true, "season": "Player filter preview", "updatedAt": "2026-11-23T12:00:00Z",
+            "players": ["Alice", "Bob"],
+            "standings": [
+                ["player": "Alice", "correct": 3, "overallScore": 3.0, "pointDifference": 7.0],
+                ["player": "Bob", "correct": 4, "overallScore": 4.0, "pointDifference": 8.0],
+            ],
+            "games": [], "progress": [],
+            "history": [
+                ["player": "Alice", "season": "2025", "correct": 3, "games": 4, "percentage": 0.75, "award": "", "current": true],
+                ["player": "Bob", "season": "2025", "correct": 4, "games": 4, "percentage": 1.0, "award": "Winner", "current": false],
+            ],
+            "careers": [], "seasons": [],
+            "playoffStandings": [
+                ["player": "Alice", "correctPlayoff": 30, "correctUnknownPlayoff": 7],
+                ["player": "Bob", "correctPlayoff": 40, "correctUnknownPlayoff": 8],
+            ],
+        ]
+        app.launchEnvironment["MBCC_TEST_SNAPSHOT"] = String(data: try JSONSerialization.data(withJSONObject: fixture), encoding: .utf8)!
+        app.launch()
+        openTab("Standings")
+        XCTAssertTrue(app.staticTexts["Alice"].firstMatch.waitForExistence(timeout: 10))
+        XCTAssertFalse(app.staticTexts["Bob"].exists)
+        app.buttons["dataConnection"].tap()
+        let setting = app.switches["currentPlayersOnly"]
+        XCTAssertTrue(setting.waitForExistence(timeout: 5))
+        XCTAssertEqual(setting.value as? String, "1")
+        setting.tap()
+        app.buttons["Cancel"].tap()
+        XCTAssertTrue(app.staticTexts["Bob"].firstMatch.waitForExistence(timeout: 5))
+        openTab("Bracket")
+        XCTAssertTrue(app.staticTexts["All-time playoff standings"].exists)
+        XCTAssertTrue(app.staticTexts["Bob"].exists)
+        XCTAssertTrue(app.staticTexts["40"].exists)
+        app.buttons["dataConnection"].tap()
+        XCTAssertEqual(app.switches["currentPlayersOnly"].value as? String, "0")
+        app.switches["currentPlayersOnly"].tap()
+        app.buttons["Cancel"].tap()
+        XCTAssertFalse(app.staticTexts["Bob"].exists)
+        XCTAssertTrue(app.staticTexts["30"].exists)
+        openTab("History")
+        XCTAssertFalse(app.switches["Include former players"].exists)
+        XCTAssertFalse(app.staticTexts["Bob"].exists)
+        app.buttons["dataConnection"].tap()
+        app.switches["currentPlayersOnly"].tap()
+        app.buttons["saveConnection"].tap()
+        app.terminate()
+        app.launchArguments = [] // A regular launch retains the saved filter.
+        app.launch()
+        app.buttons["dataConnection"].tap()
+        XCTAssertTrue(app.switches["currentPlayersOnly"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.switches["currentPlayersOnly"].value as? String, "0")
     }
 
     func testPlayoffBracketGameDetailsAndPicks() throws {

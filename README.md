@@ -131,8 +131,13 @@ pairs are supported, as is the compact one-count-column-per-user layout.
 Those totals are used
 directly; season rows below them are not added again. All users are included,
 independent of the current season or selected pick filter. Rows sort by correct
-playoff games, then correct unknown playoff games, then name. Blank totals show
-a dash, and zero remains zero. The table appears even without a current bracket.
+playoff games, then correct unknown playoff games, then name. Missing totals
+remain unavailable, and zero remains zero. The table appears even without a
+current bracket. Streamlit uses a native interactive dataframe with two-tier
+headers; click a column heading to sort, and use its built-in fullscreen or
+resize controls as needed. The iPhone table fits all three columns to the screen
+with wrapping headers and names. Tap a heading to sort; tap it again to reverse
+the order.
 
 Both apps receive these totals through the shared API. Existing overall history
 remains in the challenge workbook. The API reads the separate playoff workbook when

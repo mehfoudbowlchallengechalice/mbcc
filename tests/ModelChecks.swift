@@ -25,6 +25,44 @@ struct ModelChecks {
         let allTime = try decode(historyTotals).rankedPlayoffStandings
         precondition(allTime.map(\.player) == ["Alice", "Bob", "Zoe", "Zero", "Missing"])
         precondition(allTime.last?.correctPlayoff == nil)
+        // The app-wide player setting follows the web filter and preserves
+        // source snapshots, game results, and historical playoff totals.
+        var filterObject = try JSONSerialization.jsonObject(with: original) as! [String: Any]
+        var filterCareers = filterObject["careers"] as! [[String: Any]]
+        filterCareers[0]["active"] = false // Career status takes precedence over history.
+        filterObject["careers"] = filterCareers
+        filterObject["playoffStandings"] = [
+            ["player": "Christopher", "correctPlayoff": 40, "correctUnknownPlayoff": 8],
+            ["player": "Elise", "correctPlayoff": 30, "correctUnknownPlayoff": 7],
+            ["player": "Former", "correctPlayoff": 20, "correctUnknownPlayoff": 0],
+        ]
+        let fullRoster = try decode(filterObject)
+        let currentRoster = fullRoster.filteringCurrentPlayers(true)
+        precondition(!currentRoster.players.contains("Christopher"))
+        precondition(currentRoster.players.contains("Elise"))
+        precondition(currentRoster.standings.allSatisfy { $0.player != "Christopher" })
+        precondition(currentRoster.history.allSatisfy { $0.player != "Christopher" })
+        precondition(currentRoster.careers.allSatisfy { $0.player != "Christopher" })
+        precondition(currentRoster.games.allSatisfy { $0.picks["Christopher"] == nil })
+        precondition(currentRoster.progress.allSatisfy { $0.correct["Christopher"] == nil && $0.pointDifference["Christopher"] == nil })
+        precondition(currentRoster.championships.allSatisfy { $0.player != "Christopher" })
+        precondition(currentRoster.elimination(for: "Elise").comparisons.allSatisfy { $0.player != "Christopher" })
+        precondition(currentRoster.rankedPlayoffStandings.map(\.player) == ["Elise"])
+        precondition(currentRoster.rankedPlayoffStandings[0].correctPlayoff == 30)
+        precondition(currentRoster.rankedPlayoffStandings[0].correctUnknownPlayoff == 7)
+        precondition(currentRoster.games.map(\.id) == fullRoster.games.map(\.id))
+        precondition(currentRoster.completed == fullRoster.completed)
+        precondition(currentRoster.seasons.map(\.wins) == fullRoster.seasons.map(\.wins))
+        precondition(fullRoster.players.contains("Christopher"))
+        precondition(fullRoster.filteringCurrentPlayers(false).rankedPlayoffStandings.map(\.player) == ["Christopher", "Elise", "Former"])
+        filterObject["careers"] = []
+        var filterHistory = filterObject["history"] as! [[String: Any]]
+        filterHistory = filterHistory.filter { $0["player"] as? String == "Christopher" }
+        for index in filterHistory.indices { filterHistory[index]["current"] = false }
+        filterObject["history"] = filterHistory
+        let fallbackRoster = try decode(filterObject).filteringCurrentPlayers(true)
+        precondition(!fallbackRoster.players.contains("Christopher"))
+        precondition(fallbackRoster.players.contains("Emma")) // New roster player without history.
         precondition(snapshot.playoffRounds.allSatisfy { snapshot.playoffGames(in: $0).isEmpty })
         for (name, round) in [("CFP First-Round", PlayoffRound.first), ("CFP 1st Round", .first),
                               ("College Football Playoff Quarterfinal at the Rose Bowl", .quarterfinals),

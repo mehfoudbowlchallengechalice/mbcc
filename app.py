@@ -301,15 +301,23 @@ def bracket_view(snapshot, zone, *, source, users_loaded):
         if read:
             st.caption(f"Worksheet: {read['worksheet']} · Rows read: {read['rows']} · Columns read: {read['columns']}")
         return
-    st.caption("Scroll sideways on smaller screens to see both all-time totals.")
-    table_rows = ''.join(
-        f'<tr><th scope="row">{esc(row["player"])}</th><td>{esc(data.score(row.get("correctPlayoff")))}</td>'
-        f'<td>{esc(data.score(row.get("correctUnknownPlayoff")))}</td></tr>' for row in rows)
-    st.markdown('<div class="playoff-standings-scroll" role="region" aria-label="All-time playoff standings" tabindex="0">'
-                '<table class="playoff-standings"><thead><tr><th scope="col">User</th>'
-                '<th scope="col">Correct playoff games<br>All time</th>'
-                '<th scope="col">Correct unknown playoff games<br>All time</th></tr></thead>'
-                f'<tbody>{table_rows}</tbody></table></div>', unsafe_allow_html=True)
+    st.caption("All-time correct picks. Click a column heading to sort.")
+    frame = pd.DataFrame({"player": [row["player"] for row in rows],
+                          "correctPlayoff": pd.array([row.get("correctPlayoff") for row in rows], dtype="Int64"),
+                          "correctUnknownPlayoff": pd.array([row.get("correctUnknownPlayoff") for row in rows], dtype="Int64")})
+    # Multi-level columns give Streamlit two clean header lines while retaining
+    # its native numeric sorting, resizing, and fullscreen controls.
+    frame.columns = pd.MultiIndex.from_tuples([
+        ("", "User"), ("Correct playoff", "games"), ("Correct unknown", "playoff games")])
+    st.dataframe(frame, hide_index=True, width="stretch", row_height=38,
+                 height=min(66 + len(rows) * 38, 640), key="playoff_standings_table",
+                 column_config={
+                     str(("", "User")): st.column_config.TextColumn("User", width=140),
+                     str(("Correct playoff", "games")): st.column_config.NumberColumn("games", width=170, format="%d",
+                                                     help="Correct playoff games, all time"),
+                     str(("Correct unknown", "playoff games")): st.column_config.NumberColumn("playoff games", width=180, format="%d",
+                                                     help="Correct unknown playoff games, all time"),
+                 })
 
 
 def bracket_games_view(snapshot, zone):

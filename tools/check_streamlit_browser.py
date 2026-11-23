@@ -36,6 +36,9 @@ def main():
         {"player": player, "correctPlayoff": 20 + index, "correctUnknownPlayoff": index}
         for index, player in enumerate(fixture["players"])
     ] + [{"player": "Former player", "correctPlayoff": 0, "correctUnknownPlayoff": None}]
+    fixture["playoffStandings"][0]["correctPlayoff"] = 2
+    fixture["playoffStandings"][1]["correctPlayoff"] = 10
+    fixture["playoffStandings"][2]["correctPlayoff"] = 9
     # An explicitly fictional bracket exercises all rounds, final/live scores,
     # pending teams, and player picks without changing the bundled demo season.
     names = ([f"College Football Playoff First Round Game ({i + 1})" for i in range(4)]
@@ -67,7 +70,8 @@ def main():
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch()
             for label, width, height in [("iphone", 390, 844), ("small-phone", 320, 720), ("desktop", 1440, 1000)]:
-                page = browser.new_page(viewport={"width": width, "height": height}, timezone_id="America/New_York")
+                page = browser.new_page(viewport={"width": width, "height": height}, timezone_id="America/New_York",
+                                        permissions=["clipboard-read", "clipboard-write"])
                 page.goto(args.url)
                 if args.live:
                     page.locator(".season-hero").wait_for()
@@ -116,6 +120,8 @@ def main():
                     assert bounds["y"] + bounds["height"] <= height + 1, bounds
                     assert page.evaluate("document.documentElement.scrollWidth <= innerWidth"), screen
                     if screen == "Bracket":
+                        page.locator(".bracket-game").first.wait_for()
+                        page.get_by_test_id("stDataFrame").wait_for()
                         assert page.locator(".bracket-game").count() == 11
                         assert page.locator(".bracket-round").count() == 4
                         page.get_by_test_id("stSelectbox").filter(has_text="Show picks for").get_by_text("Results only", exact=True).wait_for()
@@ -131,14 +137,27 @@ def main():
                         page.get_by_test_id("stMain").evaluate("el => el.scrollTop = 0")
                         page.locator("h1").first.scroll_into_view_if_needed()
                         page.screenshot(path=str(output / f"bracket-{label}.png"), full_page=True)
-                        table_region = page.get_by_role("region", name="All-time playoff standings", exact=True)
+                        table_region = page.get_by_test_id("stDataFrame")
                         table_region.scroll_into_view_if_needed()
-                        assert table_region.get_by_role("row").count() == len(fixture["playoffStandings"]) + 1
-                        assert table_region.get_by_role("columnheader").count() == 3
-                        assert table_region.get_by_role("rowheader", name="Former player", exact=True).count() == 1
+                        assert table_region.count() == 1
                         assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
-                        if width < 480:
-                            assert table_region.evaluate("el => el.scrollWidth > el.clientWidth")
+                        canvas = table_region.get_by_test_id("data-grid-canvas")
+                        canvas.wait_for()
+                        if label == "desktop":
+                            grid = table_region.locator(".dvn-scroller")
+                            bounds = grid.bounding_box()
+                            def copied_user(row):
+                                grid.click(position={"x": 60, "y": 90 + row * 38})
+                                page.keyboard.press("ControlOrMeta+c")
+                                page.wait_for_function("() => navigator.clipboard.readText().then(text => text.length > 0)")
+                                return page.evaluate("navigator.clipboard.readText()").strip()
+                            grid.click(position={"x": 60, "y": 53})
+                            assert copied_user(0) == "Christopher", "User column did not sort ascending"
+                            grid.click(position={"x": bounds["width"] / 2, "y": 53})
+                            assert copied_user(0) == "Former player", "Numeric column did not sort ascending"
+                            assert copied_user(1) == "Christopher", "Counts sorted as text instead of numbers"
+                            grid.click(position={"x": bounds["width"] / 2, "y": 53})
+                            assert copied_user(0) == "Poppi", "Numeric column did not sort descending"
                         page.get_by_role("heading", name="All-time playoff standings", exact=True).scroll_into_view_if_needed()
                         page.screenshot(path=str(output / f"playoff-standings-{label}.png"), full_page=True)
                         page.get_by_role("button", name="Game details and everyone’s picks →").click()
@@ -151,7 +170,7 @@ def main():
                 page.get_by_role("heading", name="Game details", exact=True).wait_for()
                 page.get_by_role("heading", name="Everyone’s picks", exact=True).wait_for()
                 page.screenshot(path=str(output / f"game-{label}.png"), full_page=True)
-                print(f"Passed {label}: six tabs, playoff bracket and details, blog archive, external video links, game details, fixed navigation, no page overflow")
+                print(f"Passed {label}: six tabs, playoff bracket and sortable standings, blog archive, external video links, game details, fixed navigation, no page overflow")
                 page.close()
             browser.close()
     finally:

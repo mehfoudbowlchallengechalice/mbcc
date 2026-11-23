@@ -4,23 +4,51 @@ struct Snapshot: Codable {
     let isDemo: Bool?
     let season: String
     let updatedAt: String
-    let players: [String]
-    let standings: [Standing]
-    let games: [BowlGame]
-    let progress: [ProgressPoint]
-    let history: [HistoryEntry]
-    let careers: [CareerEntry]
+    var players: [String]
+    var standings: [Standing]
+    var games: [BowlGame]
+    var progress: [ProgressPoint]
+    var history: [HistoryEntry]
+    var careers: [CareerEntry]
     let seasons: [SeasonEntry]
     let gamesSource: String?
     let todaysUpdate: DailyUpdate?
     let updates: [DailyUpdate]?
-    let playoffStandings: [PlayoffStanding]?
+    var playoffStandings: [PlayoffStanding]?
     let playoffStandingsError: String?
     var updatePosts: [DailyUpdate] { updates ?? todaysUpdate.map { [$0] } ?? [] }
     var hasLiveGameSource: Bool { gamesSource == "live_scores_and_games" }
 
     var completed: Int { games.filter(\.isFinal).count }
     var remaining: Int { games.count - completed }
+
+    func filteringCurrentPlayers(_ currentOnly: Bool) -> Snapshot {
+        guard currentOnly else { return self }
+        // Match the web app: career Active, then history Current, then the
+        // season roster for players who have no historical status yet.
+        var status: [String: Bool] = [:]
+        for row in history { status[row.player] = row.current }
+        for row in careers { status[row.player] = row.active }
+        var current = Set(status.compactMap { $0.value ? $0.key : nil })
+        current.formUnion(players.filter { status[$0] == nil })
+        var filtered = self
+        filtered.players = players.filter { current.contains($0) }
+        filtered.standings = standings.filter { current.contains($0.player) }
+        filtered.history = history.filter { current.contains($0.player) }
+        filtered.careers = careers.filter { current.contains($0.player) }
+        filtered.playoffStandings = playoffStandings?.filter { current.contains($0.player) }
+        filtered.games = games.map { game in
+            var game = game
+            game.picks = game.picks.filter { current.contains($0.key) }
+            return game
+        }
+        filtered.progress = progress.map { point in
+            ProgressPoint(gameIndex: point.gameIndex,
+                          correct: point.correct.filter { current.contains($0.key) },
+                          pointDifference: point.pointDifference.filter { current.contains($0.key) })
+        }
+        return filtered
+    }
 
     var rankedPlayoffStandings: [PlayoffStanding] {
         (playoffStandings ?? []).sorted {
@@ -180,7 +208,7 @@ struct BowlGame: Codable, Identifiable {
     let unanimous: Bool?
     let focusTeam: String?
     let espnID: String?
-    let picks: [String: String]
+    var picks: [String: String]
     let live: LiveScore?
     let verification: String?
     let verificationReason: String?

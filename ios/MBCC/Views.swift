@@ -170,7 +170,7 @@ struct LiveView: View {
                         Button("See all games") { filter = "All" }.buttonStyle(.bordered)
                     }
                     ForEach(games) { game in
-                        NavigationLink { GameDetailView(game: game, players: data.players) } label: {
+                        NavigationLink { GameDetailView(game: game) } label: {
                             GameCard(game: game)
                         }.buttonStyle(.plain)
                     }
@@ -220,7 +220,7 @@ struct PlayoffBracketView: View {
                                         }
                                         ForEach(entries) { game in
                                             NavigationLink {
-                                                GameDetailView(game: game, players: data.players)
+                                                GameDetailView(game: game)
                                             } label: {
                                                 PlayoffGameCard(game: game, player: player)
                                             }.buttonStyle(.plain)
@@ -255,6 +255,30 @@ struct PlayoffBracketView: View {
 private struct PlayoffStandingsTable: View {
     let standings: [PlayoffStanding]
     let unavailable: Bool
+    @State private var sortColumn = SortColumn.playoff
+    @State private var ascending = false
+
+    private enum SortColumn { case user, playoff, unknown }
+
+    private var sortedStandings: [PlayoffStanding] {
+        standings.sorted { lhs, rhs in
+            if sortColumn == .user {
+                return ascending ? lhs.player.localizedStandardCompare(rhs.player) == .orderedAscending
+                    : lhs.player.localizedStandardCompare(rhs.player) == .orderedDescending
+            }
+            let first = sortColumn == .playoff ? lhs.correctPlayoff : lhs.correctUnknownPlayoff
+            let second = sortColumn == .playoff ? rhs.correctPlayoff : rhs.correctUnknownPlayoff
+            if first != second {
+                guard let first else { return false }
+                guard let second else { return true }
+                return ascending ? first < second : first > second
+            }
+            if sortColumn == .playoff && lhs.correctUnknownPlayoff != rhs.correctUnknownPlayoff {
+                return (lhs.correctUnknownPlayoff ?? -1) > (rhs.correctUnknownPlayoff ?? -1)
+            }
+            return lhs.player.localizedStandardCompare(rhs.player) == .orderedAscending
+        }
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -264,30 +288,58 @@ private struct PlayoffStandingsTable: View {
             } else if standings.isEmpty {
                 EmptyCard(title: "All-time playoff standings aren’t available yet", message: "Check back for historical playoff results.")
             } else {
-                Text("Swipe sideways to see both all-time totals.").font(.caption).foregroundStyle(.secondary)
-                ScrollView(.horizontal) {
-                    Grid(alignment: .leading, horizontalSpacing: 20, verticalSpacing: 14) {
-                        GridRow {
-                            Text("User").frame(width: 120, alignment: .leading)
-                            Text("Correct playoff games\nAll time").frame(width: 150, alignment: .trailing)
-                            Text("Correct unknown playoff games\nAll time").frame(width: 185, alignment: .trailing)
-                        }.font(.caption.bold()).foregroundStyle(.secondary)
-                        Divider()
-                        ForEach(standings) { entry in
-                            GridRow {
-                                Text(entry.player).fontWeight(.semibold)
-                                Text(entry.correctPlayoff.map(String.init) ?? "—")
-                                    .frame(maxWidth: .infinity, alignment: .trailing)
-                                Text(entry.correctUnknownPlayoff.map(String.init) ?? "—")
-                                    .frame(maxWidth: .infinity, alignment: .trailing)
-                            }.font(.subheadline).monospacedDigit()
-                            Divider()
-                        }
-                    }.padding(18)
-                }.background(Theme.card, in: RoundedRectangle(cornerRadius: 18))
+                let entries = sortedStandings
+                Text("All-time correct picks. Tap a heading to sort.").font(.caption).foregroundStyle(.secondary)
+                VStack(spacing: 0) {
+                    HStack(alignment: .top, spacing: 10) {
+                        heading("User", column: .user, alignment: .leading)
+                        heading("Correct\nplayoff games", column: .playoff, alignment: .trailing)
+                        heading("Correct unknown\nplayoff games", column: .unknown, alignment: .trailing)
+                    }.padding(.bottom, 12)
+                    Divider()
+                    ForEach(entries) { entry in
+                        HStack(alignment: .firstTextBaseline, spacing: 10) {
+                            Text(entry.player).fontWeight(.semibold)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+                            Text(entry.correctPlayoff.map(String.init) ?? "—")
+                                .frame(minWidth: 0, maxWidth: .infinity, alignment: .trailing)
+                            Text(entry.correctUnknownPlayoff.map(String.init) ?? "—")
+                                .frame(minWidth: 0, maxWidth: .infinity, alignment: .trailing)
+                        }.font(.subheadline).monospacedDigit().padding(.vertical, 12)
+                            .accessibilityElement(children: .contain)
+                            .accessibilityLabel("\(entry.player), \(entry.correctPlayoff.map(String.init) ?? "unavailable") correct playoff games, \(entry.correctUnknownPlayoff.map(String.init) ?? "unavailable") correct unknown playoff games, all time")
+                        if entry.id != entries.last?.id { Divider() }
+                    }
+                }.padding(14)
+                    .frame(maxWidth: .infinity)
+                    .background(Theme.card, in: RoundedRectangle(cornerRadius: 18))
                     .accessibilityIdentifier("playoffStandings")
             }
         }
+    }
+
+    private func heading(_ title: String, column: SortColumn, alignment: Alignment) -> some View {
+        Button {
+            if sortColumn == column { ascending.toggle() }
+            else { sortColumn = column; ascending = column == .user }
+        } label: {
+            HStack(alignment: .top, spacing: 3) {
+                Text(title).fixedSize(horizontal: false, vertical: true)
+                if sortColumn == column {
+                    Image(systemName: ascending ? "arrow.up" : "arrow.down")
+                        .font(.system(size: 9, weight: .bold)).padding(.top, 3)
+                }
+            }
+            .multilineTextAlignment(column == .user ? .leading : .trailing)
+            .frame(minWidth: 0, maxWidth: .infinity, alignment: alignment)
+            .frame(minHeight: 44, alignment: .top)
+            .contentShape(Rectangle())
+        }.buttonStyle(.plain).font(.caption.bold())
+            .foregroundStyle(sortColumn == column ? Theme.orange : Color.secondary)
+            .accessibilityLabel(title.replacingOccurrences(of: "\n", with: " "))
+            .accessibilityValue(sortColumn == column ? (ascending ? "Sorted ascending" : "Sorted descending") : "Not sorted")
+            .accessibilityHint("Double-tap to change the sort order")
     }
 }
 
@@ -334,11 +386,13 @@ private struct PlayoffGameCard: View {
 }
 
 struct GameDetailView: View {
+    @EnvironmentObject private var store: AppStore
     let game: BowlGame
-    let players: [String]
+    private var players: [String] { store.snapshot?.players ?? [] }
     @State private var selected: Set<String> = []
 
     var body: some View {
+        let game = store.snapshot?.games.first { $0.id == self.game.id } ?? self.game
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 GameCard(game: game)
@@ -409,6 +463,9 @@ struct GameDetailView: View {
             }.padding(20)
         }.background(Theme.background).navigationTitle("Game details").navigationBarTitleDisplayMode(.inline)
             .onAppear { selected = Set(players) }
+            .onChange(of: players) { old, players in
+                selected = selected == Set(old) ? Set(players) : selected.intersection(players)
+            }
     }
 }
 
@@ -555,28 +612,27 @@ struct SeasonView: View {
 struct HistoryView: View {
     @EnvironmentObject private var store: AppStore
     @State private var player = "All Players"
-    @State private var allPlayers = false
     @State private var moreThanWinners = false
 
     var body: some View {
         if let data = store.snapshot {
+            let players = Array(Set(data.history.map(\.player) + data.careers.map(\.player))).sorted()
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     SectionHeading(title: "A tradition worth keeping", caption: "Mehfoud Bowl Challenge Chalice")
                     Card {
                         Picker("Player", selection: $player) {
                             Text("All Players").tag("All Players")
-                            ForEach(Array(Set(data.history.map(\.player))).sorted(), id: \.self) { Text($0).tag($0) }
+                            ForEach(players, id: \.self) { Text($0).tag($0) }
                         }
-                        Toggle("Include former players", isOn: $allPlayers)
                         Toggle("Show more than winners", isOn: $moreThanWinners)
                     }.font(.subheadline)
                     SectionHeading(title: "Player season breakdown")
                     let entries = data.history.filter {
-                        (allPlayers || $0.current) && (moreThanWinners || $0.isWinner)
+                        (moreThanWinners || $0.isWinner)
                             && (player == "All Players" || player == $0.player)
                     }.sorted { $0.season > $1.season }
-                    if entries.isEmpty { EmptyCard(title: "No matching results", message: "Try including former players or more than winners.") }
+                    if entries.isEmpty { EmptyCard(title: "No matching results", message: "Try changing the player filter in Data Connection or showing more than winners.") }
                     // A workbook can have multiple rows for the same player/season.
                     // Preserve each source row rather than reusing its compound ID.
                     ForEach(Array(entries.enumerated()), id: \.offset) { _, entry in
@@ -597,7 +653,7 @@ struct HistoryView: View {
                     }
                     SectionHeading(title: "Player career breakdown")
                     Card {
-                        ForEach(data.careers.filter { (allPlayers || $0.active) && (player == "All Players" || player == $0.player) }) { career in
+                        ForEach(data.careers.filter { player == "All Players" || player == $0.player }) { career in
                             HStack {
                                 Text(career.player).font(.subheadline.bold())
                                 Spacer()
@@ -623,6 +679,9 @@ struct HistoryView: View {
                     }
                 }.padding(20)
             }.refreshable { await store.refresh() }
+                .onChange(of: players) { _, players in
+                    if player != "All Players" && !players.contains(player) { player = "All Players" }
+                }
         }
     }
 }
@@ -747,7 +806,7 @@ struct InformationView: View {
                 }
                 if let data = store.snapshot {
                     Card {
-                        SectionHeading(title: "The trophy cabinet", caption: "Every player, past and present")
+                        SectionHeading(title: "The trophy cabinet", caption: store.currentPlayersOnly ? "Current players" : "Every player, past and present")
                         let records = data.championships
                         ForEach(Array(records.enumerated()), id: \.element.id) { index, record in
                             ChampionshipRow(record: record)
@@ -786,6 +845,14 @@ struct ConnectionView: View {
     var body: some View {
         NavigationStack {
             Form {
+                Section {
+                    Toggle("Current players only", isOn: $store.currentPlayersOnly)
+                        .accessibilityIdentifier("currentPlayersOnly")
+                } header: {
+                    Text("Player filters")
+                } footer: {
+                    Text("Applies immediately to every tab and game details. Turn off to include former players.")
+                }
                 Section {
                     Toggle("Explore demo data", isOn: $demo)
                 } footer: {
