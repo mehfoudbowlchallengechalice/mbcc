@@ -1,10 +1,9 @@
 """MBCC's Streamlit interface, matching the native iPhone app's screens.
 
 Run: streamlit run app.py
-Data: existing gsheets connection or the same read-only snapshot API as iPhone.
+Data: the same read-only snapshot API as iPhone, or explicit demo data.
 """
 import html
-import logging
 import os
 from datetime import date, datetime, timezone
 from pathlib import Path
@@ -14,12 +13,10 @@ import altair as alt
 import pandas as pd
 import streamlit as st
 
-from backend.sheets_adapter import WORKSHEETS, build_snapshot
 from web_app import data
 from web_app.playoffs import playoff_games, playoff_standings
 
 ROOT = Path(__file__).resolve().parent
-PLAYOFF_HISTORY_SHEET_ID = "1Iwl1WEzLEXu05ZtFcfZovWwQsECNy8LH3II760C-w2E"
 PAGES = ["Live", "Standings", "Bracket", "Season", "History", "Info"]
 COLORS = ["#387bc4", "#bb612d", "#248363", "#8764ae", "#c2527a", "#248b96", "#5b68af", "#8a674b", "#c34b46", "#4d94ae"]
 TROPHY = '<svg viewBox="0 0 24 28" aria-hidden="true"><path d="M6 2h12v8c0 5-2.5 8-6 8s-6-3-6-8V2Zm0 2H2v5c0 4 2 6 6 6M18 4h4v5c0 4-2 6-6 6M12 18v6M7 26h10" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>'
@@ -38,45 +35,11 @@ def setting(name, default=None):
         return default
 
 
-def has_sheets_connection():
-    try:
-        return "gsheets" in st.secrets.get("connections", {})
-    except (FileNotFoundError, st.errors.StreamlitSecretNotFoundError):
-        return False
-
-
 @st.cache_data(ttl=60, show_spinner=False)
-def fetch_snapshot(source, endpoint, season):
+def fetch_snapshot(source, endpoint):
     if source == "Demo":
         return data.read_demo()
-    if source == "iPhone backend":
-        return data.fetch_api(endpoint)
-    from streamlit_gsheets import GSheetsConnection
-    connection = st.connection("gsheets", type=GSheetsConnection)
-    titles = setting("mbcc_worksheet_titles", {})
-    if not isinstance(titles, dict):
-        titles = dict(titles)
-    tables = {}
-    for name in WORKSHEETS + ("live_scores_and_games", "todays_update"):
-        frame = connection.read(worksheet=titles.get(name, name), ttl=60)
-        frame = frame.astype(object).where(pd.notna(frame), None)
-        tables[name] = [list(frame.columns)] + frame.values.tolist()
-    snapshot = build_snapshot(tables, season=season)
-    try:
-        from backend.sheets_adapter import playoff_history_standings
-        history_id = setting("mbcc_playoff_history_sheet_id", PLAYOFF_HISTORY_SHEET_ID)
-        history_url = history_id if history_id.startswith("https://") else f"https://docs.google.com/spreadsheets/d/{history_id}/edit"
-        frame = connection.read(spreadsheet=history_url, worksheet=titles.get("playoff_history", "playoff_picks"),
-                                ttl=60, header=None, nrows=3)
-        frame = frame.astype(object).where(pd.notna(frame), None)
-        snapshot["playoffStandings"] = playoff_history_standings(frame.values.tolist())
-    except Exception as error:
-        logging.getLogger("mbcc").error("Playoff history load failed (%s)", type(error).__name__)
-        snapshot["playoffStandingsError"] = (
-            str(error) if isinstance(error, ValueError) and str(error).startswith("playoff_picks ")
-            else "Couldn’t load all-time playoff standings from the history spreadsheet."
-        )
-    return data.validate_snapshot(snapshot)
+    return data.fetch_api(endpoint)
 
 
 def change_page():
@@ -88,11 +51,14 @@ def open_detail(kind, identifier=None):
 
 
 def settings():
-    default = setting("mbcc_data_source", "sheets" if has_sheets_connection() else "api")
+    default = setting("mbcc_data_source", "api")
     if os.environ.get("MBCC_DEMO") == "1":
         default = "demo"
-    sources = ["iPhone backend", "Google Sheets", "Demo"]
-    defaults = {"api": 0, "sheets": 1, "demo": 2}
+    sources = ["iPhone backend", "Demo"]
+    defaults = {"api": 0, "demo": 1}
+    # Migrate browser sessions that previously selected the direct Sheets source.
+    if st.session_state.get("data_source") not in (None, *sources):
+        st.session_state.data_source = "iPhone backend"
     with st.sidebar:
         st.header("Player filters")
         st.toggle("Current players only", value=True, key="current_players_only")
@@ -101,13 +67,9 @@ def settings():
         st.header("Data Connection")
         source = st.radio("Data source", sources, index=defaults.get(default, 0), key="data_source")
         endpoint = setting("mbcc_endpoint", data.DEFAULT_ENDPOINT)
-        season = setting("mbcc_season", "MBCC 15 · 2026–27")
         if source == "iPhone backend":
             endpoint = st.text_input("Snapshot URL", value=endpoint, key="snapshot_url")
-            st.caption("Uses the same results and posts as the iPhone app.")
-        elif source == "Google Sheets":
-            season = st.text_input("Season", value=season, key="sheet_season")
-            st.caption("Uses your existing Google Sheets connection. The live_scores_and_games and todays_update tabs are required.")
+            st.caption("All live data comes from the same backend as the iPhone app.")
         else:
             st.caption("Fictional sample results. Demo data is never used automatically when a live connection fails.")
         st.divider()
@@ -122,11 +84,11 @@ def settings():
         if st.button("Refresh now", width="stretch"):
             fetch_snapshot.clear()
         st.caption("Results refresh every minute while this page is open.")
-    return source, endpoint.strip(), season, zone
+    return source, endpoint.strip(), zone
 
 
-def load_data(source, endpoint, season):
-    identity = (source, endpoint if source == "iPhone backend" else season if source == "Google Sheets" else "demo")
+def load_data(source, endpoint):
+    identity = (source, endpoint if source == "iPhone backend" else "demo")
     if st.session_state.get("source_identity") != identity:
         st.session_state.source_identity = identity
         st.session_state.pop("last_snapshot", None)
@@ -134,7 +96,7 @@ def load_data(source, endpoint, season):
         for key in ("game_filter", "season_players", "game_players", "elimination_player", "history_player", "bracket_player", "bracket_saved_player", "bracket_game"):
             st.session_state.pop(key, None)
     try:
-        snapshot = fetch_snapshot(source, endpoint, season)
+        snapshot = fetch_snapshot(source, endpoint)
         st.session_state.last_snapshot = snapshot
         return snapshot, None
     except Exception as error:
@@ -317,7 +279,7 @@ def live_view(snapshot, zone):
             st.button("Everyone’s picks →", key=f'game_{game["id"]}', on_click=open_detail, args=("game", game["id"]), width="stretch")
 
 
-def bracket_view(snapshot, zone):
+def bracket_view(snapshot, zone, *, source, users_loaded):
     bracket_games_view(snapshot, zone)
     st.subheader("All-time playoff standings")
     if snapshot.get("playoffStandingsError"):
@@ -327,7 +289,17 @@ def bracket_view(snapshot, zone):
         return
     rows = playoff_standings(snapshot)
     if not rows:
-        st.info("All-time playoff standings aren’t available yet.")
+        if users_loaded is None:
+            st.info("The iPhone backend has not supplied playoff history. Deploy the updated backend to load it."
+                    if source == "iPhone backend" else "This demo snapshot does not include all-time playoff standings.")
+        elif users_loaded:
+            st.info(f"Loaded {users_loaded} historical users, but none match Current players only. Turn off that sidebar filter to see their standings.")
+        else:
+            st.info("The playoff worksheet returned no users. Check that playoff_picks has user names in its first row.")
+        st.caption(f"History source: {source} · Users loaded: {users_loaded if users_loaded is not None else 'not supplied'} · Users shown: 0")
+        read = snapshot.get("playoffHistoryRead")
+        if read:
+            st.caption(f"Worksheet: {read['worksheet']} · Rows read: {read['rows']} · Columns read: {read['columns']}")
         return
     st.caption("Scroll sideways on smaller screens to see both all-time totals.")
     table_rows = ''.join(
@@ -527,8 +499,8 @@ def info_view(snapshot):
 
 
 @st.fragment(run_every=60)
-def current_screen(source, endpoint, season, zone):
-    snapshot, error = load_data(source, endpoint, season)
+def current_screen(source, endpoint, zone):
+    snapshot, error = load_data(source, endpoint)
     page = st.session_state.get("primary_nav_value", "Live")
     detail = st.session_state.get("detail")
     if not detail:
@@ -541,6 +513,8 @@ def current_screen(source, endpoint, season, zone):
         return
     if snapshot.get("isDemo") is True:
         st.info("DEMO · Sample results, not real standings")
+    history_rows = snapshot.get("playoffStandings")
+    users_loaded = len(history_rows) if history_rows is not None else None
     snapshot = data.filter_current_players(snapshot, st.session_state.get("current_players_only", True))
     if detail and detail[0] == "updates":
         updates_view(snapshot)
@@ -551,7 +525,7 @@ def current_screen(source, endpoint, season, zone):
     elif page == "Standings":
         standings_view(snapshot)
     elif page == "Bracket":
-        bracket_view(snapshot, zone)
+        bracket_view(snapshot, zone, source=source, users_loaded=users_loaded)
     elif page == "Season":
         season_view(snapshot)
     elif page == "History":
@@ -565,10 +539,10 @@ def current_screen(source, endpoint, season, zone):
 def main():
     st.set_page_config(page_title="MBCC", page_icon="🏆", layout="centered", initial_sidebar_state="collapsed")
     st.markdown('<style>' + (ROOT / "web_app/styles.css").read_text() + '</style>', unsafe_allow_html=True)
-    source, endpoint, season, zone = settings()
+    source, endpoint, zone = settings()
     with st.container(key="primary_nav"):
         st.radio("Main navigation", PAGES, horizontal=True, key="primary_nav_value", label_visibility="collapsed", on_change=change_page, width="stretch")
-    current_screen(source, endpoint, season, zone)
+    current_screen(source, endpoint, zone)
 
 
 if __name__ == "__main__":

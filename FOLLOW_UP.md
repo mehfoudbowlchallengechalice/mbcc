@@ -2,6 +2,21 @@
 
 Saved Page: https://chatgpt.com/space/page_9ba1d1d21fb4819182efefce0a86cf65
 
+November 23 connection update: all live web data now goes through the iPhone
+backend. The direct Google Sheets option and web Sheets dependency have been
+removed. Existing `sheets` settings and saved selections migrate to the API;
+old web Google credentials are ignored. Season and worksheet settings belong on
+the backend. Demo remains an explicit local preview option. A live API check
+returned 48 games, one blog post, and overall history, but no `playoffStandings`.
+Deploy the updated backend/configuration for those totals, and publish/reboot the
+web app for the shared connection change. Earlier validation notes below describe
+the previous two-source implementation.
+
+Connection validation: all 85 Python checks passed, including API-backed screens,
+legacy settings and saved-selection migration, and refresh-failure behavior.
+The real hosted snapshot also passed the web loader's validation. Deployment was
+not performed; the local Google Cloud CLI is unavailable.
+
 Updated November 23, 2026 with a Bracket tab in both interfaces. It shows the existing schedule’s playoff games in four rounds, with scores, winners, player picks, and game details. An all-time playoff standings table now appears below it, using only the first three rows of `playoff_picks` in the separate history workbook: users, `Overall`, and `Overall Unknown`. The snapshot includes optional `playoffStandings`; old backends remain readable. Existing overall history stays in the challenge workbook. Publish/reboot the web app, deploy the updated API/configuration, and rebuild the iPhone app to ship this change. On compact iPhone tab bars, History and Info are under More.
 
 Validation: 78 Python checks and Swift model checks passed; the iPhone simulator build passed. Browser checks cover all six tabs, bracket navigation, and the all-time table at 320, 390, and 1440 pixels. Live private-sheet access could not be verified in this session; source mapping is tested with the user-confirmed three-row layout. Native UI tests remain blocked by the unavailable iOS 27.0 Simulator runtime. New screenshots are in `outputs/playoff-history`.
@@ -24,7 +39,7 @@ The content source is a `todays_update` tab in the existing MBCC Google workbook
 | Charts and elimination | Both under Season, with the shared pairwise logic | Both under Season |
 | Playoff bracket | Bracket tab; four scrolling rounds, player picks, and game details | Same round classification and content; tap a matchup for details |
 | Today’s Update | Latest post at the top of Live; full blog archive and external YouTube thumbnails | Same content and ordering |
-| Game source | Shared backend API, or existing Sheets connection using the same adapter | Shared backend API |
+| Live data source | Shared backend API for all live content | Same shared backend API |
 | Verification | Freshness and field comparisons match the iPhone rules | Game and score matching statuses and field comparisons |
 | Refreshing | Every minute while active; last successful results retained in the current session | Every minute while active, foreground refresh, pull to refresh, and on-disk saved results |
 | Season | Configured MBCC 15 and 2026–27; no fixed end-of-season cutoff | Configured for MBCC 15 and 2026–27 |
@@ -45,7 +60,7 @@ cd ~/mbcc-cloudrun
 bash cloudrun/update-live-source.sh
 ```
 
-The script verifies the game source and blog feed and prints the published post count. This backend workflow does not deploy the Streamlit interface. Web hosting needs the updated `app.py`, `web_app` package, `backend` adapter, requirements, theme, and demo fixture. Existing Google Sheets secrets remain usable, or the web app can use the shared API without Google credentials. See README for configuration and run instructions.
+The script verifies the game source, blog feed, and playoff totals. This backend workflow does not deploy the Streamlit interface. Web hosting needs the updated `app.py`, `web_app` package, requirements, theme, and demo fixture. All live content uses the shared API; web hosting needs no Google credentials or backend adapter. See README for configuration and run instructions.
 
 Validation completed: 69 backend, web model, and Streamlit interaction checks passed. Browser checks cover all five tabs, blog archive, external video links, game details, fixed navigation, and horizontal overflow at 320 px, 390 px, and 1440 px. Screenshots are in `outputs/streamlit`. The Google Sheets path was tested with worksheet fixtures; the real shared API was checked directly. The earlier Swift checks and iPhone build passed, but native visual testing still needs a working Simulator or a physical device.
 
@@ -57,7 +72,7 @@ Validation completed: 69 backend, web model, and Streamlit interaction checks pa
 
 - [x] Add Today’s Update to Streamlit using the same worksheet and publication ordering.
 
-- [x] Align Streamlit game data through the shared API or the existing Sheets connection with the shared adapter.
+- [x] Route all live Streamlit data through the same backend API as the iPhone app.
 
 - [x] Add game and score verification displays to Streamlit.
 

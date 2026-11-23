@@ -5,7 +5,7 @@ import os
 import unittest
 from datetime import datetime, timezone
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 from web_app import data, playoffs
 from test_web_models import playoff_fixture
@@ -192,6 +192,22 @@ class StreamlitAppTests(unittest.TestCase):
         self.page("Live")
         self.assertIn("Christopher", self.text())
 
+    def test_empty_playoff_table_distinguishes_filtered_users_from_missing_backend_data(self):
+        self.snapshot["playoffStandings"] = [{"player": "Former", "correctPlayoff": 12, "correctUnknownPlayoff": 4}]
+        st.cache_data.clear()
+        self.page("Bracket")
+        self.assertTrue(any("Loaded 1 historical users" in item.value for item in self.app.info))
+        self.app.sidebar.toggle(key="current_players_only").set_value(False).run()
+        self.assert_clean()
+        self.assertIn('<th scope="row">Former', self.text())
+        old = copy.deepcopy(self.snapshot)
+        old.pop("playoffStandings")
+        old.update(isDemo=False, gamesSource="live_scores_and_games")
+        with patch("web_app.data.fetch_api", return_value=old):
+            self.app.radio(key="data_source").set_value("iPhone backend").run()
+        self.assert_clean()
+        self.assertTrue(any("backend has not supplied playoff history" in item.value for item in self.app.info))
+
     def test_failed_live_connection_never_uses_demo_and_switching_clears_saved_data(self):
         with patch("web_app.data.fetch_api", side_effect=OSError("private upstream error")):
             self.app.radio(key="data_source").set_value("iPhone backend").run()
@@ -214,35 +230,60 @@ class StreamlitAppTests(unittest.TestCase):
         self.assertIn("last saved results", self.app.warning[0].value)
         self.assertIn("The games", [heading.value for heading in self.app.subheader])
 
-    def test_existing_google_sheets_connection_uses_the_shared_adapter(self):
-        import pandas as pd
-        from test_live_scores import live_fixture
-        tables = live_fixture()
-        tables["todays_update"] = [
-            ["published_date", "title", "message", "youtube_url"],
-            ["2026-11-19", "Sheet briefing", "Published from the worksheet", ""],
+    def test_api_supplies_blog_history_and_playoff_standings(self):
+        snapshot = copy.deepcopy(self.snapshot)
+        snapshot.update(isDemo=False, gamesSource="live_scores_and_games")
+        snapshot["playoffStandings"] = [
+            {"player": "Christopher", "correctPlayoff": 23, "correctUnknownPlayoff": 9},
+            {"player": "Former", "correctPlayoff": 12, "correctUnknownPlayoff": 0},
         ]
-        connection = Mock()
-        def read_sheet(worksheet, ttl, **options):
-            if worksheet == "playoff_picks":
-                self.assertEqual(options["spreadsheet"], "https://docs.google.com/spreadsheets/d/1Iwl1WEzLEXu05ZtFcfZovWwQsECNy8LH3II760C-w2E/edit")
-                self.assertIsNone(options["header"])
-                self.assertEqual(options["nrows"], 3)
-                return pd.DataFrame([
-                    ["", "", "", "Alice", "", "Former", ""],
-                    ["Overall", "", "", 23, "44.23%", 12, "23.08%"],
-                    ["Overall Unknown", "", "", 9, "37.50%", 0, "0.00%"],
-                ])
-            return pd.DataFrame(tables[worksheet][1:], columns=tables[worksheet][0])
-        connection.read.side_effect = read_sheet
-        with patch("streamlit.connection", return_value=connection):
-            self.app.radio(key="data_source").set_value("Google Sheets").run()
-        self.assert_clean()
-        self.assertFalse(self.app.warning)
-        self.assertIn("Sheet briefing", [heading.value for heading in self.app.subheader])
-        self.assertEqual(len(connection.read.call_args_list), 12)
-        self.assertIn("Scores", self.text())
-        self.app.sidebar.toggle(key="current_players_only").set_value(False).run()
-        self.page("Bracket")
-        self.assertIn('<th scope="row">Former</th><td>12</td><td>0</td>', self.text())
-        self.assertIn('<th scope="row">Alice</th><td>23</td><td>9</td>', self.text())
+        with patch("web_app.data.fetch_api", return_value=snapshot) as api, \
+                patch("streamlit.connection") as sheets:
+            self.app.radio(key="data_source").set_value("iPhone backend").run()
+            self.assert_clean()
+            self.assertFalse(self.app.warning)
+            self.assertIn("Latest briefing", [heading.value for heading in self.app.subheader])
+            self.assertEqual(self.app.radio(key="data_source").options, ["iPhone backend", "Demo"])
+            self.app.sidebar.toggle(key="current_players_only").set_value(False).run()
+            self.page("Bracket")
+            self.assertIn('<th scope="row">Former</th><td>12</td><td>0</td>', self.text())
+            self.assertIn('<th scope="row">Christopher</th><td>23</td><td>9</td>', self.text())
+            for name in ("Standings", "Season", "History", "Info"):
+                self.page(name)
+            api.assert_called_once_with(data.DEFAULT_ENDPOINT)
+            sheets.assert_not_called()
+
+    def test_default_and_legacy_sheets_settings_use_api_with_existing_credentials(self):
+        snapshot = copy.deepcopy(self.snapshot)
+        snapshot.update(isDemo=False, gamesSource="live_scores_and_games")
+        for legacy in (False, True):
+            with self.subTest(legacy=legacy), \
+                    patch.dict(os.environ, {"MBCC_DEMO": "0"}), \
+                    patch("web_app.data.fetch_api", return_value=snapshot) as api, \
+                    patch("streamlit.connection") as sheets:
+                st.cache_data.clear()
+                os.environ.pop("MBCC_DATA_SOURCE", None)
+                app = AppTest.from_file(str(Path(__file__).resolve().parents[1] / "app.py"), default_timeout=15)
+                app.secrets["connections"] = {"gsheets": {"spreadsheet": "unused"}}
+                if legacy:
+                    app.secrets["mbcc"] = {"data_source": "sheets"}
+                app.run()
+                self.assertFalse(app.exception)
+                self.assertEqual(app.radio(key="data_source").value, "iPhone backend")
+                self.assertFalse(app.info)
+                api.assert_called_once_with(data.DEFAULT_ENDPOINT)
+                sheets.assert_not_called()
+
+    def test_saved_google_sheets_selection_migrates_to_api(self):
+        snapshot = copy.deepcopy(self.snapshot)
+        snapshot.update(isDemo=False, gamesSource="live_scores_and_games")
+        app = AppTest.from_file(str(Path(__file__).resolve().parents[1] / "app.py"), default_timeout=15)
+        app.session_state["data_source"] = "Google Sheets"
+        with patch("web_app.data.fetch_api", return_value=snapshot) as api, \
+                patch("streamlit.connection") as sheets:
+            app.run()
+            self.assertFalse(app.exception)
+            self.assertEqual(app.radio(key="data_source").value, "iPhone backend")
+            self.assertFalse(app.warning)
+            api.assert_called_once_with(data.DEFAULT_ENDPOINT)
+            sheets.assert_not_called()

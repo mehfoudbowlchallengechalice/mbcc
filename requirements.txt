@@ -1,5 +1,4 @@
 streamlit==1.50.0
 pandas>=2.2,<3
 altair>=5.5,<6
-st-gsheets-connection>=0.1,<1
 tzdata>=2025.1

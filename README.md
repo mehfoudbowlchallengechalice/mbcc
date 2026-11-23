@@ -39,31 +39,29 @@ totals retain the spreadsheet's original aggregate calculations.
 
 Open **Data Connection** using the sidebar control at the upper left:
 
-- **Google Sheets** reuses the existing `[connections.gsheets]` Streamlit secrets.
-  It is selected automatically when that connection exists. The same
-  `backend/sheets_adapter.py` used by the iPhone API translates the worksheets.
-  This requires `live_scores_and_games` and `todays_update`, plus the existing
-  standings, picks, trackers, and history tabs. Keep the existing credentials
-  and spreadsheet setting; no new account is needed.
 - **iPhone backend** uses the public read-only snapshot API, requiring no Google
-  credentials in Streamlit. It is the default when no Sheets connection is
-  configured. This endpoint was verified on November 20, 2026 with real data,
-  the live game source, 48 games, and one published blog post.
+  credentials in Streamlit. All live scores, picks, standings, charts, blog posts,
+  history, and playoff totals use this API. It is the default even when old Sheets
+  credentials exist. This endpoint was checked on November 23, 2026 with real data,
+  48 games, and one published blog post; all-time playoff totals still require
+  deployment of the updated backend.
 - **Demo** loads the same fictional fixture as iPhone. For a local preview only,
   start with `MBCC_DEMO=1 .venv/bin/streamlit run app.py`. Failed live connections
   never silently switch to demo data.
 
-Optional settings use environment variables `MBCC_DATA_SOURCE` (`api`, `sheets`,
-or `demo`), `MBCC_ENDPOINT`, and `MBCC_SEASON`, or the matching `[mbcc]` settings
-shown in `.streamlit/secrets.toml.example`. Worksheet title aliases can be set in
-`[mbcc.worksheet_titles]`. The defaults are the current iPhone endpoint and the
-MBCC 15 season; there is no hardcoded end-of-season game filter cutoff.
+Optional web settings use environment variables `MBCC_DATA_SOURCE` (`api` or
+`demo`) and `MBCC_ENDPOINT`, or the matching `[mbcc]` settings shown in
+`.streamlit/secrets.toml.example`. Legacy `sheets` settings and saved Google Sheets
+selections now use the API. Old `[connections.gsheets]` credentials are ignored
+and can be removed from web hosting. The backend owns season, workbook, and
+worksheet settings, including `MBCC_SEASON` and `MBCC_WORKSHEET_TITLES`.
+There is no hardcoded end-of-season game filter cutoff.
 
-Both live sources refresh every minute while the browser session is open.
+Live data refreshes every minute while the browser session is open.
 The last successful snapshot is retained **for that browser session and
 connection** if a refresh fails, with a warning. Changing sources clears it.
 Unlike the iPhone app’s on-disk cache, the web copy does not persist after a new
-session. Google Sheets and the API may each cache data for up to a minute.
+session. The web loader and API may each cache data for up to a minute.
 Verification freshness is recomputed on every render, including saved results.
 Game-day and publication-date selection use Eastern Time; kickoff times use
 the browser time zone when available and can be changed in Data Connection.
@@ -74,7 +72,7 @@ The web app has its own deployment. Deploying the Cloud Run API ZIP does not
 deploy `app.py` or its new `web_app` package. On Streamlit hosting, publish the
 updated repository files and reinstall `requirements.txt`.
 
-Streamlit checks, including navigation, both live source paths with fixtures,
+Streamlit checks, including navigation, shared API loading and legacy settings,
 archive behavior, connection failures, and model parity:
 
 ```sh
@@ -105,7 +103,7 @@ deployment, the hosted service still returns its previous game list. Freshly
 imported games show “Game not verified” and “Scores not verified” until a
 successful automatic feed check supplies the comparison data.
 
-The app has Live, Standings, Bracket, Season, History, and Info tabs. On compact iPhone tab bars, History and Info are accessible through More. Tap a game to see everyone’s picks and its ESPN link when an ESPN game ID exists. Season includes player filters, the correct-picks bar chart, both Argyle charts, the elimination check, and a horizontally scrolling elimination matrix. History keeps the player, former-player, and winner filters, career totals, and season totals. There is no pick submission or sign-in flow.
+The app has Live, Standings, Bracket, Season, History, and Info tabs. On compact iPhone tab bars, History and Info are accessible through More. Tap a game to see everyone’s picks and its ESPN link when an ESPN game ID exists. Season includes player filters, the correct-picks bar chart, both Argyle charts, the elimination check, and a horizontally scrolling elimination matrix. History keeps the player and winner filters, career totals, and season totals. The gear button opens Data Connection, where **Current players only** matches the web sidebar: enabled by default and applied immediately across every tab and game details, including all-time playoff standings. The iPhone app saves this preference between launches and retains the complete snapshot so turning the filter off restores former players and their historical totals. There is no pick submission or sign-in flow.
 
 The **Bracket** tab shows playoff games in four horizontally scrolling rounds:
 First round, Quarterfinals, Semifinals, and Championship. Both interfaces reuse
@@ -136,15 +134,13 @@ independent of the current season or selected pick filter. Rows sort by correct
 playoff games, then correct unknown playoff games, then name. Blank totals show
 a dash, and zero remains zero. The table appears even without a current bracket.
 
-Streamlit's Google Sheets source reads that workbook with the existing
-connection credentials. The optional `mbcc.playoff_history_sheet_id` setting
-overrides its workbook; `mbcc.worksheet_titles.playoff_history` overrides its
-tab name. Existing overall history remains in the challenge workbook.
-The API reads the separate playoff workbook when
+Both apps receive these totals through the shared API. Existing overall history
+remains in the challenge workbook. The API reads the separate playoff workbook when
 `MBCC_PLAYOFF_HISTORY_ENABLED=1`, using `MBCC_PLAYOFF_HISTORY_SHEET_ID`. Both are
-set in the supplied Cloud Run configuration. The existing Streamlit account and
-the API's `mbcc-sheet-reader` service account need Viewer access to the history
-workbook. A failed playoff-history read leaves the other app content available
+set in the supplied Cloud Run configuration. Use `MBCC_WORKSHEET_TITLES` to override
+the `playoff_history` tab alias if needed. The API's `mbcc-sheet-reader` service
+account needs Viewer access to the history workbook. A failed playoff-history
+read leaves the other app content available
 and displays an unavailable message rather than invented standings.
 
 Publish and reboot the web app, deploy the updated backend with
