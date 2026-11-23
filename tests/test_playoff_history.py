@@ -18,6 +18,24 @@ ROWS = [["User", "Alice", "Bob", "Former", "Missing"],
 
 
 class PlayoffHistoryTests(unittest.TestCase):
+    def test_actual_workbook_count_percentage_pairs_and_leading_spacers(self):
+        users = "Christopher Nicholas Gregory Joseph Sara Emma Elise Kramer Laura Brent Lauren Hannah Hokie Doc DLT P_Smurf Jen".split()
+        users[15] = "P Smurf"
+        overall = [28, 26, 25, 26, 1, 22, 18, 3, 29, 4, 28, 5, 2, 1, 2, 21, 10]
+        unknown = [9, 10, 9, 8, 0, 4, 5, 0, 8, 0, 8, 1, 1, 0, 0, 7, 3]
+        header = [cell for user in users for cell in [user, ""]]
+        totals = ["Overall", "", ""] + [cell for count in overall for cell in [count, f"{count / 52:.2%}"]]
+        unknown_totals = ["Overall Unknown", "", ""] + [cell for count in unknown for cell in [count, f"{count / 24:.2%}"]]
+        for prefix in ([], ["", "", ""]):
+            entries = playoff_history_standings([prefix + header, totals, unknown_totals])
+            self.assertEqual([entry["player"] for entry in entries], users)
+            self.assertEqual([entry["correctPlayoff"] for entry in entries], overall)
+            self.assertEqual([entry["correctUnknownPlayoff"] for entry in entries], unknown)
+        totals[3] = ""
+        entries = playoff_history_standings([header, totals, unknown_totals])
+        self.assertIsNone(entries[0]["correctPlayoff"])
+        self.assertEqual(entries[1]["correctPlayoff"], 26)
+
     def test_only_top_three_rows_supply_totals_without_dropping_former_users_or_zero(self):
         tables = fixture()
         tables["playoff_history"] = ROWS

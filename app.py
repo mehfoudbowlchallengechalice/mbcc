@@ -4,6 +4,7 @@ Run: streamlit run app.py
 Data: existing gsheets connection or the same read-only snapshot API as iPhone.
 """
 import html
+import logging
 import os
 from datetime import date, datetime, timezone
 from pathlib import Path
@@ -69,8 +70,12 @@ def fetch_snapshot(source, endpoint, season):
                                 ttl=60, header=None, nrows=3)
         frame = frame.astype(object).where(pd.notna(frame), None)
         snapshot["playoffStandings"] = playoff_history_standings(frame.values.tolist())
-    except Exception:
-        snapshot["playoffStandingsError"] = "Couldn’t load all-time playoff standings from the history spreadsheet."
+    except Exception as error:
+        logging.getLogger("mbcc").error("Playoff history load failed (%s)", type(error).__name__)
+        snapshot["playoffStandingsError"] = (
+            str(error) if isinstance(error, ValueError) and str(error).startswith("playoff_picks ")
+            else "Couldn’t load all-time playoff standings from the history spreadsheet."
+        )
     return data.validate_snapshot(snapshot)
 
 
@@ -316,7 +321,9 @@ def bracket_view(snapshot, zone):
     bracket_games_view(snapshot, zone)
     st.subheader("All-time playoff standings")
     if snapshot.get("playoffStandingsError"):
-        st.warning("Couldn’t load all-time playoff standings from the history spreadsheet.")
+        error = snapshot["playoffStandingsError"]
+        st.warning(error if isinstance(error, str) and error.startswith("playoff_picks ")
+                   else "Couldn’t load all-time playoff standings from the history spreadsheet.")
         return
     rows = playoff_standings(snapshot)
     if not rows:

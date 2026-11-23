@@ -330,15 +330,34 @@ def playoff_history_standings(values):
     """Read the users and the two precomputed totals from the top three rows."""
     if not values or not any(text(cell) for row in values[:3] for cell in row):
         return []
-    users = values[0]
-    totals = {text(row[0]).casefold(): row for row in values[1:3] if row}
+    users = [(column, text(value)) for column, value in enumerate(values[0])
+             if text(value) and text(value).casefold() not in {"user", "users", "player", "players"}]
+    totals = {}
+    label_columns = []
+    for row in values[1:3]:
+        for column, value in enumerate(row):
+            label = " ".join(text(value).casefold().split())
+            if label in {"overall", "overall unknown"}:
+                totals[label] = row
+                label_columns.append(column)
+                break
     if not {"overall", "overall unknown"}.issubset(totals):
-        raise ValueError("playoff_picks needs Overall and Overall Unknown in the first column of rows 2 and 3")
+        raise ValueError("playoff_picks needs Overall and Overall Unknown labels in rows 2 and 3")
+    # The workbook has a count/percentage pair for each player. Names may be
+    # centered over either column, and the metric rows have leading spacers.
+    # Use the count immediately before each percentage, preserving user order.
+    percentage_columns = {column for row in totals.values() for column, value in enumerate(row)
+                          if text(value).endswith("%") and column > max(label_columns) + 1}
+    if percentage_columns:
+        count_columns = sorted(column - 1 for column in percentage_columns)
+        if len(count_columns) != len(users):
+            raise ValueError("playoff_picks needs one count/percentage pair for each user in row 1")
+        users = [(column, user) for column, (_, user) in zip(count_columns, users)]
+    else:
+        # Continue accepting the compact, one-count-column-per-user layout.
+        users = [(column, user) for column, user in users if column > max(label_columns)]
     standings, names = [], set()
-    for column, value in enumerate(users[1:], start=1):
-        player = text(value)
-        if not player:
-            continue
+    for column, player in users:
         if player in names:
             raise ValueError("playoff_picks contains duplicate users")
         names.add(player)

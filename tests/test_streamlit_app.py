@@ -228,7 +228,11 @@ class StreamlitAppTests(unittest.TestCase):
                 self.assertEqual(options["spreadsheet"], "https://docs.google.com/spreadsheets/d/1Iwl1WEzLEXu05ZtFcfZovWwQsECNy8LH3II760C-w2E/edit")
                 self.assertIsNone(options["header"])
                 self.assertEqual(options["nrows"], 3)
-                return pd.DataFrame([["User", "Alice", "Former"], ["Overall", 23, 12], ["Overall Unknown", 9, 0]])
+                return pd.DataFrame([
+                    ["", "", "", "Alice", "", "Former", ""],
+                    ["Overall", "", "", 23, "44.23%", 12, "23.08%"],
+                    ["Overall Unknown", "", "", 9, "37.50%", 0, "0.00%"],
+                ])
             return pd.DataFrame(tables[worksheet][1:], columns=tables[worksheet][0])
         connection.read.side_effect = read_sheet
         with patch("streamlit.connection", return_value=connection):

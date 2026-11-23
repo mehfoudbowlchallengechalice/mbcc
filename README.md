@@ -126,8 +126,11 @@ At the bottom of Bracket, **All-time playoff standings** lists every historical
 user, correct playoff games all time, and correct unknown playoff games all
 time. The source is the **`playoff_picks`** tab in the separate history workbook
 (`1Iwl1WEzLEXu05ZtFcfZovWwQsECNy8LH3II760C-w2E`). Only its first three rows are
-read: user names across row 1, `Overall` in the first column of one total row,
-and `Overall Unknown` in the first column of the other. Those totals are used
+read: user names across row 1, and rows labeled `Overall` and `Overall Unknown`
+below them. The sheet uses a count/percentage column pair for each user; only
+the counts are displayed. Leading spacer columns and names centered across the
+pairs are supported, as is the compact one-count-column-per-user layout.
+Those totals are used
 directly; season rows below them are not added again. All users are included,
 independent of the current season or selected pick filter. Rows sort by correct
 playoff games, then correct unknown playoff games, then name. Blank totals show
