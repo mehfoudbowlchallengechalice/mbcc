@@ -3,7 +3,7 @@ import unittest
 from datetime import datetime, timedelta, timezone
 from unittest.mock import patch
 
-from web_app import data
+from web_app import data, playoffs
 
 
 def playoff_fixture(snapshot):
@@ -95,15 +95,15 @@ class WebModelTests(unittest.TestCase):
         self.assertEqual(data.score(None), "—")
 
     def test_playoff_rounds_use_labels_not_bowl_names_and_sort_games(self):
-        rounds = data.playoff_games(playoff_fixture(self.snapshot))
+        rounds = playoffs.playoff_games(playoff_fixture(self.snapshot))
         self.assertEqual([len(games) for _, games in rounds], [4, 4, 2, 1])
         self.assertEqual([game["id"] for game in rounds[0][1]], ["playoff-0", "playoff-1", "playoff-2", "playoff-3"])
         for name in ["Cotton Bowl", "Orange Bowl", "Chalice Championship", "FCS National Championship", "Celebration Bowl"]:
-            self.assertIsNone(data.playoff_round(name))
+            self.assertIsNone(playoffs.playoff_round(name))
         for name, expected in [("CFP First-Round", 0), ("CFP 1st Round", 0), ("CFP Quarter-final", 1),
                                ("CFP Semi-final", 2), ("CFP National Championship", 3)]:
-            self.assertEqual(data.playoff_round(name), expected)
-        self.assertTrue(all(not games for _, games in data.playoff_games(self.snapshot)))
+            self.assertEqual(playoffs.playoff_round(name), expected)
+        self.assertTrue(all(not games for _, games in playoffs.playoff_games(self.snapshot)))
 
     def test_elimination_keeps_ties_alive_and_ignores_impossible_picks(self):
         self.snapshot["players"] = ["Alice", "Bob"]

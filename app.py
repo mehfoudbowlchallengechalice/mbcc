@@ -15,6 +15,7 @@ import streamlit as st
 
 from backend.sheets_adapter import WORKSHEETS, build_snapshot
 from web_app import data
+from web_app.playoffs import playoff_games
 
 ROOT = Path(__file__).resolve().parent
 PAGES = ["Live", "Standings", "Bracket", "Season", "History", "Info"]
@@ -298,7 +299,7 @@ def live_view(snapshot, zone):
 def bracket_view(snapshot, zone):
     st.subheader("The road to the championship")
     st.caption(snapshot["season"])
-    rounds = data.playoff_games(snapshot)
+    rounds = playoff_games(snapshot)
     games = [game for _, entries in rounds for game in entries]
     if not games:
         st.info("The playoff bracket isn’t available yet. Games will appear here when the schedule includes playoff rounds.")

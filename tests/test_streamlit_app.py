@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from unittest.mock import Mock, patch
 
-from web_app import data
+from web_app import data, playoffs
 from test_web_models import playoff_fixture
 
 AVAILABLE = importlib.util.find_spec("streamlit") is not None
@@ -90,7 +90,7 @@ class StreamlitAppTests(unittest.TestCase):
         self.app.run()
         self.assert_clean()
         text = self.text()
-        for title in data.PLAYOFF_ROUNDS:
+        for title in playoffs.PLAYOFF_ROUNDS:
             self.assertIn(title, text)
         self.assertEqual(text.count('<article class="bracket-game">'), 11)
         self.assertIn("<strong>0</strong>", text)
