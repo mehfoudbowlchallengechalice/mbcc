@@ -15,9 +15,10 @@ import streamlit as st
 
 from backend.sheets_adapter import WORKSHEETS, build_snapshot
 from web_app import data
-from web_app.playoffs import playoff_games
+from web_app.playoffs import playoff_games, playoff_standings
 
 ROOT = Path(__file__).resolve().parent
+PLAYOFF_HISTORY_SHEET_ID = "1Iwl1WEzLEXu05ZtFcfZovWwQsECNy8LH3II760C-w2E"
 PAGES = ["Live", "Standings", "Bracket", "Season", "History", "Info"]
 COLORS = ["#387bc4", "#bb612d", "#248363", "#8764ae", "#c2527a", "#248b96", "#5b68af", "#8a674b", "#c34b46", "#4d94ae"]
 TROPHY = '<svg viewBox="0 0 24 28" aria-hidden="true"><path d="M6 2h12v8c0 5-2.5 8-6 8s-6-3-6-8V2Zm0 2H2v5c0 4 2 6 6 6M18 4h4v5c0 4-2 6-6 6M12 18v6M7 26h10" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>'
@@ -59,7 +60,18 @@ def fetch_snapshot(source, endpoint, season):
         frame = connection.read(worksheet=titles.get(name, name), ttl=60)
         frame = frame.astype(object).where(pd.notna(frame), None)
         tables[name] = [list(frame.columns)] + frame.values.tolist()
-    return data.validate_snapshot(build_snapshot(tables, season=season))
+    snapshot = build_snapshot(tables, season=season)
+    try:
+        from backend.sheets_adapter import playoff_history_standings
+        history_id = setting("mbcc_playoff_history_sheet_id", PLAYOFF_HISTORY_SHEET_ID)
+        history_url = history_id if history_id.startswith("https://") else f"https://docs.google.com/spreadsheets/d/{history_id}/edit"
+        frame = connection.read(spreadsheet=history_url, worksheet=titles.get("playoff_history", "playoff_history"),
+                                ttl=60, header=None, nrows=3)
+        frame = frame.astype(object).where(pd.notna(frame), None)
+        snapshot["playoffStandings"] = playoff_history_standings(frame.values.tolist())
+    except Exception:
+        snapshot["playoffStandingsError"] = "Couldn’t load all-time playoff standings from the history spreadsheet."
+    return data.validate_snapshot(snapshot)
 
 
 def change_page():
@@ -297,6 +309,27 @@ def live_view(snapshot, zone):
 
 
 def bracket_view(snapshot, zone):
+    bracket_games_view(snapshot, zone)
+    st.subheader("All-time playoff standings")
+    if snapshot.get("playoffStandingsError"):
+        st.warning("Couldn’t load all-time playoff standings from the history spreadsheet.")
+        return
+    rows = playoff_standings(snapshot)
+    if not rows:
+        st.info("All-time playoff standings aren’t available yet.")
+        return
+    st.caption("Scroll sideways on smaller screens to see both all-time totals.")
+    table_rows = ''.join(
+        f'<tr><th scope="row">{esc(row["player"])}</th><td>{esc(data.score(row.get("correctPlayoff")))}</td>'
+        f'<td>{esc(data.score(row.get("correctUnknownPlayoff")))}</td></tr>' for row in rows)
+    st.markdown('<div class="playoff-standings-scroll" role="region" aria-label="All-time playoff standings" tabindex="0">'
+                '<table class="playoff-standings"><thead><tr><th scope="col">User</th>'
+                '<th scope="col">Correct playoff games<br>All time</th>'
+                '<th scope="col">Correct unknown playoff games<br>All time</th></tr></thead>'
+                f'<tbody>{table_rows}</tbody></table></div>', unsafe_allow_html=True)
+
+
+def bracket_games_view(snapshot, zone):
     st.subheader("The road to the championship")
     st.caption(snapshot["season"])
     rounds = playoff_games(snapshot)

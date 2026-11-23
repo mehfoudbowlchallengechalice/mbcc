@@ -80,6 +80,19 @@ def validate_snapshot(snapshot):
                     raise SnapshotError("The snapshot contains incomplete or invalid results.")
     if any(not parse_time(game["startTime"]) for game in snapshot["games"]):
         raise SnapshotError("The snapshot contains an invalid kickoff time.")
+    playoff_rows = snapshot.get("playoffStandings")
+    if playoff_rows is not None:
+        if not isinstance(playoff_rows, list):
+            raise SnapshotError("The snapshot contains invalid playoff standings.")
+        names = set()
+        for row in playoff_rows:
+            if not isinstance(row, dict) or not isinstance(row.get("player"), str) or not row["player"].strip() or row["player"] in names:
+                raise SnapshotError("The snapshot contains invalid playoff standings.")
+            names.add(row["player"])
+            for key in ("correctPlayoff", "correctUnknownPlayoff"):
+                value = row.get(key)
+                if value is not None and (type(value) is not int or value < 0):
+                    raise SnapshotError("The snapshot contains invalid playoff totals.")
     return snapshot
 
 

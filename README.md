@@ -110,8 +110,35 @@ Games must include `College Football Playoff` or `CFP` and a round name in their
 existing game title. Ordinary bowl names are excluded because bowl assignments
 change by season. Within each round games are in kickoff order. The current
 snapshot does not supply seeds or feeder-game relationships, so the view does
-not invent those connections. No new worksheet, API field, or backend deployment
-is required. Publish the updated web files and rebuild the iPhone app to use it.
+not invent those connections. Displaying the bracket games uses the existing
+schedule and does not require a new worksheet.
+
+At the bottom of Bracket, **All-time playoff standings** lists every historical
+user, correct playoff games all time, and correct unknown playoff games all
+time. The source is the **`playoff_history`** tab in the separate history workbook
+(`1Iwl1WEzLEXu05ZtFcfZovWwQsECNy8LH3II760C-w2E`). Only its first three rows are
+read: user names across row 1, `Overall` in the first column of one total row,
+and `Overall Unknown` in the first column of the other. Those totals are used
+directly; season rows below them are not added again. All users are included,
+independent of the current season or selected pick filter. Rows sort by correct
+playoff games, then correct unknown playoff games, then name. Blank totals show
+a dash, and zero remains zero. The table appears even without a current bracket.
+
+Streamlit's Google Sheets source reads that workbook with the existing
+connection credentials. The optional `mbcc.playoff_history_sheet_id` setting
+overrides its workbook; `mbcc.worksheet_titles.playoff_history` overrides its
+tab name. Existing overall history remains in the challenge workbook.
+The API reads the separate playoff workbook when
+`MBCC_PLAYOFF_HISTORY_ENABLED=1`, using `MBCC_PLAYOFF_HISTORY_SHEET_ID`. Both are
+set in the supplied Cloud Run configuration. The existing Streamlit account and
+the API's `mbcc-sheet-reader` service account need Viewer access to the history
+workbook. A failed playoff-history read leaves the other app content available
+and displays an unavailable message rather than invented standings.
+
+Publish and reboot the web app, deploy the updated backend with
+`bash cloudrun/update-live-source.sh`, and rebuild the iPhone app to ship the
+table. Older API responses remain readable and display a playoff-history
+unavailable state until the backend is updated.
 
 Info includes a trophy cabinet for every current and former player, ordered by championship total. Each winning season earns one trophy, and a shared championship earns half a trophy, including Nicholas and Joseph’s first-season win. Players without championships appear by name without trophies. Totals come from the history records, counting each player’s winning season once.
 
@@ -175,7 +202,9 @@ The supplied files are:
 The owner confirmed that **all worksheets read by Streamlit are in the challenge
 file**, including `basic_history`, `agg_history`, and `season_history`. Both
 spreadsheet variables in `backend/.env.example` and `cloudrun/env.yaml` therefore
-point to the challenge file. The separate history file is not queried directly.
+point to the challenge file. The separate history file is now queried only for
+`playoff_history`; the three existing overall history tabs stay in the challenge
+file.
 
 The backend reads the private challenge file using the dedicated runtime service
 account. The owner granted it Viewer access. All nine required tab names were

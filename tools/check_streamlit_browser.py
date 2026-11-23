@@ -32,6 +32,10 @@ def main():
          "message": "An earlier sample post, preserved in the archive.", "youtubeURL": "https://youtu.be/M7lc1UVf-VE"},
     ]
     fixture["isDemo"] = True
+    fixture["playoffStandings"] = [
+        {"player": player, "correctPlayoff": 20 + index, "correctUnknownPlayoff": index}
+        for index, player in enumerate(fixture["players"])
+    ] + [{"player": "Former player", "correctPlayoff": 0, "correctUnknownPlayoff": None}]
     # An explicitly fictional bracket exercises all rounds, final/live scores,
     # pending teams, and player picks without changing the bundled demo season.
     names = ([f"College Football Playoff First Round Game ({i + 1})" for i in range(4)]
@@ -126,6 +130,16 @@ def main():
                         page.get_by_test_id("stMain").evaluate("el => el.scrollTop = 0")
                         page.locator("h1").first.scroll_into_view_if_needed()
                         page.screenshot(path=str(output / f"bracket-{label}.png"), full_page=True)
+                        table_region = page.get_by_role("region", name="All-time playoff standings", exact=True)
+                        table_region.scroll_into_view_if_needed()
+                        assert table_region.get_by_role("row").count() == len(fixture["playoffStandings"]) + 1
+                        assert table_region.get_by_role("columnheader").count() == 3
+                        assert table_region.get_by_role("rowheader", name="Former player", exact=True).count() == 1
+                        assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
+                        if width < 480:
+                            assert table_region.evaluate("el => el.scrollWidth > el.clientWidth")
+                        page.get_by_role("heading", name="All-time playoff standings", exact=True).scroll_into_view_if_needed()
+                        page.screenshot(path=str(output / f"playoff-standings-{label}.png"), full_page=True)
                         page.get_by_role("button", name="Game details and everyone’s picks →").click()
                         page.get_by_role("heading", name="Game details", exact=True).wait_for()
                         page.get_by_role("button", name="← Back to Bracket").click()

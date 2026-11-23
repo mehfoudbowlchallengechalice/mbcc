@@ -2,9 +2,9 @@
 
 Saved Page: https://chatgpt.com/space/page_9ba1d1d21fb4819182efefce0a86cf65
 
-Updated November 23, 2026 with a Bracket tab in both interfaces. It shows the existing schedule’s playoff games in four rounds, with scores, winners, player picks, and game details. The live schedule contains 11 labeled playoff games, currently with TBD opponents. No spreadsheet or backend changes are required. Web publication and an iPhone rebuild are still needed to ship this change. On compact iPhone tab bars, History and Info are under More.
+Updated November 23, 2026 with a Bracket tab in both interfaces. It shows the existing schedule’s playoff games in four rounds, with scores, winners, player picks, and game details. An all-time playoff standings table now appears below it, using only the first three rows of `playoff_history` in the separate history workbook: users, `Overall`, and `Overall Unknown`. The snapshot includes optional `playoffStandings`; old backends remain readable. Existing overall history stays in the challenge workbook. Publish/reboot the web app, deploy the updated API/configuration, and rebuild the iPhone app to ship this change. On compact iPhone tab bars, History and Info are under More.
 
-Validation: 71 Python checks and Swift model checks passed; the iPhone simulator build passed. Browser checks cover all six tabs and bracket navigation at 320, 390, and 1440 pixels. Native UI tests were compiled but could not launch because the installed iOS 27.0 Simulator runtime path is unavailable. Bracket screenshots are in `outputs/playoff-bracket`.
+Validation: 78 Python checks and Swift model checks passed; the iPhone simulator build passed. Browser checks cover all six tabs, bracket navigation, and the all-time table at 320, 390, and 1440 pixels. Live private-sheet access could not be verified in this session; source mapping is tested with the user-confirmed three-row layout. Native UI tests remain blocked by the unavailable iOS 27.0 Simulator runtime. New screenshots are in `outputs/playoff-history`.
 
 `app.py` follows the current iPhone app’s navigation, cards, blog feed, game details, scores, charts, elimination, history, and trophy cabinet. Remaining work is deployment of the web interface and final comparison with the native app on a device.
 

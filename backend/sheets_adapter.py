@@ -326,6 +326,34 @@ def published_updates(values, now):
     return sorted(reversed(posts), key=lambda post: post["publishedDate"], reverse=True)
 
 
+def playoff_history_standings(values):
+    """Read the users and the two precomputed totals from the top three rows."""
+    if not values or not any(text(cell) for row in values[:3] for cell in row):
+        return []
+    users = values[0]
+    totals = {text(row[0]).casefold(): row for row in values[1:3] if row}
+    if not {"overall", "overall unknown"}.issubset(totals):
+        raise ValueError("playoff_history needs Overall and Overall Unknown in the first column of rows 2 and 3")
+    standings, names = [], set()
+    for column, value in enumerate(users[1:], start=1):
+        player = text(value)
+        if not player:
+            continue
+        if player in names:
+            raise ValueError("playoff_history contains duplicate users")
+        names.add(player)
+        entry = {"player": player}
+        for label, key in (("overall", "correctPlayoff"), ("overall unknown", "correctUnknownPlayoff")):
+            row = totals[label]
+            value = row[column] if column < len(row) else None
+            count = integer(value, field=f"playoff_history.{label}.{player}") if text(value) else None
+            if count is not None and count < 0:
+                raise ValueError("playoff_history totals must be nonnegative")
+            entry[key] = count
+        standings.append(entry)
+    return standings
+
+
 def build_snapshot(tables, season="MBCC 14 · 2025–26", now=None):
     now = now or datetime.now(timezone.utc)
     using_live = "live_scores_and_games" in tables
@@ -425,4 +453,5 @@ def build_snapshot(tables, season="MBCC 14 · 2025–26", now=None):
             "todaysUpdate": updates[0] if updates else None,
             "updates": updates,
             "players": players, "standings": standings, "games": games,
-            "progress": progress, "history": history, "careers": careers, "seasons": seasons}
+            "progress": progress, "history": history, "careers": careers, "seasons": seasons,
+            "playoffStandings": playoff_history_standings(tables["playoff_history"]) if "playoff_history" in tables else None}

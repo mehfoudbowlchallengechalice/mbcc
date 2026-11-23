@@ -84,7 +84,7 @@ class StreamlitAppTests(unittest.TestCase):
 
     def test_bracket_results_player_picks_and_return_from_game_details(self):
         self.page("Bracket")
-        self.assertIn("isn’t available yet", self.app.info[-1].value)
+        self.assertTrue(any("isn’t available yet" in item.value for item in self.app.info))
         self.snapshot.update(playoff_fixture(self.snapshot))
         st.cache_data.clear()
         self.app.run()
@@ -111,6 +111,28 @@ class StreamlitAppTests(unittest.TestCase):
         self.assert_clean()
         self.assertEqual(self.app.title[0].value, "Bracket")
         self.assertEqual(self.app.selectbox(key="bracket_player").value, "Emma")
+
+    def test_all_time_playoff_table_works_without_current_bracket_and_keeps_all_users(self):
+        self.snapshot["playoffStandings"] = [
+            {"player": "Former <player>", "correctPlayoff": 12, "correctUnknownPlayoff": 4},
+            {"player": "Christopher", "correctPlayoff": 17, "correctUnknownPlayoff": 0},
+            {"player": "Elise", "correctPlayoff": None, "correctUnknownPlayoff": 2},
+        ]
+        st.cache_data.clear()
+        self.page("Bracket")
+        self.assertIn("All-time playoff standings", [item.value for item in self.app.subheader])
+        text = self.text()
+        self.assertIn('<table class="playoff-standings">', text)
+        self.assertIn("Former &lt;player&gt;", text)
+        self.assertIn("<td>0</td>", text)
+        self.assertIn("<td>—</td>", text)
+        self.assertLess(text.index('<th scope="row">Christopher'), text.index('<th scope="row">Former'))
+        self.snapshot.update(playoff_fixture(self.snapshot))
+        st.cache_data.clear()
+        self.app.run()
+        self.app.selectbox(key="bracket_player").set_value("Christopher").run()
+        self.assert_clean()
+        self.assertIn("Former &lt;player&gt;", self.text())
 
     def test_failed_live_connection_never_uses_demo_and_switching_clears_saved_data(self):
         with patch("web_app.data.fetch_api", side_effect=OSError("private upstream error")):
@@ -143,11 +165,21 @@ class StreamlitAppTests(unittest.TestCase):
             ["2026-11-19", "Sheet briefing", "Published from the worksheet", ""],
         ]
         connection = Mock()
-        connection.read.side_effect = lambda worksheet, ttl: pd.DataFrame(tables[worksheet][1:], columns=tables[worksheet][0])
+        def read_sheet(worksheet, ttl, **options):
+            if worksheet == "playoff_history":
+                self.assertEqual(options["spreadsheet"], "https://docs.google.com/spreadsheets/d/1Iwl1WEzLEXu05ZtFcfZovWwQsECNy8LH3II760C-w2E/edit")
+                self.assertIsNone(options["header"])
+                self.assertEqual(options["nrows"], 3)
+                return pd.DataFrame([["User", "Alice", "Former"], ["Overall", 23, 12], ["Overall Unknown", 9, 0]])
+            return pd.DataFrame(tables[worksheet][1:], columns=tables[worksheet][0])
+        connection.read.side_effect = read_sheet
         with patch("streamlit.connection", return_value=connection):
             self.app.radio(key="data_source").set_value("Google Sheets").run()
         self.assert_clean()
         self.assertFalse(self.app.warning)
         self.assertIn("Sheet briefing", [heading.value for heading in self.app.subheader])
-        self.assertEqual(len(connection.read.call_args_list), 11)
+        self.assertEqual(len(connection.read.call_args_list), 12)
         self.assertIn("Scores", self.text())
+        self.page("Bracket")
+        self.assertIn('<th scope="row">Former</th><td>12</td><td>0</td>', self.text())
+        self.assertIn('<th scope="row">Alice</th><td>23</td><td>9</td>', self.text())

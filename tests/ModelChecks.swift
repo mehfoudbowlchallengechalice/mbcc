@@ -13,6 +13,18 @@ struct ModelChecks {
         precondition(!snapshot.hasLiveGameSource) // The old/demo contract is not a live-tab cache.
         precondition(snapshot.todaysUpdate == nil) // Compatible with existing servers and caches.
         precondition(snapshot.updatePosts.isEmpty)
+        precondition(snapshot.playoffStandings == nil && snapshot.rankedPlayoffStandings.isEmpty)
+        var historyTotals = try JSONSerialization.jsonObject(with: original) as! [String: Any]
+        historyTotals["playoffStandings"] = [
+            ["player": "Zoe", "correctPlayoff": 3, "correctUnknownPlayoff": 1],
+            ["player": "Bob", "correctPlayoff": 3, "correctUnknownPlayoff": 2],
+            ["player": "Missing", "correctPlayoff": NSNull(), "correctUnknownPlayoff": NSNull()],
+            ["player": "Zero", "correctPlayoff": 0, "correctUnknownPlayoff": 0],
+            ["player": "Alice", "correctPlayoff": 3, "correctUnknownPlayoff": 2],
+        ]
+        let allTime = try decode(historyTotals).rankedPlayoffStandings
+        precondition(allTime.map(\.player) == ["Alice", "Bob", "Zoe", "Zero", "Missing"])
+        precondition(allTime.last?.correctPlayoff == nil)
         precondition(snapshot.playoffRounds.allSatisfy { snapshot.playoffGames(in: $0).isEmpty })
         for (name, round) in [("CFP First-Round", PlayoffRound.first), ("CFP 1st Round", .first),
                               ("College Football Playoff Quarterfinal at the Rose Bowl", .quarterfinals),

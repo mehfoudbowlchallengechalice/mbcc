@@ -14,11 +14,21 @@ struct Snapshot: Codable {
     let gamesSource: String?
     let todaysUpdate: DailyUpdate?
     let updates: [DailyUpdate]?
+    let playoffStandings: [PlayoffStanding]?
+    let playoffStandingsError: String?
     var updatePosts: [DailyUpdate] { updates ?? todaysUpdate.map { [$0] } ?? [] }
     var hasLiveGameSource: Bool { gamesSource == "live_scores_and_games" }
 
     var completed: Int { games.filter(\.isFinal).count }
     var remaining: Int { games.count - completed }
+
+    var rankedPlayoffStandings: [PlayoffStanding] {
+        (playoffStandings ?? []).sorted {
+            if $0.correctPlayoff != $1.correctPlayoff { return ($0.correctPlayoff ?? -1) > ($1.correctPlayoff ?? -1) }
+            if $0.correctUnknownPlayoff != $1.correctUnknownPlayoff { return ($0.correctUnknownPlayoff ?? -1) > ($1.correctUnknownPlayoff ?? -1) }
+            return $0.player.lowercased() < $1.player.lowercased()
+        }
+    }
 
     var playoffRounds: [PlayoffRound] {
         PlayoffRound.allCases
@@ -70,6 +80,13 @@ struct Snapshot: Codable {
         return EliminationResult(best: own, comparisons: comparisons,
                                  eliminated: comparisons.contains { $0.correct > own })
     }
+}
+
+struct PlayoffStanding: Codable, Identifiable {
+    var id: String { player }
+    let player: String
+    let correctPlayoff: Int?
+    let correctUnknownPlayoff: Int?
 }
 
 enum PlayoffRound: Int, CaseIterable, Identifiable {

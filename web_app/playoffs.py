@@ -31,3 +31,10 @@ def playoff_games(snapshot):
     for games in rounds:
         games.sort(key=lambda game: (parse_time(game["startTime"]), game["id"]))
     return list(zip(PLAYOFF_ROUNDS, rounds))
+
+
+def playoff_standings(snapshot):
+    return sorted(snapshot.get("playoffStandings") or [], key=lambda row: (
+        -(row["correctPlayoff"] if row.get("correctPlayoff") is not None else -1),
+        -(row["correctUnknownPlayoff"] if row.get("correctUnknownPlayoff") is not None else -1),
+        row["player"].casefold()))

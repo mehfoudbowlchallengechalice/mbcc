@@ -241,12 +241,52 @@ struct PlayoffBracketView: View {
                             }
                         }
                     }
+                    PlayoffStandingsTable(standings: data.rankedPlayoffStandings, unavailable: data.playoffStandingsError != nil)
                     updatedLabel(data)
                 }.padding(20)
             }.refreshable { await store.refresh() }
                 .onChange(of: data.players) { _, players in
                     if let player, !players.contains(player) { self.player = nil }
                 }
+        }
+    }
+}
+
+private struct PlayoffStandingsTable: View {
+    let standings: [PlayoffStanding]
+    let unavailable: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            SectionHeading(title: "All-time playoff standings")
+            if unavailable {
+                EmptyCard(title: "Couldn’t load all-time playoff standings", message: "Pull to refresh and try again.")
+            } else if standings.isEmpty {
+                EmptyCard(title: "All-time playoff standings aren’t available yet", message: "Check back for historical playoff results.")
+            } else {
+                Text("Swipe sideways to see both all-time totals.").font(.caption).foregroundStyle(.secondary)
+                ScrollView(.horizontal) {
+                    Grid(alignment: .leading, horizontalSpacing: 20, verticalSpacing: 14) {
+                        GridRow {
+                            Text("User").frame(width: 120, alignment: .leading)
+                            Text("Correct playoff games\nAll time").frame(width: 150, alignment: .trailing)
+                            Text("Correct unknown playoff games\nAll time").frame(width: 185, alignment: .trailing)
+                        }.font(.caption.bold()).foregroundStyle(.secondary)
+                        Divider()
+                        ForEach(standings) { entry in
+                            GridRow {
+                                Text(entry.player).fontWeight(.semibold)
+                                Text(entry.correctPlayoff.map(String.init) ?? "—")
+                                    .frame(maxWidth: .infinity, alignment: .trailing)
+                                Text(entry.correctUnknownPlayoff.map(String.init) ?? "—")
+                                    .frame(maxWidth: .infinity, alignment: .trailing)
+                            }.font(.subheadline).monospacedDigit()
+                            Divider()
+                        }
+                    }.padding(18)
+                }.background(Theme.card, in: RoundedRectangle(cornerRadius: 18))
+                    .accessibilityIdentifier("playoffStandings")
+            }
         }
     }
 }

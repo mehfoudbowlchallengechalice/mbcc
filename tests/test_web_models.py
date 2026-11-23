@@ -105,6 +105,23 @@ class WebModelTests(unittest.TestCase):
             self.assertEqual(playoffs.playoff_round(name), expected)
         self.assertTrue(all(not games for _, games in playoffs.playoff_games(self.snapshot)))
 
+    def test_playoff_history_is_optional_and_sorts_historical_totals(self):
+        self.assertEqual(playoffs.playoff_standings(self.snapshot), [])
+        self.snapshot["playoffStandings"] = [
+            {"player": "Zoe", "correctPlayoff": 3, "correctUnknownPlayoff": 1},
+            {"player": "Bob", "correctPlayoff": 3, "correctUnknownPlayoff": 2},
+            {"player": "Missing", "correctPlayoff": None, "correctUnknownPlayoff": None},
+            {"player": "Zero", "correctPlayoff": 0, "correctUnknownPlayoff": 0},
+            {"player": "Alice", "correctPlayoff": 3, "correctUnknownPlayoff": 2},
+        ]
+        self.assertEqual([row["player"] for row in playoffs.playoff_standings(data.validate_snapshot(self.snapshot))],
+                         ["Alice", "Bob", "Zoe", "Zero", "Missing"])
+        for value in [-1, 1.5, True, "12"]:
+            broken = copy.deepcopy(self.snapshot)
+            broken["playoffStandings"][0]["correctPlayoff"] = value
+            with self.assertRaises(data.SnapshotError):
+                data.validate_snapshot(broken)
+
     def test_elimination_keeps_ties_alive_and_ignores_impossible_picks(self):
         self.snapshot["players"] = ["Alice", "Bob"]
         self.snapshot["standings"] = [{"player": "Alice", "correct": 0}, {"player": "Bob", "correct": 1}]
