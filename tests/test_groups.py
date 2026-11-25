@@ -1,4 +1,5 @@
 import copy
+import base64
 import io
 import json
 import os
@@ -8,7 +9,7 @@ from urllib.parse import parse_qs, urlsplit
 from unittest.mock import Mock, patch
 
 from backend import server
-from backend.groups import GroupError, combine_snapshots, normalize_group
+from backend.groups import GroupError, combine_snapshots, resolve_group
 from backend.sheets_adapter import build_snapshot
 from web_app import data, playoffs
 from test_backend import fixture
@@ -24,18 +25,19 @@ class GroupTests(unittest.TestCase):
         self.sub["playoffStandings"] = [{"player": "Alice", "correctPlayoff": 2, "correctUnknownPlayoff": 1}]
 
     def test_keywords_and_url_encoding(self):
-        for raw, expected in (("", "default"), ("  ", "default"), ("DEFAULT", "default"),
-                              (" Sub ", "sub"), (" DEFAULT+SUB ", "default+sub")):
-            self.assertEqual(normalize_group(raw), expected)
-            self.assertEqual(data.group_keyword(raw), expected)
-        with self.assertRaises(GroupError):
-            normalize_group("unknown")
-        with self.assertRaises(data.SnapshotError):
-            data.group_keyword("unknown")
+        with patch.dict(os.environ, {"MBCC_SUB_KEYWORD": "FixtureSub42", "MBCC_COMBINED_KEYWORD": "FixtureBoth42"}):
+            for raw, expected in (("", "default"), ("  ", "default"), ("unknown", "default"),
+                                  ("sub", "default"), ("default+sub", "default"),
+                                  (" fixturesub42 ", "sub"), (" FixtureBoth42 ", "default+sub")):
+                self.assertEqual(resolve_group(raw), expected)
+        self.assertEqual(data.normalize_keyword(" ArbitraryPrivateValue "), "ArbitraryPrivateValue")
         endpoint = "https://example.com/api/snapshot?other=&group=sub&other=two"
-        parsed = parse_qs(urlsplit(data.group_endpoint(endpoint, "default+sub")).query, keep_blank_values=True)
-        self.assertEqual(parsed, {"other": ["", "two"], "group": ["default+sub"]})
-        self.assertNotIn("group", parse_qs(urlsplit(data.group_endpoint(endpoint, "default")).query))
+        parsed = parse_qs(urlsplit(data.connection_endpoint(endpoint)).query, keep_blank_values=True)
+        self.assertEqual(parsed, {"other": ["", "two"]})
+        with patch.dict(os.environ, {"MBCC_SUB_KEYWORD": "", "MBCC_COMBINED_KEYWORD": ""}):
+            self.assertEqual(resolve_group("sub"), "default")
+        with patch.dict(os.environ, {"MBCC_SUB_KEYWORD": "duplicate", "MBCC_COMBINED_KEYWORD": " DUPLICATE "}):
+            self.assertEqual(resolve_group("duplicate"), "default")
 
     def test_combined_rosters_keep_distinct_stats_and_share_games(self):
         before_main, before_sub = copy.deepcopy(self.main), copy.deepcopy(self.sub)
@@ -143,22 +145,29 @@ class GroupTests(unittest.TestCase):
             server.snapshot_bytes("default+sub")
             self.assertEqual(server._cache["default+sub"][0], 120)
 
-    def call(self, query):
+    def call(self, query="", keyword="", encoded=None):
         response = {}
         def start(status, headers):
             response["status"] = status
         body = b"".join(server.application({"PATH_INFO": "/api/snapshot", "REQUEST_METHOD": "GET",
-                                           "QUERY_STRING": query}, start))
+                                           "QUERY_STRING": query,
+                                           "HTTP_X_MBCC_KEYWORD": encoded if encoded is not None else base64.b64encode(keyword.encode()).decode()}, start))
         return response["status"], json.loads(body)
 
     def test_api_group_selection_and_rejection(self):
-        with patch.object(server, "snapshot_bytes", return_value=b'{}') as fetch:
-            self.assertEqual(self.call("group=default%2Bsub")[0], "200 OK")
+        env = {"MBCC_SUB_KEYWORD": "FixtureSub42", "MBCC_COMBINED_KEYWORD": "FixtureBoth42"}
+        with patch.dict(os.environ, env), patch.object(server, "snapshot_bytes", return_value=b'{}') as fetch:
+            self.assertEqual(self.call(keyword="FixtureBoth42")[0], "200 OK")
             fetch.assert_called_once_with("default+sub")
-            for query in ("group=bad", "group=sub&group=default", "group=default+sub"):
-                self.assertEqual(self.call(query)[0], "400 Bad Request")
-        with patch.object(server, "snapshot_bytes", side_effect=GroupError("Subgroup not configured")):
-            status, body = self.call("group=sub")
+            for query in ("group=bad", "group=default%2Bsub", "group=sub&group=default", "keyword=FixtureSub42"):
+                fetch.reset_mock()
+                self.assertEqual(self.call(query)[0], "200 OK")
+                fetch.assert_called_once_with()
+            fetch.reset_mock()
+            self.call(encoded="malformed header")
+            fetch.assert_called_once_with()
+        with patch.dict(os.environ, env), patch.object(server, "snapshot_bytes", side_effect=GroupError("Subgroup not configured")):
+            status, body = self.call(keyword="FixtureSub42")
             self.assertEqual(status, "409 Conflict")
             self.assertEqual(body["error"], "Subgroup not configured")
 
@@ -168,16 +177,74 @@ class GroupTests(unittest.TestCase):
             with self.assertRaisesRegex(data.SnapshotError, "Subgroup not configured"):
                 data.fetch_api(data.DEFAULT_ENDPOINT)
 
-    def test_backend_failures_identify_the_requested_group_without_leaking_response_details(self):
-        for group, label in data.GROUP_LABELS.items():
-            endpoint = data.group_endpoint(data.DEFAULT_ENDPOINT, group)
+    def test_backend_failures_never_leak_keyword_or_response_details(self):
+        for keyword in ("", "FixtureSub42", "FixtureBoth42"):
+            endpoint = data.DEFAULT_ENDPOINT
             error = HTTPError(endpoint, 502, "Bad Gateway", {}, io.BytesIO(b'private upstream details'))
-            with self.subTest(group=group), patch.object(data, "urlopen", side_effect=error):
+            with self.subTest(keyword=keyword), patch.object(data, "urlopen", side_effect=error):
                 with self.assertRaises(data.SnapshotError) as caught:
-                    data.fetch_api(endpoint)
-                self.assertIn(label.lower(), str(caught.exception))
+                    data.fetch_api(endpoint, keyword=keyword)
+                self.assertIn("selected group", str(caught.exception))
                 self.assertIn("HTTP 502", str(caught.exception))
                 self.assertNotIn("private", str(caught.exception))
+                self.assertNotIn("Fixture", str(caught.exception))
+
+    def test_client_transmits_arbitrary_utf8_keywords_only_in_header(self):
+        snapshot = data.read_demo()
+        snapshot.update(group="sub", keywordRouting=True)
+        keyword = "arbitrary + ünicode secret"
+        with patch.object(data, "urlopen", return_value=io.BytesIO(json.dumps(snapshot).encode())) as fetch:
+            loaded = data.fetch_api(data.DEFAULT_ENDPOINT + "?group=old&keyword=old&other=keep", keyword=keyword)
+        request = fetch.call_args.args[0]
+        headers = {key.lower(): value for key, value in request.header_items()}
+        self.assertEqual(base64.b64decode(headers[data.KEYWORD_HEADER.lower()]).decode(), keyword)
+        self.assertEqual(request.full_url, data.DEFAULT_ENDPOINT + "?other=keep")
+        self.assertEqual(loaded["group"], "sub")
+        snapshot.pop("keywordRouting")
+        with patch.object(data, "urlopen", return_value=io.BytesIO(json.dumps(snapshot).encode())):
+            with self.assertRaisesRegex(data.SnapshotError, "private group keywords"):
+                data.fetch_api(data.DEFAULT_ENDPOINT, keyword=keyword)
+
+    def test_server_and_client_use_environment_mapping_without_client_aliases(self):
+        env = {"MBCC_SUB_KEYWORD": "ServerOnlyCodeA", "MBCC_COMBINED_KEYWORD": "ServerOnlyCodeB"}
+        def payload(group="default"):
+            return json.dumps(dict(data.read_demo(), group=group, keywordRouting=True)).encode()
+        def transport(request, timeout):
+            headers = {key.lower(): value for key, value in request.header_items()}
+            response = b"".join(server.application({"PATH_INFO": "/api/snapshot", "REQUEST_METHOD": "GET",
+                                                   "QUERY_STRING": urlsplit(request.full_url).query,
+                                                   "HTTP_X_MBCC_KEYWORD": headers.get("x-mbcc-keyword", "")},
+                                                  lambda status, headers: None))
+            return io.BytesIO(response)
+        with patch.dict(os.environ, env), patch.object(server, "snapshot_bytes", side_effect=payload), \
+                patch.object(data, "urlopen", side_effect=transport):
+            for keyword, expected in (("", "default"), ("sub", "default"), ("wrong", "default"),
+                                      (" ServerOnlyCodeA ", "sub"), ("serveronlycodeb", "default+sub")):
+                self.assertEqual(data.fetch_api(data.DEFAULT_ENDPOINT, keyword=keyword)["group"], expected)
+            with patch.dict(os.environ, {"MBCC_SUB_KEYWORD": "RotatedServerCode"}):
+                self.assertEqual(data.fetch_api(data.DEFAULT_ENDPOINT, keyword="ServerOnlyCodeA")["group"], "default")
+                self.assertEqual(data.fetch_api(data.DEFAULT_ENDPOINT, keyword="RotatedServerCode")["group"], "sub")
+
+    def test_nine_user_keywords_personalize_without_filtering_or_leaking_cached_identity(self):
+        players = ["Christopher", "Nicholas", "Gregory", "Joseph", "Sara", "Emma", "Elise", "Kramer", "Laura"]
+        env = {f"MBCC_{name.upper()}_KEYWORD": f"fixture-user-code-{index}" for index, name in enumerate(players)}
+        payload = {"players": players, "standings": [{"player": name} for name in players]}
+        cached = json.dumps(payload).encode()
+        with patch.dict(os.environ, env, clear=True), patch.object(server, "snapshot_bytes", return_value=cached):
+            for index, name in enumerate(players):
+                status, snapshot = self.call(keyword=f"fixture-user-code-{index}")
+                self.assertEqual(status, "200 OK")
+                self.assertEqual(snapshot["viewerPlayer"], name)
+                self.assertEqual(snapshot["group"], "default")
+                self.assertEqual(snapshot["players"], players)
+                self.assertEqual(snapshot["standings"], payload["standings"])
+                self.assertNotIn("fixture-user-code", json.dumps(snapshot))
+                self.assertIsNone(self.call()[1]["viewerPlayer"])
+            with patch.dict(os.environ, {"MBCC_GHOST_KEYWORD": "fixture-absent-player"}):
+                self.assertIsNone(self.call(keyword="fixture-absent-player")[1]["viewerPlayer"])
+            with patch.dict(os.environ, {"MBCC_NICHOLAS_KEYWORD": "fixture-user-code-0"}):
+                self.assertIsNone(self.call(keyword="fixture-user-code-0")[1]["viewerPlayer"])
+        self.assertEqual(json.loads(cached), payload)
 
 
 if __name__ == "__main__":

@@ -24,18 +24,18 @@ class StreamlitModuleReloadTests(unittest.TestCase):
         try:
             # Simulate a running app retaining the imported module from before
             # the group feature, while app.py and the files on disk are updated.
-            for name in ("GROUP_LABELS", "group_keyword", "group_endpoint"):
+            for name in ("GROUP_LABELS", "KEYWORD_HEADER", "normalize_keyword"):
                 data.__dict__.pop(name, None)
             with patch.dict(os.environ, {"MBCC_DEMO": "1"}):
                 app = AppTest.from_file(str(Path(__file__).resolve().parents[1] / "app.py"), default_timeout=15).run()
                 self.assertFalse(app.exception)
-                self.assertEqual(app.text_input(key="group_keyword").value, "default")
+                self.assertEqual(app.text_input(key="group_keyword").value, "")
                 app.text_input(key="group_keyword").set_value("sub").run()
                 self.assertFalse(app.exception)
-                self.assertIn("demo has only the main group", app.warning[0].value)
+                self.assertFalse(app.warning)
             self.assertIsInstance(data.GROUP_LABELS, dict)
-            self.assertTrue(callable(data.group_keyword))
-            self.assertTrue(callable(data.group_endpoint))
+            self.assertTrue(callable(data.normalize_keyword))
+            self.assertEqual(data.KEYWORD_HEADER, "X-MBCC-Keyword")
         finally:
             importlib.reload(data)
             st.cache_data.clear()
@@ -84,6 +84,21 @@ class StreamlitAppTests(unittest.TestCase):
 
     def playoff_users(self):
         return self.app.dataframe[0].value.iloc[:, 0].tolist() if self.app.dataframe else []
+
+    def test_keyword_is_masked_and_hints_do_not_list_accepted_values(self):
+        from streamlit.proto.TextInput_pb2 import TextInput
+        field = self.app.text_input(key="group_keyword")
+        self.assertEqual(field.proto.type, TextInput.PASSWORD)
+        self.assertEqual(field.proto.placeholder, "Enter keyword")
+        self.assertFalse(field.proto.help)
+        for item in self.app.caption:
+            self.assertNotIn("default+sub", item.value)
+            self.assertNotIn("Blank / default", item.value)
+        field.set_value("incorrect-private-value").run()
+        self.assert_clean()
+        self.assertFalse(self.app.warning)
+        self.assertEqual(self.app.session_state["source_identity"][-1], data.keyword_identity("incorrect-private-value"))
+        self.assertNotIn("incorrect-private-value", self.text())
 
     def test_navigation_scores_charts_filters_history_and_trophy_cabinet(self):
         self.assertIn("Latest briefing", [heading.value for heading in self.app.subheader])
@@ -263,47 +278,75 @@ class StreamlitAppTests(unittest.TestCase):
         sub["group"] = "sub"
         sub["standings"][0]["correct"] = 0
         combined = combine_snapshots(main, sub)
-        responses = {data.DEFAULT_ENDPOINT: main,
-                     data.group_endpoint(data.DEFAULT_ENDPOINT, "sub"): sub,
-                     data.group_endpoint(data.DEFAULT_ENDPOINT, "default+sub"): combined}
-        with patch("web_app.data.fetch_api", side_effect=lambda endpoint: responses[endpoint]) as api:
+        def response(endpoint, keyword=""):
+            return {"FixtureSub42": sub, "FixtureBoth42": combined}.get(keyword, main)
+        with patch("web_app.data.fetch_api", side_effect=response) as api:
             self.app.radio(key="data_source").set_value("iPhone backend").run()
             self.page("Season")
             self.app.multiselect(key="season_players").set_value([main["players"][0]]).run()
-            self.app.text_input(key="group_keyword").set_value(" SUB ").run()
+            self.app.text_input(key="group_keyword").set_value(" FixtureSub42 ").run()
             self.assert_clean()
             self.assertEqual(self.app.session_state["last_snapshot"]["group"], "sub")
             self.assertEqual(self.app.multiselect(key="season_players").value, sub["players"])
-            self.app.text_input(key="group_keyword").set_value("default+sub").run()
+            self.app.text_input(key="group_keyword").set_value("FixtureBoth42").run()
             self.assert_clean()
             self.assertEqual(len(self.app.multiselect(key="season_players").options), 2 * len(main["players"]))
+            self.assertEqual(self.app.multiselect(key="season_players").options.count("Christopher"), 2)
+            self.assertIn("Christopher [Main]", self.app.multiselect(key="season_players").value)
+            self.assertIn("Christopher [Sub]", self.app.multiselect(key="season_players").value)
             for page in ("Standings", "Bracket", "History", "Info", "Live"):
                 self.page(page)
+                self.assertNotIn("[Main]", self.text())
+                self.assertNotIn("[Sub]", self.text())
             self.assertEqual(self.app.session_state["last_snapshot"]["group"], "default+sub")
+            self.app.text_input(key="group_keyword").set_value("misspelled-private-keyword").run()
+            self.assert_clean()
+            self.assertFalse(self.app.warning)
+            self.assertEqual(self.app.session_state["last_snapshot"]["group"], "default")
             self.app.text_input(key="group_keyword").set_value("").run()
             self.assert_clean()
             self.assertEqual(self.app.session_state["last_snapshot"]["group"], "default")
-            self.assertEqual(api.call_count, 3)
+            self.assertEqual(api.call_count, 4)
 
-    def test_unsupported_keyword_and_subgroup_do_not_show_saved_main_results(self):
-        for keyword, message in (("invalid", "Enter default"), ("sub", "demo has only the main group")):
+    def test_demo_always_shows_main_without_resolving_private_keywords_locally(self):
+        for keyword in ("arbitrary-private-entry", "sub", ""):
             self.app.text_input(key="group_keyword").set_value(keyword).run()
             self.assert_clean()
-            self.assertIn(message, self.app.warning[0].value)
-            self.assertIn("Connect to MBCC", [heading.value for heading in self.app.subheader])
-            self.assertNotIn("The games", [heading.value for heading in self.app.subheader])
-        self.app.text_input(key="group_keyword").set_value("default").run()
-        self.assert_clean()
-        self.assertIn("The games", [heading.value for heading in self.app.subheader])
+            self.assertFalse(self.app.warning)
+            self.assertIn("The games", [heading.value for heading in self.app.subheader])
 
-    def test_old_backend_cannot_silently_return_main_group_for_subgroup(self):
+    def test_personal_schedule_styles_picks_and_keeps_every_player_visible(self):
+        snapshot = copy.deepcopy(self.snapshot)
+        snapshot.update(group="default", keywordRouting=True, viewerPlayer="Christopher")
+        viewer = "Christopher"
+        snapshot["games"][0].update(winner="Home", homeTeam="Home", awayTeam="Away", live=None,
+                                    picks={name: "Home" if name == viewer else "Away" for name in snapshot["players"]})
+        snapshot["games"][1].update(winner="Home", homeTeam="Home", awayTeam="Away", live=None,
+                                    picks={name: "Away" for name in snapshot["players"]})
+        snapshot["games"][2].update(winner=None, homeTeam="Home", awayTeam="Away", live=None,
+                                    picks={name: "Home" for name in snapshot["players"]})
+        with patch("web_app.data.fetch_api", return_value=snapshot):
+            self.app.radio(key="data_source").set_value("iPhone backend").run()
+            self.app.text_input(key="group_keyword").set_value("fixture-personal-code").run()
+            self.app.radio(key="game_filter").set_value("All").run()
+        self.assert_clean()
+        self.assertIn("viewer-pick pick-correct", self.text())
+        self.assertIn("viewer-pick pick-incorrect", self.text())
+        self.assertIn("viewer-pick pick-pending", self.text())
+        self.page("Standings")
+        self.assertIn("Christopher", self.text())
+        self.assertIn("Elise", self.text())
+        self.assertEqual(len(self.app.session_state["last_snapshot"]["players"]), len(snapshot["players"]))
+
+    def test_backend_keyword_routing_failure_does_not_show_saved_main_results(self):
         old = copy.deepcopy(self.snapshot)
         old.update(isDemo=False, gamesSource="live_scores_and_games")
         with patch("web_app.data.fetch_api", return_value=old):
             self.app.radio(key="data_source").set_value("iPhone backend").run()
-            self.app.text_input(key="group_keyword").set_value("sub").run()
+        with patch("web_app.data.fetch_api", side_effect=data.SnapshotError("Update the MBCC backend to recognize private group keywords.")):
+            self.app.text_input(key="group_keyword").set_value("FixtureSub42").run()
         self.assert_clean()
-        self.assertIn("does not support the selected group", self.app.warning[0].value)
+        self.assertIn("private group keywords", self.app.warning[0].value)
         self.assertIn("Connect to MBCC", [heading.value for heading in self.app.subheader])
 
     def test_combined_playoff_table_keeps_available_group_with_missing_subgroup_totals(self):
@@ -313,13 +356,13 @@ class StreamlitAppTests(unittest.TestCase):
         main["playoffStandings"] = [{"player": "Christopher", "correctPlayoff": 4, "correctUnknownPlayoff": 0}]
         sub["playoffStandings"] = None
         combined = combine_snapshots(main, sub)
-        with patch("web_app.data.fetch_api", side_effect=lambda endpoint: combined if "group=" in endpoint else main):
+        with patch("web_app.data.fetch_api", side_effect=lambda endpoint, keyword="": combined if keyword else main):
             self.app.radio(key="data_source").set_value("iPhone backend").run()
             self.app.text_input(key="group_keyword").set_value("default+sub").run()
             self.page("Bracket")
         self.assertFalse(self.app.warning)
         self.assertTrue(any("Main-group history only" in caption.value for caption in self.app.caption))
-        self.assertEqual(self.playoff_users(), ["Christopher [Main]"])
+        self.assertEqual(self.playoff_users(), ["Christopher"])
 
     def test_subgroup_playoff_history_is_not_expected_even_from_an_older_backend(self):
         sub = copy.deepcopy(self.snapshot)
@@ -340,12 +383,12 @@ class StreamlitAppTests(unittest.TestCase):
         main["playoffStandings"] = [{"player": "Christopher", "correctPlayoff": 4, "correctUnknownPlayoff": 0}]
         combined = combine_snapshots(main, copy.deepcopy(main))
         combined["playoffStandingsError"] = "All-time playoff standings unavailable for: Subgroup."
-        with patch("web_app.data.fetch_api", side_effect=lambda endpoint: combined if "group=" in endpoint else main):
+        with patch("web_app.data.fetch_api", side_effect=lambda endpoint, keyword="": combined if keyword else main):
             self.app.radio(key="data_source").set_value("iPhone backend").run()
             self.app.text_input(key="group_keyword").set_value("default+sub").run()
             self.page("Bracket")
         self.assertFalse(self.app.warning)
-        self.assertEqual(self.playoff_users(), ["Christopher [Main]"])
+        self.assertEqual(self.playoff_users(), ["Christopher"])
 
     def test_failed_refresh_retains_the_same_connection_and_recomputes_verification(self):
         fresh = copy.deepcopy(self.snapshot)

@@ -1,6 +1,8 @@
 :root { --mbcc-orange:#a64012; --mbcc-muted:#68737f; --mbcc-line:#ebe9e4; }
 html { -webkit-text-size-adjust:100%; }
 .stMainBlockContainer { max-width:750px; padding:2rem 1.4rem 8rem; }
+/* Keep saved group keywords masked, including the password reveal control. */
+.st-key-group_keyword button { display:none; }
 h1,h2,h3 { letter-spacing:-.035em; }
 h1 { font-size:2rem; font-weight:760; padding-bottom:.7rem; }
 h2 { font-size:1.55rem; } h3 { font-size:1.2rem; }
@@ -46,6 +48,11 @@ div[class*="st-key-mbcc_card_"] { background:var(--secondary-background-color,#f
 .team-row { display:flex; gap:12px; align-items:center; margin:14px 0; padding-left:10px; border-left:4px solid #c2c9cd; }
 .team-row strong { margin-left:auto; font-size:23px; font-variant-numeric:tabular-nums; }
 .team-name { font-weight:650; font-size:16px; }
+.personalized-game .team-name { font-weight:400; }
+.personalized-game .viewer-pick .team-name,.bracket-team.viewer-pick > span,.personal-pick { font-weight:750; }
+.viewer-pick.pick-correct { border-bottom:3px solid #22784f; }
+.viewer-pick.pick-incorrect { border-bottom:3px dotted #858b94; }
+.personal-pick { padding:8px 0; font-size:13px; }
 .team-focus { color:#276cb2; }
 .game-meta { color:var(--mbcc-muted); font-size:11px; margin:14px 0 8px; }
 .verification { display:block; color:var(--mbcc-muted); font-size:12px; margin-bottom:7px; }

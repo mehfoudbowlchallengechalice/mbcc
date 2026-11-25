@@ -16,6 +16,18 @@ Deploy MBCC using Google Cloud Console
    response. If an error occurs, share the error text in the chat.
 
 This updates the existing mbcc-api service using its existing reader/build identities.
+It preserves container-only environment variables, including MBCC_SUB_KEYWORD
+and MBCC_COMBINED_KEYWORD, plus all MBCC_[NAME]_KEYWORD player variables.
+Set their values directly in Cloud Run; do not put
+the values in env.yaml or upload them in the ZIP. The apps send masked entries
+in a request header, and the API alone decides which group to return.
+Add a distinct player keyword for each of the nine main-group roster names,
+such as MBCC_CHRISTOPHER_KEYWORD and MBCC_NICHOLAS_KEYWORD. One entry selects
+that player's picks, while everyone remains visible. Correct final picks have
+a solid green underline; incorrect final picks have a dotted gray underline.
+Pending picks are bold without a result line. Unknown entries show ordinary
+main-group results. Deploy the API first, then publish Streamlit and rebuild
+the iPhone app to enable these highlights.
 Games come from live_scores_and_games, and original tabs supply verification references.
 The configuration enables that source and labels the season MBCC 15 · 2026–27.
 Imported games and scores stay unverified until the first successful automatic check.

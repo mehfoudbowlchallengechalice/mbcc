@@ -8,13 +8,14 @@ MBCC_READER="mbcc-sheet-reader@${MBCC_PROJECT}.iam.gserviceaccount.com"
 MBCC_BUILDER="mbcc-api-builder@${MBCC_PROJECT}.iam.gserviceaccount.com"
 MBCC_SOURCE=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 cd "$MBCC_SOURCE"
+MBCC_ENV_UPDATES=$(python3 cloudrun/config_updates.py cloudrun/env.yaml)
 
-echo "Updating mbcc-api with live scores and the Today’s Update blog feed."
+echo "Updating mbcc-api with spreadsheet data and private keyword routing."
 gcloud run deploy mbcc-api \
   --project="$MBCC_PROJECT" --region="$MBCC_REGION" --source=. \
   --service-account="$MBCC_READER" \
   --build-service-account="projects/${MBCC_PROJECT}/serviceAccounts/${MBCC_BUILDER}" \
-  --env-vars-file=cloudrun/env.yaml \
+  --update-env-vars="$MBCC_ENV_UPDATES" \
   --cpu=1 --memory=512Mi --min=0 --max=1 \
   --concurrency=8 --timeout=60 --cpu-throttling --quiet
 
@@ -37,6 +38,8 @@ with open(sys.argv[1]) as response:
     snapshot = json.load(response)
 if snapshot.get("isDemo") is not False or snapshot.get("gamesSource") != "live_scores_and_games":
     raise SystemExit("The service is not reading live_scores_and_games; check the deployed configuration.")
+if snapshot.get("keywordRouting") is not True:
+    raise SystemExit("The service is not using API-side private keyword routing; check the deployed backend.")
 games = snapshot.get("games", [])
 if not games:
     raise SystemExit("The live tab returned no games; check the uploaded tab.")

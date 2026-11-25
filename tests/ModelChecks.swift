@@ -3,6 +3,18 @@ import Foundation
 @main
 struct ModelChecks {
     static func main() throws {
+        precondition("Alice [Main]".groupDisplayName == "Alice")
+        precondition("Alice [Sub]".groupDisplayName == "Alice")
+        precondition("2026–27 [Sub]".groupDisplayName == "2026–27")
+        precondition("Alice [Other]".groupDisplayName == "Alice [Other]")
+        let entry = " Arbitrary + ünicode value "
+        let encoded = SnapshotConnection.encodedKeyword(entry)!
+        precondition(String(data: Data(base64Encoded: encoded)!, encoding: .utf8) == entry.trimmingCharacters(in: .whitespacesAndNewlines))
+        precondition(SnapshotConnection.encodedKeyword("  ") == nil)
+        let groupEndpoint = URL(string: "https://example.com/api/snapshot?other=&group=sub&keyword=old&other=a%2Bb&literal=x+y")!
+        let privateURL = SnapshotConnection.snapshotURL(from: groupEndpoint)!
+        precondition(privateURL.absoluteString.contains("other=a%2Bb&literal=x+y"))
+        precondition(!privateURL.absoluteString.contains("group=") && !privateURL.absoluteString.contains("keyword="))
         let demo = URL(fileURLWithPath: CommandLine.arguments[1])
         let original = try Data(contentsOf: demo)
         let snapshot = try JSONDecoder().decode(Snapshot.self, from: original)
@@ -15,6 +27,27 @@ struct ModelChecks {
         precondition(snapshot.updatePosts.isEmpty)
         precondition(snapshot.playoffStandings == nil && snapshot.rankedPlayoffStandings.isEmpty)
         precondition(snapshot.tracksPlayoffHistory && !snapshot.mainGroupPlayoffHistoryOnly)
+        precondition(SnapshotConnection.accepts(snapshot, keyword: ""))
+        precondition(!SnapshotConnection.accepts(snapshot, keyword: "arbitrary-private-value"))
+        var personalObject = try JSONSerialization.jsonObject(with: original) as! [String: Any]
+        personalObject["viewerPlayer"] = "Christopher"
+        var personalGameRow = (personalObject["games"] as! [[String: Any]])[0]
+        personalGameRow["homeTeam"] = "Home"
+        personalGameRow["awayTeam"] = "Away"
+        personalGameRow["winner"] = "Home"
+        personalGameRow["picks"] = ["Christopher": "Home", "Elise": "Away"]
+        personalGameRow.removeValue(forKey: "live")
+        personalObject["games"] = [personalGameRow]
+        let personal = try decode(personalObject)
+        precondition(personal.personalizedPlayer == "Christopher")
+        precondition(personal.players.count == snapshot.players.count && personal.standings.count == snapshot.standings.count)
+        precondition(personal.games[0].pickOutcome(for: "Christopher") == .correct)
+        precondition(personal.games[0].pickOutcome(for: "Elise") == .incorrect)
+        precondition(personal.games[0].pickOutcome(for: "Missing") == nil)
+        personalGameRow["winner"] = NSNull()
+        personalObject["games"] = [personalGameRow]
+        let pendingPersonal = try decode(personalObject)
+        precondition(pendingPersonal.games[0].pickOutcome(for: "Christopher") == .pending)
         var historyTotals = try JSONSerialization.jsonObject(with: original) as! [String: Any]
         historyTotals["playoffStandings"] = [
             ["player": "Zoe", "correctPlayoff": 3, "correctUnknownPlayoff": 1],
@@ -28,8 +61,11 @@ struct ModelChecks {
         precondition(allTime.last?.correctPlayoff == nil)
         var subgroupHistory = historyTotals
         subgroupHistory["group"] = "sub"
+        subgroupHistory["keywordRouting"] = true
         subgroupHistory["playoffStandingsError"] = "Old backend could not load history"
         let subgroup = try decode(subgroupHistory)
+        precondition(SnapshotConnection.accepts(subgroup, keyword: "arbitrary-private-value"))
+        precondition(!SnapshotConnection.accepts(subgroup, keyword: ""))
         precondition(!subgroup.tracksPlayoffHistory && !subgroup.playoffHistoryUnavailable)
         precondition(subgroup.rankedPlayoffStandings.isEmpty)
         subgroupHistory.removeValue(forKey: "group")

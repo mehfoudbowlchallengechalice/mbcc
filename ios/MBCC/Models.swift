@@ -1,5 +1,59 @@
 import Foundation
 
+extension String {
+    var groupDisplayName: String {
+        for suffix in [" [Main]", " [Sub]"] where hasSuffix(suffix) {
+            return String(dropLast(suffix.count))
+        }
+        return self
+    }
+}
+
+enum ChallengeGroup: String, CaseIterable {
+    case main = "default"
+    case sub = "sub"
+    case combined = "default+sub"
+
+    var title: String {
+        switch self {
+        case .main: return "Main group"
+        case .sub: return "Subgroup"
+        case .combined: return "Main group + subgroup"
+        }
+    }
+
+}
+
+enum SnapshotConnection {
+    static let keywordHeader = "X-MBCC-Keyword"
+
+    static func normalizedKeyword(_ value: String) -> String {
+        value.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    static func encodedKeyword(_ value: String) -> String? {
+        let keyword = normalizedKeyword(value)
+        return keyword.isEmpty ? nil : Data(keyword.utf8).base64EncodedString()
+    }
+
+    static func snapshotURL(from endpoint: URL) -> URL? {
+        guard var parts = URLComponents(url: endpoint, resolvingAgainstBaseURL: false) else { return nil }
+        // Preserve other encoded connection parameters, including duplicate
+        // keys, while replacing any manually entered group parameter.
+        let items = (parts.percentEncodedQueryItems ?? []).filter {
+            !["group", "keyword"].contains($0.name.removingPercentEncoding ?? $0.name)
+        }
+        parts.percentEncodedQueryItems = items.isEmpty ? nil : items
+        return parts.url
+    }
+
+    static func accepts(_ snapshot: Snapshot, keyword: String) -> Bool {
+        guard ChallengeGroup(rawValue: snapshot.group ?? "default") != nil else { return false }
+        if normalizedKeyword(keyword).isEmpty { return snapshot.group == nil || snapshot.group == "default" }
+        return snapshot.keywordRouting == true
+    }
+}
+
 struct Snapshot: Codable {
     let isDemo: Bool?
     let season: String
@@ -18,6 +72,12 @@ struct Snapshot: Codable {
     let playoffStandingsError: String?
     let group: String?
     let playoffHistoryScope: String?
+    let keywordRouting: Bool?
+    let viewerPlayer: String?
+    var personalizedPlayer: String? {
+        guard let viewerPlayer, players.contains(viewerPlayer) else { return nil }
+        return viewerPlayer
+    }
     var updatePosts: [DailyUpdate] { updates ?? todaysUpdate.map { [$0] } ?? [] }
     var hasLiveGameSource: Bool { gamesSource == "live_scores_and_games" }
 
@@ -202,6 +262,10 @@ struct Standing: Codable, Identifiable {
     let pointDifference: Double
 }
 
+enum PickOutcome: String {
+    case pending, correct, incorrect
+}
+
 struct BowlGame: Codable, Identifiable {
     let id: String
     let name: String
@@ -258,6 +322,11 @@ struct BowlGame: Codable, Identifiable {
     var date: Date { ISO8601DateFormatter().date(from: startTime) ?? .distantPast }
     var isFinal: Bool {
         (live == nil || live?.status == "final") && winner != nil && winner != "TBD" && winner != ""
+    }
+    func pickOutcome(for player: String?) -> PickOutcome? {
+        guard let player, let pick = picks[player], !pick.isEmpty else { return nil }
+        guard isFinal else { return .pending }
+        return pick == winner ? .correct : .incorrect
     }
     var kickoffText: String {
         kickoffTimeKnown == false ? date.formatted(date: .abbreviated, time: .omitted) + " · Time TBD"

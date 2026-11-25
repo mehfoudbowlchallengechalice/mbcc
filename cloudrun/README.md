@@ -21,6 +21,27 @@ and no downloadable service-account keys. Streamlit remains separate.
 Always name the deployment archive `mbcc-cloudrun.zip`, replacing the previous
 package when preparing an update. Do not add dates or feature names to the filename.
 
+Private group values belong only in the service's `MBCC_SUB_KEYWORD` and
+`MBCC_COMBINED_KEYWORD` environment variables (or Secret Manager references).
+Keep them out of source files and the ZIP. `config_updates.py` prepares additive
+updates for the non-secret settings in `env.yaml`, so the deployment scripts
+preserve container-only variables and existing secret references.
+
+Player keywords use the same runtime-only configuration: add one distinct
+`MBCC_[NAME]_KEYWORD` variable for each of the nine players, such as
+`MBCC_CHRISTOPHER_KEYWORD` or `MBCC_NICHOLAS_KEYWORD`. The name must match a
+unique main-group roster entry, ignoring case, spaces, punctuation, and accents.
+The API returns the full main group with that player's `viewerPlayer` metadata;
+both apps highlight their picks while retaining everyone in standings. Correct
+final picks have a solid green underline, incorrect final picks a dotted gray
+underline, and pending picks are bold without a result line. Use one keyword
+at a time. Player variables are preserved during source deployment too.
+
+Both apps send the masked entry in `X-MBCC-Keyword` (base64-encoded UTF-8).
+The API resolves it, and blank or unmatched values return the main group.
+Legacy query-string group selectors do not bypass this lookup. Deploy the API
+first, then publish/reboot Streamlit and rebuild the iPhone app.
+
 For the existing service, upload the current `mbcc-cloudrun.zip` to Cloud Shell,
 extract it over `~/mbcc-cloudrun`, and run `bash cloudrun/update-live-source.sh`.
 This deploys the updated backend with `MBCC_LIVE_SCORES_ENABLED=1` and the
@@ -80,7 +101,7 @@ gcloud run deploy mbcc-api \
   --region=us-east1 \
   --source=. \
   --service-account=mbcc-sheet-reader@project-72f15f51-cfef-4c90-b6e.iam.gserviceaccount.com \
-  --env-vars-file=cloudrun/env.yaml \
+  --update-env-vars="$(python3 cloudrun/config_updates.py cloudrun/env.yaml)" \
   --allow-unauthenticated \
   --cpu=1 --memory=512Mi \
   --min=0 --max=1 \

@@ -9,6 +9,7 @@ MBCC_READER="mbcc-sheet-reader@${MBCC_PROJECT}.iam.gserviceaccount.com"
 MBCC_BUILDER="mbcc-api-builder@${MBCC_PROJECT}.iam.gserviceaccount.com"
 MBCC_SOURCE=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 cd "$MBCC_SOURCE"
+MBCC_ENV_UPDATES=$(python3 cloudrun/config_updates.py cloudrun/env.yaml)
 
 trap 'echo "Deployment stopped at line $LINENO. Copy the error above into the chat; do not include credentials." >&2' ERR
 
@@ -44,7 +45,7 @@ gcloud run deploy "$MBCC_SERVICE" \
   --source=. \
   --service-account="$MBCC_READER" \
   --build-service-account="projects/${MBCC_PROJECT}/serviceAccounts/${MBCC_BUILDER}" \
-  --env-vars-file=cloudrun/env.yaml \
+  --update-env-vars="$MBCC_ENV_UPDATES" \
   --allow-unauthenticated \
   --cpu=1 --memory=512Mi --min=0 --max=1 \
   --concurrency=8 --timeout=60 --cpu-throttling --quiet

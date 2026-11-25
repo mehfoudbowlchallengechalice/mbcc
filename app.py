@@ -5,6 +5,7 @@ Data: the same read-only snapshot API as iPhone, or explicit demo data.
 """
 import html
 import importlib
+import json
 import os
 from datetime import date, datetime, timezone
 from pathlib import Path
@@ -27,6 +28,10 @@ def esc(value):
     return html.escape(str(value), quote=True)
 
 
+def name_label(value):
+    return esc(data.display_name(value))
+
+
 def setting(name, default=None):
     if name.upper() in os.environ:
         return os.environ[name.upper()]
@@ -42,8 +47,12 @@ def ensure_data_helpers():
 
     def ready():
         return (isinstance(getattr(data, "GROUP_LABELS", None), dict)
-                and callable(getattr(data, "group_keyword", None))
-                and callable(getattr(data, "group_endpoint", None)))
+                and getattr(data, "KEYWORD_HEADER", None) == "X-MBCC-Keyword"
+                and callable(getattr(data, "normalize_keyword", None))
+                and callable(getattr(data, "keyword_identity", None))
+                and callable(getattr(data, "pick_result", None))
+                and callable(getattr(data, "viewer_player", None))
+                and callable(getattr(data, "display_name", None)))
 
     if ready():
         return
@@ -55,16 +64,10 @@ def ensure_data_helpers():
 
 
 @st.cache_data(ttl=60, show_spinner=False)
-def fetch_snapshot(source, endpoint, group="default"):
-    group = data.group_keyword(group)
+def fetch_snapshot(source, endpoint, keyword=""):
     if source == "Demo":
-        if group != "default":
-            raise data.SnapshotError("The bundled demo has only the main group. Use default or connect to a configured live subgroup.")
         return data.read_demo()
-    snapshot = data.fetch_api(data.group_endpoint(endpoint, group))
-    if group != "default" and snapshot.get("group") != group:
-        raise data.SnapshotError("This backend does not support the selected group yet. Deploy the updated backend and configure the subgroup spreadsheet.")
-    return snapshot
+    return data.fetch_api(endpoint, keyword=keyword) if keyword else data.fetch_api(endpoint)
 
 
 def change_page():
@@ -86,12 +89,8 @@ def settings():
         st.session_state.data_source = "iPhone backend"
     with st.sidebar:
         st.header("Groups")
-        keyword = st.text_input("Group keyword", value=setting("mbcc_group_keyword", "default"), key="group_keyword",
-                                help="Blank or default: main group. sub: subgroup. default+sub: both groups together.")
-        group = keyword.strip().lower() or "default"
-        st.caption("Blank / default → main group · sub → subgroup · default+sub → both together")
-        if group in data.GROUP_LABELS:
-            st.caption("Showing: " + data.GROUP_LABELS[group])
+        keyword = st.text_input("Group keyword", value=setting("mbcc_group_keyword", ""), key="group_keyword",
+                                type="password", placeholder="Enter keyword")
         st.divider()
         st.header("Player filters")
         st.toggle("Current players only", value=True, key="current_players_only")
@@ -117,11 +116,11 @@ def settings():
         if st.button("Refresh now", width="stretch"):
             fetch_snapshot.clear()
         st.caption("Results refresh every minute while this page is open.")
-    return source, endpoint.strip(), zone, group
+    return source, endpoint.strip(), zone, data.normalize_keyword(keyword)
 
 
-def load_data(source, endpoint, group="default"):
-    identity = (source, endpoint if source == "iPhone backend" else "demo", group)
+def load_data(source, endpoint, keyword=""):
+    identity = (source, endpoint if source == "iPhone backend" else "demo", data.keyword_identity(keyword))
     if st.session_state.get("source_identity") != identity:
         st.session_state.source_identity = identity
         st.session_state.pop("last_snapshot", None)
@@ -129,7 +128,12 @@ def load_data(source, endpoint, group="default"):
         for key in ("game_filter", "season_players", "game_players", "elimination_player", "history_player", "bracket_player", "bracket_saved_player", "bracket_game"):
             st.session_state.pop(key, None)
     try:
-        snapshot = fetch_snapshot(source, endpoint, group)
+        snapshot = fetch_snapshot(source, endpoint, keyword)
+        previous = st.session_state.get("last_snapshot")
+        if previous and previous.get("viewerPlayer") != snapshot.get("viewerPlayer"):
+            if st.session_state.get("bracket_player") == previous.get("viewerPlayer"):
+                st.session_state.pop("bracket_player", None)
+                st.session_state.pop("bracket_saved_player", None)
         st.session_state.last_snapshot = snapshot
         return snapshot, None
     except Exception as error:
@@ -195,14 +199,21 @@ def verification_badge(game, for_game=False):
     return f'<span class="verification {esc(status)}">{symbol} {esc(data.verification_label(status, for_game))}</span>'
 
 
-def game_card(game, zone):
+def game_card(game, zone, viewer=None):
     status = (game.get("live") or {}).get("status", "final" if data.is_final(game) else "scheduled").upper()
     lines = [f'<div class="game-heading"><strong>{esc(game["name"])}</strong><span class="game-status">{esc(status)}</span></div>']
     for side in ("away", "home"):
         team = game[f"{side}Team"]
+        picked = viewer and game.get("picks", {}).get(viewer) == team
+        outcome = data.pick_result(game, viewer) if picked else None
+        pick_class = f" viewer-pick pick-{outcome}" if picked else ""
         winner = game.get("winner") == team
         focus = team == game.get("focusTeam") and game.get("upset") is True
-        lines.append(f'<div class="team-row {"team-focus" if focus else ""}"><span class="team-name">{esc(team)}{" <span aria-label=Winner>🏆</span>" if winner else ""}</span><strong>{esc(data.score(game.get(side + "Score")))}</strong></div>')
+        label = f' aria-label="{esc(team)}; your pick; {esc(outcome)}"' if picked else ""
+        lines.append(f'<div class="team-row {"team-focus" if focus else ""}{pick_class}"{label}><span class="team-name">{esc(team)}{" <span aria-label=Winner>🏆</span>" if winner else ""}</span><strong>{esc(data.score(game.get(side + "Score")))}</strong></div>')
+    pick = game.get("picks", {}).get(viewer) if viewer else None
+    if pick and pick not in (game["homeTeam"], game["awayTeam"]):
+        lines.append(f'<p class="personal-pick viewer-pick pick-{data.pick_result(game, viewer)}">Your pick: <strong>{esc(pick)}</strong></p>')
     if game.get("pointDifference") is not None:
         lines.append(f'<p class="small muted">Score difference: {esc(data.score(game["pointDifference"]))}</p>')
     lines.append(verification_badge(game))
@@ -217,7 +228,8 @@ def game_card(game, zone):
         flags.append("Focus: " + game["focusTeam"])
     if flags:
         lines.append('<p class="small muted">' + ' · '.join(esc(flag) for flag in flags) + '</p>')
-    st.markdown(''.join(lines), unsafe_allow_html=True)
+    markup = ''.join(lines)
+    st.markdown(f'<div class="personalized-game">{markup}</div>' if viewer else markup, unsafe_allow_html=True)
     fetched = data.parse_time((game.get("live") or {}).get("updatedAt"))
     if fetched:
         st.caption(f'{(game.get("live") or {}).get("source", "Live")} updated {fetched.astimezone(ZoneInfo(zone)).strftime("%b %d, %I:%M %p %Z")}')
@@ -227,7 +239,7 @@ def player_filter(snapshot, key):
     players = snapshot["players"]
     if key in st.session_state:
         st.session_state[key] = [name for name in st.session_state[key] if name in players]
-    return st.multiselect("Players", players, default=players, key=key)
+    return st.multiselect("Players", players, default=players, key=key, format_func=data.display_name)
 
 
 def game_view(snapshot, identifier, zone):
@@ -241,7 +253,7 @@ def game_view(snapshot, identifier, zone):
         st.info("This game is no longer in the current schedule.")
         return
     with card("game_detail"):
-        game_card(game, zone)
+        game_card(game, zone, data.viewer_player(snapshot))
     checks = game.get("fieldVerification")
     if checks:
         with st.expander("Compare with original entries", expanded=True):
@@ -270,7 +282,7 @@ def game_view(snapshot, identifier, zone):
             if data.is_final(game) and pick:
                 correct = pick == game["winner"]
                 result = f'<span class="pick-result {"correct" if correct else "incorrect"}">{"✓ Correct" if correct else "✕ Incorrect"}</span>'
-            st.markdown(f'<div class="list-row">{avatar(player)}<strong>{esc(player)}</strong><div class="row-value">{esc(pick or "No pick")}{result}</div></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="list-row">{avatar(player)}<strong>{name_label(player)}</strong><div class="row-value">{esc(pick or "No pick")}{result}</div></div>', unsafe_allow_html=True)
 
 
 def live_view(snapshot, zone):
@@ -294,9 +306,12 @@ def live_view(snapshot, zone):
     if standings:
         leader = standings[0]
         with card("leader"):
-            st.markdown(f'<div class="list-row">{avatar(leader["player"])}<div><p class="eyebrow">SETTING THE PACE</p><strong>{esc(leader["player"])}</strong></div><div class="row-value"><strong class="large-score">{leader["correct"]}</strong> <span class="muted">({esc(data.score(leader["overallScore"]))})</span><small>correct picks</small></div></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="list-row">{avatar(leader["player"])}<div><p class="eyebrow">SETTING THE PACE</p><strong>{name_label(leader["player"])}</strong></div><div class="row-value"><strong class="large-score">{leader["correct"]}</strong> <span class="muted">({esc(data.score(leader["overallScore"]))})</span><small>correct picks</small></div></div>', unsafe_allow_html=True)
     st.subheader("The games")
-    st.caption("Scores and everyone’s picks, in one place.")
+    viewer = data.viewer_player(snapshot)
+    st.caption(f"Picks for {data.display_name(viewer)}" if viewer else "Scores and everyone’s picks, in one place.")
+    if viewer:
+        st.caption("Your pick is bold. Final results: solid green = correct; dotted gray = incorrect.")
     if "game_filter" not in st.session_state:
         st.session_state.game_filter = "Today" if data.filtered_games(snapshot["games"], "Today") else "All"
     mode = st.radio("Show games", ["Today", "Future", "All"], horizontal=True, key="game_filter", label_visibility="collapsed")
@@ -308,7 +323,7 @@ def live_view(snapshot, zone):
         st.info("No upcoming games. Switch to All to see this season’s results and picks.")
     for game in games:
         with card(f'game_{game["id"]}'):
-            game_card(game, zone)
+            game_card(game, zone, viewer)
             st.button("Everyone’s picks →", key=f'game_{game["id"]}', on_click=open_detail, args=("game", game["id"]), width="stretch")
 
 
@@ -344,7 +359,7 @@ def bracket_view(snapshot, zone, *, source, users_loaded):
             st.caption(f"Worksheet: {read['worksheet']} · Rows read: {read['rows']} · Columns read: {read['columns']}")
         return
     st.caption("All-time correct picks. Click a column heading to sort.")
-    frame = pd.DataFrame({"player": [row["player"] for row in rows],
+    frame = pd.DataFrame({"player": [data.display_name(row["player"]) for row in rows],
                           "correctPlayoff": pd.array([row.get("correctPlayoff") for row in rows], dtype="Int64"),
                           "correctUnknownPlayoff": pd.array([row.get("correctUnknownPlayoff") for row in rows], dtype="Int64")})
     # Multi-level columns give Streamlit two clean header lines while retaining
@@ -372,10 +387,10 @@ def bracket_games_view(snapshot, zone):
         return
     players = snapshot["players"]
     if "bracket_player" not in st.session_state:
-        st.session_state.bracket_player = st.session_state.get("bracket_saved_player", "")
+        st.session_state.bracket_player = st.session_state.get("bracket_saved_player", data.viewer_player(snapshot) or "")
     if st.session_state.get("bracket_player") not in [""] + players:
         st.session_state.pop("bracket_player", None)
-    player = st.selectbox("Show picks for", [""] + players, format_func=lambda value: value or "Results only", key="bracket_player")
+    player = st.selectbox("Show picks for", [""] + players, format_func=lambda value: data.display_name(value) if value else "Results only", key="bracket_player")
     st.session_state.bracket_saved_player = player
     completed = sum(data.is_final(game) for game in games)
     st.caption(f"{completed} of {len(games)} playoff games complete · Swipe or scroll sideways to see every round.")
@@ -390,7 +405,9 @@ def bracket_games_view(snapshot, zone):
             for side in ("away", "home"):
                 team = game[side + "Team"]
                 won = data.is_final(game) and team == game.get("winner")
-                lines.append(f'<div class="bracket-team {"bracket-winner" if won else ""}"><span>{esc(team)}{" <span aria-label=Winner>✓</span>" if won else ""}</span><strong>{esc(data.score(game.get(side + "Score")))}</strong></div>')
+                picked = player and game.get("picks", {}).get(player) == team
+                pick_class = f" viewer-pick pick-{data.pick_result(game, player)}" if picked else ""
+                lines.append(f'<div class="bracket-team {"bracket-winner" if won else ""}{pick_class}"><span>{esc(team)}{" <span aria-label=Winner>✓</span>" if won else ""}</span><strong>{esc(data.score(game.get(side + "Score")))}</strong></div>')
             lines.append(f'<p class="small muted">{esc(data.kickoff_label(game, zone))}</p>')
             lines.append(verification_badge(game))
             if player:
@@ -433,7 +450,7 @@ def standings_view(snapshot):
             else:
                 value = f'{entry["correct"]} <span class="secondary-score">({esc(data.score(entry["overallScore"]))})</span>'
                 subtitle = "Correct picks"
-            st.markdown(f'<div class="list-row"><span class="rank {"leading" if rank == 1 else ""}">{rank}</span>{avatar(entry["player"])}<div><strong>{esc(entry["player"])}</strong><small>{subtitle}</small></div><div class="row-value large-score">{value}</div></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="list-row"><span class="rank {"leading" if rank == 1 else ""}">{rank}</span>{avatar(entry["player"])}<div><strong>{name_label(entry["player"])}</strong><small>{subtitle}</small></div><div class="row-value large-score">{value}</div></div>', unsafe_allow_html=True)
     st.caption("Points gained in wins, minus points lost in losses, for each player’s picks." if margin else "Correct picks are the official score. The smaller value in parentheses is the MBCC score from the spreadsheet.")
 
 
@@ -444,14 +461,16 @@ def chart_theme(chart):
 def season_view(snapshot):
     st.subheader("How the season unfolds")
     selected = player_filter(snapshot, "season_players")
-    color = alt.Color("player:N", scale=alt.Scale(domain=snapshot["players"], range=COLORS), legend=alt.Legend(title=None))
+    labels = {player: data.display_name(player) for player in snapshot["players"]}
+    label_expression = f'({json.dumps(labels)})[datum.label] || datum.label'
+    color = alt.Color("player:N", scale=alt.Scale(domain=snapshot["players"], range=COLORS), legend=alt.Legend(title=None, labelExpr=label_expression))
     with card("correct_chart"):
         st.subheader("Correct picks")
-        rows = [row for row in snapshot["standings"] if row["player"] in selected]
+        rows = [dict(row, playerLabel=data.display_name(row["player"])) for row in snapshot["standings"] if row["player"] in selected]
         if rows:
             chart = alt.Chart(pd.DataFrame(rows)).mark_bar(cornerRadiusTopLeft=4, cornerRadiusTopRight=4).encode(
-                x=alt.X("player:N", title=None, sort=selected), y=alt.Y("correct:Q", title="Correct picks", axis=alt.Axis(tickMinStep=1)),
-                color=color, tooltip=[alt.Tooltip("player:N", title="Player"), alt.Tooltip("correct:Q", title="Correct picks")]).properties(height=240)
+                x=alt.X("player:N", title=None, sort=selected, axis=alt.Axis(labelExpr=label_expression)), y=alt.Y("correct:Q", title="Correct picks", axis=alt.Axis(tickMinStep=1)),
+                color=color, tooltip=[alt.Tooltip("playerLabel:N", title="Player"), alt.Tooltip("correct:Q", title="Correct picks")]).properties(height=240)
             st.altair_chart(chart_theme(chart), use_container_width=True)
         else:
             st.info("Choose players to see the charts.")
@@ -460,13 +479,13 @@ def season_view(snapshot):
     with card("progress_chart"):
         st.subheader("Point Chaos Argyle" if field == "pointDifference" else "Argyle chart")
         st.caption("Progress after each completed game")
-        points = [{"player": player, "game": point["gameIndex"], "value": point[field][player]}
+        points = [{"player": player, "playerLabel": data.display_name(player), "game": point["gameIndex"], "value": point[field][player]}
                   for point in snapshot["progress"] for player in selected if player in point[field]]
         if points:
             chart = alt.Chart(pd.DataFrame(points)).mark_line(point=True).encode(
                 x=alt.X("game:Q", title="Games completed", axis=alt.Axis(tickMinStep=1)),
                 y=alt.Y("value:Q", title=metric), color=color,
-                tooltip=[alt.Tooltip("player:N", title="Player"), alt.Tooltip("game:Q", title="Game"), alt.Tooltip("value:Q", title=metric)]).properties(height=280)
+                tooltip=[alt.Tooltip("playerLabel:N", title="Player"), alt.Tooltip("game:Q", title="Game"), alt.Tooltip("value:Q", title=metric)]).properties(height=280)
             st.altair_chart(chart_theme(chart), use_container_width=True)
         else:
             st.info("Choose players to see the charts." if not selected else "Charts appear after the first result.")
@@ -478,16 +497,18 @@ def season_view(snapshot):
     if st.session_state.get("elimination_player") not in snapshot["players"]:
         st.session_state.pop("elimination_player", None)
     with card("elimination"):
-        player = st.selectbox("Player", snapshot["players"], key="elimination_player")
+        player = st.selectbox("Player", snapshot["players"], key="elimination_player", format_func=data.display_name)
         result = data.elimination(snapshot, player)
         (st.warning if result["eliminated"] else st.success)("Eliminated" if result["eliminated"] else "Not yet eliminated")
-        st.write(f'{result["best"]} correct picks in {player}’s best case')
+        st.write(f'{result["best"]} correct picks in {data.display_name(player)}’s best case')
         for comparison in result["comparisons"]:
-            st.markdown(f'<div class="comparison-row"><span>{esc(comparison["player"])}</span><strong>{comparison["correct"]}</strong></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="comparison-row"><span>{name_label(comparison["player"])}</span><strong>{comparison["correct"]}</strong></div>', unsafe_allow_html=True)
         st.caption("Assumes this player wins every remaining possible pick, then compares the shared picks others would also win. Ties remain alive. Like the iPhone app, this check does not solve every possible playoff bracket.")
     with st.expander("Full elimination matrix"):
         matrix = {name: {row["player"]: row["correct"] for row in data.elimination(snapshot, name)["comparisons"]} for name in snapshot["players"]}
-        st.dataframe(pd.DataFrame.from_dict(matrix, orient="index").rename_axis("Best case for ↓"), width="stretch")
+        frame = pd.DataFrame.from_dict(matrix, orient="index").rename_axis("Best case for ↓")
+        st.dataframe(frame.rename(index=data.display_name), width="stretch",
+                     column_config={name: st.column_config.NumberColumn(label=data.display_name(name)) for name in frame.columns})
 
 
 def history_view(snapshot):
@@ -497,7 +518,7 @@ def history_view(snapshot):
         players = ["All Players"] + sorted({row["player"] for row in snapshot["history"] + snapshot["careers"]})
         if st.session_state.get("history_player") not in players:
             st.session_state.pop("history_player", None)
-        player = st.selectbox("Player", players, key="history_player")
+        player = st.selectbox("Player", players, key="history_player", format_func=data.display_name)
         more = st.toggle("Show more than winners", key="history_more")
     st.subheader("Player season breakdown")
     entries = [row for row in snapshot["history"] if (more or data.is_winner(row)) and (player == "All Players" or row["player"] == player)]
@@ -505,16 +526,16 @@ def history_view(snapshot):
         st.info("No matching results. Try changing the sidebar player filter or showing more than winners.")
     for index, row in enumerate(sorted(entries, key=lambda row: row["season"], reverse=True)):
         with card(f"history_{index}"):
-            st.markdown(f'<div class="comparison-row"><span class="eyebrow">{esc(row["season"])}</span><span class="small muted">{esc(row["award"])}</span></div><div class="list-row"><strong>{esc(row["player"])}</strong><strong class="row-value">{row["percentage"]:.1%}</strong></div><p class="small muted">{row["correct"]} correct of {row["games"]} picks</p>', unsafe_allow_html=True)
+            st.markdown(f'<div class="comparison-row"><span class="eyebrow">{name_label(row["season"])}</span><span class="small muted">{esc(row["award"])}</span></div><div class="list-row"><strong>{name_label(row["player"])}</strong><strong class="row-value">{row["percentage"]:.1%}</strong></div><p class="small muted">{row["correct"]} correct of {row["games"]} picks</p>', unsafe_allow_html=True)
     st.subheader("Player career breakdown")
     with card("careers"):
         for row in snapshot["careers"]:
             if player == "All Players" or row["player"] == player:
-                st.markdown(f'<div class="list-row"><strong>{esc(row["player"])}</strong><div class="row-value"><strong>{row["percentage"]:.1%}</strong><small>{row["wins"]} W · {row["losses"]} L</small></div></div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="list-row"><strong>{name_label(row["player"])}</strong><div class="row-value"><strong>{row["percentage"]:.1%}</strong><small>{row["wins"]} W · {row["losses"]} L</small></div></div>', unsafe_allow_html=True)
     st.subheader("MBCC season breakdown")
     with card("seasons"):
         for row in sorted(snapshot["seasons"], key=lambda row: row["season"], reverse=True):
-            st.markdown(f'<div class="list-row"><div><strong>{esc(row["season"])}</strong><small>{row["wins"]} W · {row["losses"]} L</small></div><strong class="row-value">{row["percentage"]:.1%}</strong></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="list-row"><div><strong>{name_label(row["season"])}</strong><small>{row["wins"]} W · {row["losses"]} L</small></div><strong class="row-value">{row["percentage"]:.1%}</strong></div>', unsafe_allow_html=True)
 
 
 def info_view(snapshot):
@@ -540,7 +561,7 @@ def info_view(snapshot):
         for record in data.championships(snapshot):
             trophies = TROPHY * record["fullWins"] + ''.join(f'<span class="half-trophy">{TROPHY}</span>' for _ in range(record["sharedWins"]))
             description = f'{record["fullWins"]} outright championships, {record["sharedWins"]} shared championships'
-            st.markdown(f'<div class="list-row"><strong>{esc(record["player"])}</strong><span class="trophy-row row-value" role="img" aria-label="{esc(description)}">{trophies}</span></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="list-row"><strong>{name_label(record["player"])}</strong><span class="trophy-row row-value" role="img" aria-label="{esc(description)}">{trophies}</span></div>', unsafe_allow_html=True)
         st.caption("Half trophies mark shared championships. Nicholas and Joseph shared the first MBCC.")
     with card("about_data"):
         st.subheader("About the data")
@@ -549,8 +570,8 @@ def info_view(snapshot):
 
 
 @st.fragment(run_every=60)
-def current_screen(source, endpoint, zone, group="default"):
-    snapshot, error = load_data(source, endpoint, group)
+def current_screen(source, endpoint, zone, keyword=""):
+    snapshot, error = load_data(source, endpoint, keyword)
     page = st.session_state.get("primary_nav_value", "Live")
     detail = st.session_state.get("detail")
     if not detail:
@@ -563,7 +584,7 @@ def current_screen(source, endpoint, zone, group="default"):
         return
     if snapshot.get("isDemo") is True:
         st.info("DEMO · Sample results, not real standings")
-    st.caption(data.GROUP_LABELS.get(group, group))
+    st.caption(data.GROUP_LABELS.get(snapshot.get("group"), "Main group"))
     history_rows = snapshot.get("playoffStandings")
     users_loaded = len(history_rows) if history_rows is not None else None
     snapshot = data.filter_current_players(snapshot, st.session_state.get("current_players_only", True))
@@ -591,10 +612,10 @@ def main():
     st.set_page_config(page_title="MBCC", page_icon="🏆", layout="centered", initial_sidebar_state="collapsed")
     ensure_data_helpers()
     st.markdown('<style>' + (ROOT / "web_app/styles.css").read_text() + '</style>', unsafe_allow_html=True)
-    source, endpoint, zone, group = settings()
+    source, endpoint, zone, keyword = settings()
     with st.container(key="primary_nav"):
         st.radio("Main navigation", PAGES, horizontal=True, key="primary_nav_value", label_visibility="collapsed", on_change=change_page, width="stretch")
-    current_screen(source, endpoint, zone, group)
+    current_screen(source, endpoint, zone, keyword)
 
 
 if __name__ == "__main__":

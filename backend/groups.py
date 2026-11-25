@@ -1,6 +1,10 @@
 """Combine two challenge rosters without merging their player identities."""
 from copy import deepcopy
 from datetime import datetime
+import hmac
+import os
+import re
+import unicodedata
 
 GROUPS = {"default": "Main group", "sub": "Subgroup", "default+sub": "Main group + subgroup"}
 
@@ -9,11 +13,34 @@ class GroupError(ValueError):
     """A group configuration or compatibility error safe to show to readers."""
 
 
-def normalize_group(value):
-    group = (value or "").strip().lower() or "default"
-    if group not in GROUPS:
-        raise GroupError("Enter default, sub, or default+sub as the group keyword.")
-    return group
+def player_token(name):
+    ascii_name = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode()
+    return re.sub(r"[^A-Z0-9]", "", ascii_name.upper())
+
+
+def resolve_selection(keyword):
+    """Return a non-secret scope and optional player token for a private entry."""
+    value = (keyword or "").strip().casefold().encode("utf-8")
+    if not value:
+        return "default", None
+    matches = []
+    for group, name in (("sub", "MBCC_SUB_KEYWORD"), ("default+sub", "MBCC_COMBINED_KEYWORD")):
+        configured = os.environ.get(name, "").strip().casefold().encode("utf-8")
+        if configured and hmac.compare_digest(value, configured):
+            matches.append((group, None))
+    for name, configured in os.environ.items():
+        match = re.fullmatch(r"MBCC_([A-Z0-9_]+)_KEYWORD", name)
+        if not match or match[1] in {"SUB", "COMBINED", "GROUP"}:
+            continue
+        configured = configured.strip().casefold().encode("utf-8")
+        if configured and hmac.compare_digest(value, configured):
+            matches.append(("default", player_token(match[1])))
+    # Missing or ambiguous settings never expose an unintended group.
+    return matches[0] if len(matches) == 1 else ("default", None)
+
+
+def resolve_group(keyword):
+    return resolve_selection(keyword)[0]
 
 
 def combine_snapshots(main, sub):

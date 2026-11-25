@@ -15,6 +15,7 @@ struct RootView: View {
             tab("History", icon: "trophy", tag: "history") { HistoryView() }
             tab("Info", icon: "info.circle", tag: "info") { InformationView() }
         }
+        .id(store.connectionIdentity)
         .sheet(isPresented: $showConnection) { ConnectionView() }
         .task {
             await store.refresh()
@@ -146,7 +147,7 @@ struct LiveView: View {
                                 PlayerAvatar(player: leader.player)
                                 VStack(alignment: .leading, spacing: 3) {
                                     Text("SETTING THE PACE").font(.caption2.bold()).foregroundStyle(Theme.orange)
-                                    Text(leader.player).font(.headline)
+                                    Text(leader.player.groupDisplayName).font(.headline)
                                 }
                                 Spacer()
                                 VStack(alignment: .trailing, spacing: 3) {
@@ -156,7 +157,11 @@ struct LiveView: View {
                             }
                         }
                     }
-                    SectionHeading(title: "The games", caption: "Scores and everyone’s picks, in one place.")
+                    SectionHeading(title: "The games", caption: data.personalizedPlayer.map { "Picks for \($0.groupDisplayName)" } ?? "Scores and everyone’s picks, in one place.")
+                    if data.personalizedPlayer != nil {
+                        Text("Your pick is bold. Final results: solid green = correct; dotted gray = incorrect.")
+                            .font(.caption).foregroundStyle(.secondary)
+                    }
                     Picker("Show games", selection: $filter) {
                         ForEach(filters, id: \.self) { Text($0) }
                     }.pickerStyle(.segmented)
@@ -171,7 +176,7 @@ struct LiveView: View {
                     }
                     ForEach(games) { game in
                         NavigationLink { GameDetailView(game: game) } label: {
-                            GameCard(game: game)
+                            GameCard(game: game, viewer: data.personalizedPlayer)
                         }.buttonStyle(.plain)
                     }
                     updatedLabel(data)
@@ -187,6 +192,7 @@ struct LiveView: View {
 struct PlayoffBracketView: View {
     @EnvironmentObject private var store: AppStore
     @State private var player: String? = nil
+    @State private var initializedPlayer = false
 
     var body: some View {
         if let data = store.snapshot {
@@ -200,7 +206,7 @@ struct PlayoffBracketView: View {
                     } else {
                         Picker("Show picks for", selection: $player) {
                             Text("Results only").tag(nil as String?)
-                            ForEach(data.players, id: \.self) { Text($0).tag(Optional($0)) }
+                            ForEach(data.players, id: \.self) { Text($0.groupDisplayName).tag(Optional($0)) }
                         }.pickerStyle(.menu)
                         Text("\(games.filter(\.isFinal).count) of \(games.count) playoff games complete · Swipe sideways to see every round.")
                             .font(.caption).foregroundStyle(.secondary)
@@ -246,6 +252,12 @@ struct PlayoffBracketView: View {
                     updatedLabel(data)
                 }.padding(20)
             }.refreshable { await store.refresh() }
+                .onAppear {
+                    if !initializedPlayer { player = data.personalizedPlayer; initializedPlayer = true }
+                }
+                .onChange(of: data.personalizedPlayer) { old, new in
+                    if player == old { player = new }
+                }
                 .onChange(of: data.players) { _, players in
                     if let player, !players.contains(player) { self.player = nil }
                 }
@@ -308,7 +320,7 @@ private struct PlayoffStandingsTable: View {
                     Divider()
                     ForEach(entries) { entry in
                         HStack(alignment: .firstTextBaseline, spacing: 10) {
-                            Text(entry.player).fontWeight(.semibold)
+                            Text(entry.player.groupDisplayName).fontWeight(.semibold)
                                 .fixedSize(horizontal: false, vertical: true)
                                 .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
                             Text(entry.correctPlayoff.map(String.init) ?? "—")
@@ -317,7 +329,7 @@ private struct PlayoffStandingsTable: View {
                                 .frame(minWidth: 0, maxWidth: .infinity, alignment: .trailing)
                         }.font(.subheadline).monospacedDigit().padding(.vertical, 12)
                             .accessibilityElement(children: .contain)
-                            .accessibilityLabel("\(entry.player), \(entry.correctPlayoff.map(String.init) ?? "unavailable") correct playoff games, \(entry.correctUnknownPlayoff.map(String.init) ?? "unavailable") correct unknown playoff games, all time")
+                            .accessibilityLabel("\(entry.player.groupDisplayName), \(entry.correctPlayoff.map(String.init) ?? "unavailable") correct playoff games, \(entry.correctUnknownPlayoff.map(String.init) ?? "unavailable") correct unknown playoff games, all time")
                         if entry.id != entries.last?.id { Divider() }
                     }
                 }.padding(14)
@@ -384,13 +396,17 @@ private struct PlayoffGameCard: View {
 
     private func team(_ name: String, score: Int?) -> some View {
         HStack(alignment: .firstTextBaseline) {
-            Text(name).font(.subheadline)
+            Text(name).font(.subheadline).fontWeight(player.map { game.picks[$0] == name } == true ? .bold : .regular)
             if game.isFinal && game.winner == name {
                 Image(systemName: "checkmark").accessibilityLabel("Winner")
             }
             Spacer()
             Text(score.map(String.init) ?? "—").font(.headline.monospacedDigit())
         }.foregroundStyle(game.isFinal && game.winner == name ? Color.green : Color.primary)
+            .padding(.bottom, 5)
+            .overlay(alignment: .bottom) {
+                if let player, game.picks[player] == name { PickResultLine(outcome: game.pickOutcome(for: player)) }
+            }
     }
 }
 
@@ -404,7 +420,7 @@ struct GameDetailView: View {
         let game = store.snapshot?.games.first { $0.id == self.game.id } ?? self.game
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                GameCard(game: game)
+                GameCard(game: game, viewer: store.snapshot?.personalizedPlayer)
                 if let checks = game.fieldVerification {
                     Card {
                         Text("Compare with original entries").font(.headline)
@@ -453,7 +469,7 @@ struct GameDetailView: View {
                     ForEach(players.filter { selected.contains($0) }, id: \.self) { player in
                         HStack {
                             PlayerAvatar(player: player)
-                            Text(player).font(.subheadline)
+                            Text(player.groupDisplayName).font(.subheadline)
                             Spacer(minLength: 10)
                             VStack(alignment: .trailing, spacing: 3) {
                                 Text(game.picks[player] ?? "No pick").font(.subheadline.weight(.semibold)).multilineTextAlignment(.trailing)
@@ -499,7 +515,7 @@ struct StandingsView: View {
                                 Text(String(rank)).font(.headline.monospacedDigit()).foregroundStyle(rank == 1 ? Theme.orange : .secondary).frame(minWidth: 20)
                                 PlayerAvatar(player: entry.player)
                                 VStack(alignment: .leading, spacing: 4) {
-                                    Text(entry.player).font(.headline)
+                                    Text(entry.player.groupDisplayName).font(.headline)
                                     Text(margin ? "\(entry.correct) correct picks" : "Correct picks")
                                         .font(.caption).foregroundStyle(.secondary)
                                 }
@@ -559,11 +575,25 @@ struct SeasonView: View {
                                         if let value = (margin ? point.pointDifference : point.correct)[player] {
                                             LineMark(x: .value("Game", point.gameIndex), y: .value("Score", value))
                                                 .foregroundStyle(by: .value("Player", player))
+                                                .accessibilityLabel(player.groupDisplayName)
                                         }
                                     }
                                 }
                             }
                             .chartForegroundStyleScale(domain: data.players, range: Theme.playerColors)
+                            .chartLegend {
+                                LazyVGrid(columns: [GridItem(.adaptive(minimum: 110), alignment: .leading)], alignment: .leading) {
+                                    ForEach(Array(data.players.enumerated()), id: \.element) { index, name in
+                                        if selected.contains(name) {
+                                            HStack(spacing: 5) {
+                                                Circle().fill(Theme.playerColors[index % Theme.playerColors.count])
+                                                    .frame(width: 8, height: 8)
+                                                Text(name.groupDisplayName).font(.caption)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                             .chartXAxisLabel("Games completed")
                             .frame(height: 300)
                         }
@@ -571,17 +601,17 @@ struct SeasonView: View {
                     SectionHeading(title: "Elimination check", caption: "Who can still reach the top?")
                     Card {
                         Picker("Player", selection: $player) {
-                            ForEach(data.players, id: \.self) { Text($0).tag($0) }
+                            ForEach(data.players, id: \.self) { Text($0.groupDisplayName).tag($0) }
                         }.pickerStyle(.menu)
                         if !player.isEmpty {
                             let result = data.elimination(for: player)
                             Label(result.eliminated ? "Eliminated" : "Not yet eliminated",
                                   systemImage: result.eliminated ? "xmark.circle" : "checkmark.seal.fill")
                                 .font(.title3.bold()).foregroundStyle(result.eliminated ? Color.secondary : Color.green)
-                            Text("\(result.best) correct picks in \(player)’s best case").font(.subheadline)
+                            Text("\(result.best) correct picks in \(player.groupDisplayName)’s best case").font(.subheadline)
                             ForEach(result.comparisons) { comparison in
                                 HStack {
-                                    Text(comparison.player)
+                                    Text(comparison.player.groupDisplayName)
                                     Spacer()
                                     Text(String(comparison.correct)).monospacedDigit()
                                 }.font(.subheadline).foregroundStyle(comparison.player == player ? .primary : .secondary)
@@ -595,11 +625,11 @@ struct SeasonView: View {
                             Grid(alignment: .leading, horizontalSpacing: 18, verticalSpacing: 12) {
                                 GridRow {
                                     Text("Best case for ↓").font(.caption.bold())
-                                    ForEach(data.players, id: \.self) { Text($0).font(.caption.bold()) }
+                                    ForEach(data.players, id: \.self) { Text($0.groupDisplayName).font(.caption.bold()) }
                                 }
                                 ForEach(data.players, id: \.self) { candidate in
                                     GridRow {
-                                        Text(candidate).font(.caption.bold())
+                                        Text(candidate.groupDisplayName).font(.caption.bold())
                                         ForEach(data.elimination(for: candidate).comparisons) { item in
                                             Text(String(item.correct)).font(.caption.monospacedDigit())
                                         }
@@ -632,7 +662,7 @@ struct HistoryView: View {
                     Card {
                         Picker("Player", selection: $player) {
                             Text("All Players").tag("All Players")
-                            ForEach(players, id: \.self) { Text($0).tag($0) }
+                            ForEach(players, id: \.self) { Text($0.groupDisplayName).tag($0) }
                         }
                         Toggle("Show more than winners", isOn: $moreThanWinners)
                     }.font(.subheadline)
@@ -647,13 +677,13 @@ struct HistoryView: View {
                     ForEach(Array(entries.enumerated()), id: \.offset) { _, entry in
                         Card {
                             HStack {
-                                Label(entry.season, systemImage: entry.isWinner ? "trophy.fill" : "calendar")
+                                Label(entry.season.groupDisplayName, systemImage: entry.isWinner ? "trophy.fill" : "calendar")
                                     .font(.caption.bold()).foregroundStyle(Theme.orange)
                                 Spacer()
                                 Text(entry.award).font(.caption).foregroundStyle(.secondary)
                             }
                             HStack {
-                                Text(entry.player).font(.title3.bold())
+                                Text(entry.player.groupDisplayName).font(.title3.bold())
                                 Spacer()
                                 Text(entry.percentage.percentText).font(.title3.bold().monospacedDigit())
                             }
@@ -664,7 +694,7 @@ struct HistoryView: View {
                     Card {
                         ForEach(data.careers.filter { player == "All Players" || player == $0.player }) { career in
                             HStack {
-                                Text(career.player).font(.subheadline.bold())
+                                Text(career.player.groupDisplayName).font(.subheadline.bold())
                                 Spacer()
                                 VStack(alignment: .trailing, spacing: 3) {
                                     Text(career.percentage.percentText).font(.headline.monospacedDigit())
@@ -678,7 +708,7 @@ struct HistoryView: View {
                         ForEach(data.seasons.sorted { $0.season > $1.season }) { season in
                             HStack {
                                 VStack(alignment: .leading, spacing: 3) {
-                                    Text(season.season).font(.subheadline.bold())
+                                    Text(season.season.groupDisplayName).font(.subheadline.bold())
                                     Text("\(season.wins) W · \(season.losses) L").font(.caption).foregroundStyle(.secondary)
                                 }
                                 Spacer()
@@ -849,11 +879,28 @@ struct ConnectionView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var demo = true
     @State private var endpoint = ""
-    private var valid: Bool { demo || AppStore.validURL(endpoint.trimmingCharacters(in: .whitespacesAndNewlines)) != nil }
+    @State private var keyword = ""
+    @FocusState private var focusedField: ConnectionField?
+    private enum ConnectionField { case keyword, endpoint }
+    private var validEndpoint: Bool { demo || AppStore.validURL(endpoint.trimmingCharacters(in: .whitespacesAndNewlines)) != nil }
+    private var valid: Bool { validEndpoint }
 
     var body: some View {
         NavigationStack {
             Form {
+                Section {
+                    SecureField("Enter keyword", text: $keyword)
+                        .textInputAutocapitalization(.never).autocorrectionDisabled()
+                        .focused($focusedField, equals: .keyword).submitLabel(.done)
+                        .onSubmit { focusedField = nil }.accessibilityIdentifier("groupKeyword")
+                } header: {
+                    Text("Group keyword")
+                } footer: {
+                    Text("Applies to every tab and game details.")
+                    if demo {
+                        Text("The bundled demo contains only the main group.")
+                    }
+                }
                 Section {
                     Toggle("Current players only", isOn: $store.currentPlayersOnly)
                         .accessibilityIdentifier("currentPlayersOnly")
@@ -870,8 +917,10 @@ struct ConnectionView: View {
                 Section {
                     TextField("https://your-server.com/api/snapshot", text: $endpoint)
                         .textInputAutocapitalization(.never).autocorrectionDisabled().keyboardType(.URL)
+                        .focused($focusedField, equals: .endpoint).submitLabel(.done)
+                        .onSubmit { focusedField = nil }
                         .accessibilityIdentifier("snapshotURL")
-                    if !valid { Text("Enter a full HTTPS URL.").font(.caption).foregroundStyle(.red) }
+                    if !validEndpoint { Text("Enter a full HTTPS URL.").font(.caption).foregroundStyle(.red) }
                 } header: {
                     Text("MBCC snapshot URL")
                 } footer: {
@@ -879,14 +928,14 @@ struct ConnectionView: View {
                 }
                 Section {
                     Button("Save connection") {
-                        let useDemo = demo, url = endpoint
+                        let useDemo = demo, url = endpoint, groupKeyword = keyword
                         dismiss()
-                        Task { await store.configure(demo: useDemo, endpoint: url) }
+                        Task { await store.configure(demo: useDemo, endpoint: url, keyword: groupKeyword) }
                     }.disabled(!valid).accessibilityIdentifier("saveConnection")
                 }
             }.navigationTitle("Data Connection").navigationBarTitleDisplayMode(.inline)
                 .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } } }
-                .onAppear { demo = store.isDemo; endpoint = store.endpoint }
+                .onAppear { demo = store.isDemo; endpoint = store.endpoint; keyword = store.groupKeyword }
         }
     }
 }
@@ -903,6 +952,15 @@ private struct CorrectPicksChart: View {
         Chart(standings) { entry in
             BarMark(x: .value("Correct", entry.correct), y: .value("Player", entry.player))
                 .foregroundStyle(Theme.orange)
-        }.frame(height: CGFloat(max(standings.count, 1) * 30 + 30))
+                .accessibilityLabel(entry.player.groupDisplayName)
+        }
+        .chartYAxis {
+            AxisMarks { value in
+                AxisValueLabel {
+                    if let name = value.as(String.self) { Text(name.groupDisplayName) }
+                }
+            }
+        }
+        .frame(height: CGFloat(max(standings.count, 1) * 30 + 30))
     }
 }

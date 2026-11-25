@@ -1,5 +1,7 @@
 """The same display rules as ios/MBCC/Models.swift, without UI dependencies."""
 import json
+import base64
+import hashlib
 import math
 import re
 from collections import defaultdict
@@ -7,12 +9,13 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 from urllib.error import HTTPError
 from urllib.parse import parse_qs, parse_qsl, urlencode, urlsplit, urlunsplit
-from urllib.request import Request, urlopen
+from urllib.request import HTTPRedirectHandler, Request, build_opener
 from zoneinfo import ZoneInfo
 
 EASTERN = ZoneInfo("America/New_York")
 DEFAULT_ENDPOINT = "https://mbcc-api-jarvycxodq-ue.a.run.app/api/snapshot"
 GROUP_LABELS = {"default": "Main group", "sub": "Subgroup", "default+sub": "Main group + subgroup"}
+KEYWORD_HEADER = "X-MBCC-Keyword"
 ROOT = Path(__file__).resolve().parents[1]
 CHECKED_FIELDS = (
     ("startTime", "Kickoff"), ("awayTeam", "Away team"), ("homeTeam", "Home team"),
@@ -24,20 +27,38 @@ class SnapshotError(ValueError):
     pass
 
 
-def group_keyword(value):
-    keyword = (value or "").strip().lower() or "default"
-    if keyword not in GROUP_LABELS:
-        raise SnapshotError("Enter default, sub, or default+sub as the group keyword.")
-    return keyword
+def display_name(value):
+    """Show original names while keeping combined-group lookup keys distinct."""
+    value = str(value)
+    for suffix in (" [Main]", " [Sub]"):
+        if value.endswith(suffix):
+            return value[:-len(suffix)]
+    return value
 
 
-def group_endpoint(endpoint, group):
-    """Replace an existing group query without losing other connection options."""
+def normalize_keyword(value):
+    # The API alone resolves arbitrary private values. Do not classify them here.
+    return (value or "").strip()
+
+
+def connection_endpoint(endpoint):
+    """Remove legacy selectors; private entries are sent only in a header."""
     parts = urlsplit(endpoint)
-    query = [(key, value) for key, value in parse_qsl(parts.query, keep_blank_values=True) if key != "group"]
-    if group != "default":
-        query.append(("group", group))
+    query = [(key, value) for key, value in parse_qsl(parts.query, keep_blank_values=True) if key not in {"group", "keyword"}]
     return urlunsplit(parts._replace(query=urlencode(query)))
+
+
+def keyword_identity(value):
+    return hashlib.sha256(normalize_keyword(value).encode("utf-8")).hexdigest()
+
+
+class _NoRedirect(HTTPRedirectHandler):
+    def redirect_request(self, request, response, code, message, headers, new_url):
+        return None  # Never forward a private header to a redirect target.
+
+
+def urlopen(request, timeout):
+    return build_opener(_NoRedirect).open(request, timeout=timeout)
 
 
 def parse_time(value):
@@ -114,18 +135,20 @@ def validate_snapshot(snapshot):
     return snapshot
 
 
-def fetch_api(endpoint):
+def fetch_api(endpoint, keyword=""):
+    endpoint = connection_endpoint(endpoint)
+    keyword = normalize_keyword(keyword)
     if not valid_endpoint(endpoint):
         raise SnapshotError("Enter an HTTPS snapshot URL (local HTTP is supported for development).")
     request = Request(endpoint, headers={"Accept": "application/json", "User-Agent": "MBCC-Streamlit/1.0"})
+    if keyword:
+        request.add_header(KEYWORD_HEADER, base64.b64encode(keyword.encode("utf-8")).decode("ascii"))
     try:
         with urlopen(request, timeout=20) as response:
             payload = response.read(16 * 1024 * 1024 + 1)
     except HTTPError as error:
         if 500 <= error.code < 600:
-            group = parse_qs(urlsplit(endpoint).query).get("group", ["default"])[0]
-            label = GROUP_LABELS.get(group, "Selected group").lower()
-            raise SnapshotError(f"The MBCC backend couldn’t load {label} (HTTP {error.code}). Check that group’s spreadsheet settings and backend logs.") from None
+            raise SnapshotError(f"The MBCC backend couldn’t load the selected group (HTTP {error.code}). Check its spreadsheet settings and backend logs.") from None
         if error.code == 409:
             try:
                 message = json.loads(error.read(4096)).get("error")
@@ -136,7 +159,13 @@ def fetch_api(endpoint):
         raise
     if len(payload) > 16 * 1024 * 1024:
         raise SnapshotError("The snapshot is too large to load.")
-    return validate_snapshot(json.loads(payload))
+    snapshot = validate_snapshot(json.loads(payload))
+    group = snapshot.get("group", "default")
+    if group not in GROUP_LABELS or not keyword and group != "default":
+        raise SnapshotError("The backend returned an unexpected group. Check Data Connection and try again.")
+    if keyword and snapshot.get("keywordRouting") is not True:
+        raise SnapshotError("Update the MBCC backend to recognize private group keywords.")
+    return snapshot
 
 
 def filter_current_players(snapshot, current_only=True):
@@ -169,6 +198,20 @@ def read_demo():
 def is_final(game):
     live = game.get("live")
     return (live is None or live.get("status") == "final") and game.get("winner") not in (None, "", "TBD")
+
+
+def pick_result(game, player):
+    pick = game.get("picks", {}).get(player) if player else None
+    if not pick:
+        return None
+    if not is_final(game):
+        return "pending"
+    return "correct" if pick == game["winner"] else "incorrect"
+
+
+def viewer_player(snapshot):
+    viewer = snapshot.get("viewerPlayer")
+    return viewer if viewer in snapshot["players"] else None
 
 
 def ranked(snapshot, margin=False):

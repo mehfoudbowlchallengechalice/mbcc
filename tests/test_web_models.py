@@ -29,6 +29,25 @@ class WebModelTests(unittest.TestCase):
         self.snapshot = data.read_demo()
         self.now = datetime(2026, 11, 20, 2, tzinfo=timezone.utc)
 
+    def test_group_display_names_remove_only_the_generated_suffix(self):
+        self.assertEqual(data.display_name("Alice [Main]"), "Alice")
+        self.assertEqual(data.display_name("Alice [Sub]"), "Alice")
+        self.assertEqual(data.display_name("2026–27 [Sub]"), "2026–27")
+        self.assertEqual(data.display_name("Alice [Other]"), "Alice [Other]")
+        self.assertEqual(data.display_name("Alice"), "Alice")
+
+    def test_personal_pick_results_wait_for_final_and_keep_unknown_slots(self):
+        game = copy.deepcopy(self.snapshot["games"][0])
+        game.update(winner="Home", homeTeam="Home", awayTeam="Away", live=None,
+                    picks={"Alice": "Home", "Bob": "Away", "Future": "Unresolved school"})
+        self.assertEqual(data.pick_result(game, "Alice"), "correct")
+        self.assertEqual(data.pick_result(game, "Bob"), "incorrect")
+        self.assertEqual(data.pick_result(game, "Future"), "incorrect")
+        self.assertIsNone(data.pick_result(game, "Missing"))
+        game["live"] = {"status": "live"}
+        self.assertEqual(data.pick_result(game, "Alice"), "pending")
+        self.assertEqual(data.pick_result(game, "Bob"), "pending")
+
     def test_current_player_filter_covers_all_player_data_without_mutating_source(self):
         self.snapshot["careers"][0]["active"] = False
         self.snapshot["playoffStandings"] = [

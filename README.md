@@ -37,19 +37,46 @@ exists; new players without either record use the current season roster.
 History keeps its individual player and winner filters. Season-wide historical
 totals retain the spreadsheet's original aggregate calculations.
 
-In the sidebar's **Groups** settings, enter a **Group keyword**:
+In the sidebar's **Groups** settings, enter a masked **Group keyword**. The API
+resolves the entry using its runtime configuration:
 
 | Keyword | Results shown |
 | --- | --- |
-| Blank or `default` | Main group from the existing challenge spreadsheet |
-| `sub` | Subgroup from the second challenge spreadsheet |
-| `default+sub` | Both rosters together, with a shared standings ranking |
+| Blank or unmatched entry | Main group from the existing challenge spreadsheet |
+| Value configured as `MBCC_SUB_KEYWORD` | Subgroup from the second challenge spreadsheet |
+| Value configured as `MBCC_COMBINED_KEYWORD` | Both rosters together, with a shared standings ranking |
+| Value configured as `MBCC_[NAME]_KEYWORD` | Main group, with that player's schedule picks highlighted |
 
-Keywords ignore case and surrounding spaces. An unknown keyword shows an error.
+Set distinct, nonblank values for these variables directly in the `mbcc-api`
+Cloud Run container (or reference Secret Manager secrets as environment variables).
+Do not put the values in source files, `cloudrun/env.yaml`, or the deployment ZIP.
+Missing or ambiguous keyword configuration exposes only the main group.
+Keywords ignore case and surrounding spaces; unmatched entries silently select
+the main group. Both apps send the entered value to the API without a local
+keyword lookup table, so changing keywords requires no app rebuild.
+Add the nine player variables using their roster names, such as
+`MBCC_CHRISTOPHER_KEYWORD` and `MBCC_NICHOLAS_KEYWORD`. Names are matched without
+case, spaces, punctuation, or accents; the name must identify one current roster
+entry. No list of player codes is hardcoded in either app.
+Everyone remains visible in standings and other screens. The selected player's
+schedule pick is bold, with a solid green underline for a correct final result
+or a dotted gray underline for an incorrect final result. Pending picks are bold
+without a result line. Bracket selection starts with that player and remains
+adjustable. Unknown or ambiguous player names leave the ordinary main view.
+Both apps mask the keyword field and omit accepted values from on-screen hints,
+placeholders, and validation messages. The group names remain visible so users
+can tell which results they are viewing.
 The selection applies to every screen, player filter, game pick, chart, history,
-and trophy cabinet. Changing groups clears the previous group's saved results
-and player selections. A failed subgroup load never displays main-group data
+and trophy cabinet. Changing groups clears displayed results, player selections,
+and open game details. A failed subgroup load never displays main-group data
 as the subgroup. The bundled demo contains only the main group.
+
+On iPhone, open the gear button's **Data Connection**, enter the same **Group
+keyword**, and tap **Save connection**. The selection is saved between launches.
+The iPhone stores the entered keyword in Keychain, and cache files contain only
+its fingerprint. Saved results are reused only for the same endpoint and entry.
+Both apps check that the API supports private keyword routing, so an older
+backend cannot silently ignore a nonblank entry.
 
 To add the subgroup spreadsheet:
 
@@ -63,15 +90,16 @@ To add the subgroup spreadsheet:
    from that workbook by default. Set `MBCC_SUB_HISTORY_SHEET_ID` only if they
    are in a separate subgroup history workbook.
 4. Deploy the updated backend using `bash cloudrun/update-live-source.sh`,
-   and publish/reboot the updated Streamlit app. Then select `sub` or
-   `default+sub` in the sidebar.
+   and publish/reboot the updated Streamlit app. Then enter your configured
+   subgroup or combined-view keyword in the sidebar or iPhone Data Connection.
 
-The combined view labels player names `[Main]` and `[Sub]`, including matching
-names, so each entry retains its own picks and stats. Games appear once and
+The combined view shows original player and season names without bracketed
+group labels. Internal keys keep each entry's picks and stats separate, even
+when names match across groups. Games appear once and
 combine both rosters' picks. Scores and standings values remain those from each
 spreadsheet; both spreadsheets must use comparable scoring formulas. Historical
-awards stay with their original group, and season aggregate rows are labeled
-by group. The main group's updates supply the combined news feed. Incompatible
+awards and season aggregate rows stay with their original group.
+The main group's updates supply the combined news feed. Incompatible
 seasons, schedules, results, or trackers show a message instead of a partial merge.
 
 The subgroup does not track all-time playoff history and needs no
@@ -84,8 +112,18 @@ ignored. `MBCC_SUB_UPDATES_ENABLED=1` enables a subgroup
 `todays_update` tab; it defaults to off. Optional `MBCC_SUB_SEASON` and
 `MBCC_SUB_WORKSHEET_TITLES` override the main backend's season and tab mapping.
 `MBCC_GROUP_KEYWORD` or `[mbcc].group_keyword` sets Streamlit's initial selection.
-The API defaults to the main group and accepts `?group=sub` or
-`?group=default%2Bsub`; group choices are display filters, not access controls.
+The API defaults to the main group. Apps send UTF-8 keywords base64-encoded in
+the `X-MBCC-Keyword` header, keeping them out of request URLs. The response's
+`group` is a non-secret scope identifier, and `keywordRouting: true` confirms the
+protocol is supported. Legacy `group` and `keyword` query parameters are ignored;
+they cannot bypass the private runtime mapping. Clients do not follow redirects
+with keyword headers. Deploy the backend before publishing the updated clients.
+The API's optional `viewerPlayer` identifies the selected player per response;
+it never stores this selection in the shared group snapshot cache.
+
+The deployment scripts update only the non-secret settings in `env.yaml` and
+preserve the keyword variables or Secret Manager references already configured
+in Cloud Run. The config helper refuses keyword values in `env.yaml`.
 
 Open **Data Connection** using the sidebar control at the upper left:
 
@@ -368,6 +406,18 @@ Swift model checks (macOS with Xcode):
 swiftc ios/MBCC/Models.swift tests/ModelChecks.swift -o /tmp/mbcc-model-checks
 /tmp/mbcc-model-checks ios/MBCC/demo.json
 ```
+
+iPhone connection checks with an isolated mock API (no Google access required):
+
+```sh
+swiftc -swift-version 5 ios/MBCC/Models.swift ios/MBCC/AppStore.swift \
+  tests/AppStoreChecks.swift -o /tmp/mbcc-appstore-checks
+/tmp/mbcc-appstore-checks
+```
+
+These cover keyword requests and URL encoding, saved selections, group-specific
+cache validation, failed connections, demo restrictions, older API responses,
+and a slow response completing after the user switches groups.
 
 Xcode simulator build:
 

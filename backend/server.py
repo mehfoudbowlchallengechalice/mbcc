@@ -1,5 +1,7 @@
 """WSGI read-only API. For local use: python3 -m backend.server [--demo]."""
 import json
+import base64
+import binascii
 import logging
 import os
 import sys
@@ -7,12 +9,12 @@ import threading
 import time
 from pathlib import Path
 from urllib.error import HTTPError
-from urllib.parse import parse_qs, urlencode, quote
+from urllib.parse import urlencode, quote
 from urllib.request import Request, urlopen
 from wsgiref.simple_server import make_server
 
 from backend.sheets_adapter import WORKSHEETS, build_snapshot, playoff_history_standings
-from backend.groups import GroupError, combine_snapshots, normalize_group
+from backend.groups import GroupError, combine_snapshots, resolve_selection, player_token
 
 logger = logging.getLogger("mbcc")
 _lock = threading.Lock()
@@ -72,9 +74,9 @@ def spreadsheet_groups(group="default"):
 def fetch_snapshot(group="default"):
     if os.environ.get("MBCC_DEMO") == "1":
         if group != "default":
-            raise GroupError("The bundled demo has only the main group. Use default or connect to a configured live subgroup.")
+            raise GroupError("The bundled demo has only the main group. Choose the main group or connect to live data.")
         snapshot = json.loads((Path(__file__).resolve().parents[1] / "ios/MBCC/demo.json").read_text())
-        return dict(snapshot, group=group)
+        return dict(snapshot, group=group, keywordRouting=True)
     groups = spreadsheet_groups(group)
     titles = worksheet_titles(group)
     import google.auth
@@ -115,6 +117,7 @@ def fetch_snapshot(group="default"):
     season = os.environ.get("MBCC_SEASON", "MBCC 15 · 2026–27")
     snapshot = build_snapshot(tables, season=os.environ.get("MBCC_SUB_SEASON", season) if group == "sub" else season)
     snapshot["group"] = group
+    snapshot["keywordRouting"] = True
     snapshot["playoffHistoryScope"] = "none" if group == "sub" else "main"
     if group == "sub":
         # The subgroup does not track all-time playoff history. Even an old
@@ -160,31 +163,37 @@ def application(environ, start_response):
     elif environ.get("PATH_INFO") == "/health":
         body = b'{"status":"ok"}'
     elif environ.get("PATH_INFO") == "/api/snapshot":
+        # Base64 keeps arbitrary UTF-8 entries out of URLs and makes the header
+        # safe for HTTP transports. Never log or return the submitted value.
         try:
-            values = parse_qs(environ.get("QUERY_STRING", ""), keep_blank_values=True).get("group", [""])
-            if len(values) != 1:
-                raise GroupError("Supply only one group keyword.")
-            group = normalize_group(values[0])
+            keyword = base64.b64decode(environ.get("HTTP_X_MBCC_KEYWORD", ""), validate=True).decode("utf-8")
+        except (binascii.Error, UnicodeError, ValueError):
+            keyword = ""
+        # Legacy query selectors cannot bypass the private keyword mapping.
+        group, viewer_token = resolve_selection(keyword)
+        try:
+            body = snapshot_bytes() if group == "default" else snapshot_bytes(group)
+            # Personalization is applied to a new response object, never to the
+            # shared group cache. The complete roster and stats stay available.
+            snapshot = json.loads(body)
+            viewers = [name for name in snapshot.get("players", []) if viewer_token and player_token(name) == viewer_token]
+            snapshot.update(group=group, keywordRouting=True, viewerPlayer=viewers[0] if len(viewers) == 1 else None)
+            body = json.dumps(snapshot, allow_nan=False).encode()
         except GroupError as exc:
-            status, body = "400 Bad Request", json.dumps({"error": str(exc)}).encode()
-        else:
-            try:
-                body = snapshot_bytes() if group == "default" else snapshot_bytes(group)
-            except GroupError as exc:
-                status, body = "409 Conflict", json.dumps({"error": str(exc)}).encode()
-            except Exception as exc:
-                # Never expose credentials, spreadsheet contents, or remote error bodies.
-                code = getattr(exc, "code", None)
-                validation = str(exc).replace("\r", " ").replace("\n", " ")[:500] if isinstance(exc, ValueError) else ""
-                logger.error("Snapshot load failed (%s%s)%s", type(exc).__name__,
-                             f": {code}" if isinstance(code, int) else "",
-                             f": {validation}" if validation else "")
-                status, body = "502 Bad Gateway", b'{"error":"MBCC data is temporarily unavailable"}'
+            status, body = "409 Conflict", json.dumps({"error": str(exc)}).encode()
+        except Exception as exc:
+            code = getattr(exc, "code", None)
+            validation = str(exc).replace("\r", " ").replace("\n", " ")[:500] if isinstance(exc, ValueError) else ""
+            logger.error("Snapshot load failed (%s%s)%s", type(exc).__name__,
+                         f": {code}" if isinstance(code, int) else "",
+                         f": {validation}" if validation else "")
+            status, body = "502 Bad Gateway", b'{"error":"MBCC data is temporarily unavailable"}'
     else:
         status, body = "404 Not Found", b'{"error":"Not found"}'
     headers = [("Content-Type", "application/json; charset=utf-8"),
                ("Content-Length", str(len(body))), ("Cache-Control", "no-store"),
                ("X-Content-Type-Options", "nosniff")]
+    headers.append(("Vary", "X-MBCC-Keyword"))
     if status.startswith("405"):
         headers.append(("Allow", "GET, HEAD"))
     start_response(status, headers)
