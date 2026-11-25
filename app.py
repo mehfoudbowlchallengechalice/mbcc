@@ -4,6 +4,7 @@ Run: streamlit run app.py
 Data: the same read-only snapshot API as iPhone, or explicit demo data.
 """
 import html
+import importlib
 import os
 from datetime import date, datetime, timezone
 from pathlib import Path
@@ -33,6 +34,24 @@ def setting(name, default=None):
         return st.secrets.get("mbcc", {}).get(name.removeprefix("mbcc_"), default)
     except (FileNotFoundError, st.errors.StreamlitSecretNotFoundError):
         return default
+
+
+def ensure_data_helpers():
+    """Refresh an older module retained across a hosted source update."""
+    global data
+
+    def ready():
+        return (isinstance(getattr(data, "GROUP_LABELS", None), dict)
+                and callable(getattr(data, "group_keyword", None))
+                and callable(getattr(data, "group_endpoint", None)))
+
+    if ready():
+        return
+    importlib.invalidate_caches()
+    data = importlib.reload(data)
+    if not ready():
+        st.error("The app update is incomplete. Publish app.py and web_app/data.py from the same commit, then reboot the Streamlit app from Manage app.")
+        st.stop()
 
 
 @st.cache_data(ttl=60, show_spinner=False)
@@ -562,6 +581,7 @@ def current_screen(source, endpoint, zone, group="default"):
 
 def main():
     st.set_page_config(page_title="MBCC", page_icon="🏆", layout="centered", initial_sidebar_state="collapsed")
+    ensure_data_helpers()
     st.markdown('<style>' + (ROOT / "web_app/styles.css").read_text() + '</style>', unsafe_allow_html=True)
     source, endpoint, zone, group = settings()
     with st.container(key="primary_nav"):

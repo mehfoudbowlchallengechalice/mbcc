@@ -18,6 +18,43 @@ if AVAILABLE:
 
 
 @unittest.skipUnless(AVAILABLE, "Install requirements.txt to run Streamlit interaction checks")
+class StreamlitModuleReloadTests(unittest.TestCase):
+    def test_stale_data_module_is_reloaded_before_settings_render(self):
+        st.cache_data.clear()
+        try:
+            # Simulate a running app retaining the imported module from before
+            # the group feature, while app.py and the files on disk are updated.
+            for name in ("GROUP_LABELS", "group_keyword", "group_endpoint"):
+                data.__dict__.pop(name, None)
+            with patch.dict(os.environ, {"MBCC_DEMO": "1"}):
+                app = AppTest.from_file(str(Path(__file__).resolve().parents[1] / "app.py"), default_timeout=15).run()
+                self.assertFalse(app.exception)
+                self.assertEqual(app.text_input(key="group_keyword").value, "default")
+                app.text_input(key="group_keyword").set_value("sub").run()
+                self.assertFalse(app.exception)
+                self.assertIn("demo has only the main group", app.warning[0].value)
+            self.assertIsInstance(data.GROUP_LABELS, dict)
+            self.assertTrue(callable(data.group_keyword))
+            self.assertTrue(callable(data.group_endpoint))
+        finally:
+            importlib.reload(data)
+            st.cache_data.clear()
+
+    def test_incomplete_source_update_displays_recovery_steps_without_crashing(self):
+        st.cache_data.clear()
+        try:
+            data.__dict__.pop("GROUP_LABELS", None)
+            with patch("importlib.reload", return_value=data), patch.dict(os.environ, {"MBCC_DEMO": "1"}):
+                app = AppTest.from_file(str(Path(__file__).resolve().parents[1] / "app.py"), default_timeout=15).run()
+            self.assertFalse(app.exception)
+            self.assertIn("Publish app.py and web_app/data.py from the same commit", app.error[0].value)
+            self.assertFalse(app.text_input)
+        finally:
+            importlib.reload(data)
+            st.cache_data.clear()
+
+
+@unittest.skipUnless(AVAILABLE, "Install requirements.txt to run Streamlit interaction checks")
 class StreamlitAppTests(unittest.TestCase):
     def setUp(self):
         st.cache_data.clear()
