@@ -154,8 +154,8 @@ connection** if a refresh fails, with a warning. Changing sources clears it.
 Unlike the iPhone app’s on-disk cache, the web copy does not persist after a new
 session. The web loader and API may each cache data for up to a minute.
 Verification freshness is recomputed on every render, including saved results.
-Game-day and publication-date selection use Eastern Time; kickoff times use
-the browser time zone when available and can be changed in Data Connection.
+All dates and times use Eastern Time (ET), including kickoffs and update times.
+The time zone is fixed in both apps and follows Eastern daylight saving changes.
 
 This emulates the native app’s content and navigation in a browser; system
 controls, browser links, and the connection sidebar remain Streamlit controls.
@@ -389,7 +389,7 @@ reference entries or picks, with unchecked verification. Game and score groups
 are independent; blank live values never fall back to originals. Without live
 mode, the earlier name-based mapping remains available during setup. Malformed
 calculated summary numbers still produce errors instead of inventing standings.
-Sheet dates/times are Eastern, and the app displays kickoff in device-local time.
+Sheet dates/times and all app displays use Eastern Time (ET).
 
 The server caches one snapshot for 60 seconds. The iPhone app refreshes on launch, foregrounding, pull-to-refresh, and every minute while active. A failed refresh retains the last successful snapshot for the same endpoint, with a warning; switching sources clears the displayed data. There is no automatic fallback to demo data.
 

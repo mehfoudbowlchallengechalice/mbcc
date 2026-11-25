@@ -18,6 +18,27 @@ struct ModelChecks {
         let demo = URL(fileURLWithPath: CommandLine.arguments[1])
         let original = try Data(contentsOf: demo)
         let snapshot = try JSONDecoder().decode(Snapshot.self, from: original)
+        var timeObject = try JSONSerialization.jsonObject(with: original) as! [String: Any]
+        var timeGame = (timeObject["games"] as! [[String: Any]])[0]
+        let originalTimeZone = NSTimeZone.default
+        for (start, abbreviation) in [("2027-01-02T00:30:00Z", "EST"), ("2027-07-02T00:30:00Z", "EDT")] {
+            timeGame["startTime"] = start
+            timeGame["kickoffTimeKnown"] = true
+            timeObject["games"] = [timeGame]
+            let game = try decode(timeObject).games[0]
+            NSTimeZone.default = TimeZone(identifier: "Asia/Tokyo")!
+            let label = game.kickoffText
+            precondition(label.hasSuffix(abbreviation))
+            NSTimeZone.default = TimeZone(identifier: "America/Los_Angeles")!
+            precondition(game.kickoffText == label)
+            timeGame["kickoffTimeKnown"] = false
+            timeObject["games"] = [timeGame]
+            let unknownGame = try decode(timeObject).games[0]
+            let unknownLabel = unknownGame.kickoffText
+            NSTimeZone.default = TimeZone(identifier: "Asia/Tokyo")!
+            precondition(unknownGame.kickoffText == unknownLabel && unknownLabel.hasSuffix("Time TBD"))
+        }
+        NSTimeZone.default = originalTimeZone
         precondition(snapshot.players.count == 10)
         precondition(snapshot.completed == 5 && snapshot.remaining == 3)
         precondition(snapshot.progress.last?.gameIndex == 5)

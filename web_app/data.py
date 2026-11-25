@@ -356,11 +356,11 @@ def score(value):
     return f"{number:,.0f}" if number.is_integer() else f"{number:,.3f}".rstrip("0").rstrip(".")
 
 
-def kickoff_label(game, time_zone="America/New_York"):
+def kickoff_label(game):
     moment = parse_time(game.get("startTime"))
     if moment is None:
         return "Kickoff TBD"
-    local = moment.astimezone(ZoneInfo(time_zone))
+    local = moment.astimezone(EASTERN)
     if game.get("kickoffTimeKnown") is False:
         return local.strftime("%b %d, %Y") + " · Time TBD"
     return local.strftime("%b %d · %I:%M %p %Z").replace(" 0", " ")

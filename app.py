@@ -7,9 +7,8 @@ import html
 import importlib
 import json
 import os
-from datetime import date, datetime, timezone
+from datetime import date
 from pathlib import Path
-from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import altair as alt
 import pandas as pd
@@ -110,18 +109,11 @@ def settings():
         else:
             st.caption("Fictional sample results. Demo data is never used automatically when a live connection fails.")
         st.divider()
-        try:
-            browser_zone = getattr(st.context, "timezone", None) or "America/New_York"
-            ZoneInfo(browser_zone)
-        except (AttributeError, ZoneInfoNotFoundError):
-            browser_zone = "America/New_York"
-        zones = list(dict.fromkeys([browser_zone, "America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles", "UTC"]))
-        zone = st.selectbox("Kickoff time zone", zones, key="time_zone")
-        st.caption("Game days and post publication dates always use Eastern Time.")
+        st.caption("All dates and times use Eastern Time (ET).")
         if st.button("Refresh now", width="stretch"):
             fetch_snapshot.clear()
         st.caption("Results refresh every minute while this page is open.")
-    return source, endpoint.strip(), zone, data.normalize_keyword(keyword)
+    return source, endpoint.strip(), data.normalize_keyword(keyword)
 
 
 def load_data(source, endpoint, keyword=""):
@@ -204,7 +196,7 @@ def verification_badge(game, for_game=False):
     return f'<span class="verification {esc(status)}">{symbol} {esc(data.verification_label(status, for_game))}</span>'
 
 
-def game_card(game, zone, viewer=None):
+def game_card(game, viewer=None):
     status = (game.get("live") or {}).get("status", "final" if data.is_final(game) else "scheduled").upper()
     lines = [f'<div class="game-heading"><strong>{esc(game["name"])}</strong><span class="game-status">{esc(status)}</span></div>']
     for side in ("away", "home"):
@@ -222,7 +214,7 @@ def game_card(game, zone, viewer=None):
     if game.get("pointDifference") is not None:
         lines.append(f'<p class="small muted">Score difference: {esc(data.score(game["pointDifference"]))}</p>')
     lines.append(verification_badge(game))
-    lines.append(f'<p class="game-meta"><span>{esc(data.kickoff_label(game, zone))}</span><span>{esc(game.get("network", ""))}</span></p>')
+    lines.append(f'<p class="game-meta"><span>{esc(data.kickoff_label(game))}</span><span>{esc(game.get("network", ""))}</span></p>')
     lines.append(verification_badge(game, for_game=True))
     flags = []
     if game.get("upset") is True:
@@ -237,7 +229,7 @@ def game_card(game, zone, viewer=None):
     st.markdown(f'<div class="personalized-game">{markup}</div>' if viewer else markup, unsafe_allow_html=True)
     fetched = data.parse_time((game.get("live") or {}).get("updatedAt"))
     if fetched:
-        st.caption(f'{(game.get("live") or {}).get("source", "Live")} updated {fetched.astimezone(ZoneInfo(zone)).strftime("%b %d, %I:%M %p %Z")}')
+        st.caption(f'{(game.get("live") or {}).get("source", "Live")} updated {fetched.astimezone(data.EASTERN).strftime("%b %d, %I:%M %p %Z")}')
 
 
 def player_filter(snapshot, key):
@@ -247,7 +239,7 @@ def player_filter(snapshot, key):
     return st.multiselect("Players", players, default=players, key=key, format_func=data.display_name)
 
 
-def game_view(snapshot, identifier, zone):
+def game_view(snapshot, identifier):
     origin = st.session_state.get("primary_nav_value", "Live")
     if st.button(f"← Back to {origin}", key="back_game"):
         st.session_state.pop("detail", None)
@@ -258,7 +250,7 @@ def game_view(snapshot, identifier, zone):
         st.info("This game is no longer in the current schedule.")
         return
     with card("game_detail"):
-        game_card(game, zone, data.viewer_player(snapshot))
+        game_card(game, data.viewer_player(snapshot))
     checks = game.get("fieldVerification")
     if checks:
         with st.expander("Compare with original entries", expanded=True):
@@ -290,7 +282,7 @@ def game_view(snapshot, identifier, zone):
             st.markdown(f'<div class="list-row">{avatar(player)}<strong>{name_label(player, snapshot)}</strong><div class="row-value">{esc(pick or "No pick")}{result}</div></div>', unsafe_allow_html=True)
 
 
-def live_view(snapshot, zone):
+def live_view(snapshot):
     posts = data.update_posts(snapshot)
     with card("latest_update"):
         st.markdown('<p class="eyebrow">◖ TODAY’S UPDATE</p>', unsafe_allow_html=True)
@@ -322,18 +314,18 @@ def live_view(snapshot, zone):
     mode = st.radio("Show games", ["Today", "Future", "All"], horizontal=True, key="game_filter", label_visibility="collapsed")
     if mode == "Today":
         st.caption("Today shows the next game day when there are no games today.")
-    st.caption(f"Game days use Eastern Time. Kickoff times use {zone.replace('_', ' ')}.")
+    st.caption("All dates and times use Eastern Time (ET).")
     games = data.filtered_games(snapshot["games"], mode)
     if not games:
         st.info("No upcoming games. Switch to All to see this season’s results and picks.")
     for game in games:
         with card(f'game_{game["id"]}'):
-            game_card(game, zone, viewer)
+            game_card(game, viewer)
             st.button("Everyone’s picks →", key=f'game_{game["id"]}', on_click=open_detail, args=("game", game["id"]), width="stretch")
 
 
-def bracket_view(snapshot, zone, *, source, users_loaded):
-    bracket_games_view(snapshot, zone)
+def bracket_view(snapshot, *, source, users_loaded):
+    bracket_games_view(snapshot)
     st.subheader("All-time playoff standings")
     if snapshot.get("group") == "sub" or snapshot.get("playoffHistoryScope") == "none":
         st.info("All-time playoff history is not tracked for these results.")
@@ -380,7 +372,7 @@ def bracket_view(snapshot, zone, *, source, users_loaded):
                  })
 
 
-def bracket_games_view(snapshot, zone):
+def bracket_games_view(snapshot):
     st.subheader("The road to the championship")
     st.caption(snapshot["season"])
     rounds = playoff_games(snapshot)
@@ -411,7 +403,7 @@ def bracket_games_view(snapshot, zone):
                 picked = player and game.get("picks", {}).get(player) == team
                 pick_class = f" viewer-pick pick-{data.pick_result(game, player)}" if picked else ""
                 lines.append(f'<div class="bracket-team {"bracket-winner" if won else ""}{pick_class}"><span>{esc(team)}{" <span aria-label=Winner>✓</span>" if won else ""}</span><strong>{esc(data.score(game.get(side + "Score")))}</strong></div>')
-            lines.append(f'<p class="small muted">{esc(data.kickoff_label(game, zone))}</p>')
+            lines.append(f'<p class="small muted">{esc(data.kickoff_label(game))}</p>')
             lines.append(verification_badge(game))
             if player:
                 pick = game.get("picks", {}).get(player)
@@ -581,11 +573,11 @@ def info_view(snapshot):
     with card("about_data"):
         st.subheader("About the data")
         st.write("You’re exploring fictional sample results." if snapshot.get("isDemo") is True else "The app refreshes every minute while open. Games, scores, and verification use the same snapshot contract as the iPhone app. Standings and history retain their spreadsheet calculations.")
-        st.caption("Game days and post publication dates use Eastern Time. Choose your kickoff time zone in Data Connection.")
+        st.caption("All dates and times use Eastern Time (ET).")
 
 
 @st.fragment(run_every=60)
-def current_screen(source, endpoint, zone, keyword=""):
+def current_screen(source, endpoint, keyword=""):
     snapshot, error = load_data(source, endpoint, keyword)
     page = st.session_state.get("primary_nav_value", "Live")
     detail = st.session_state.get("detail")
@@ -605,13 +597,13 @@ def current_screen(source, endpoint, zone, keyword=""):
     if detail and detail[0] == "updates":
         updates_view(snapshot)
     elif detail and detail[0] == "game":
-        game_view(snapshot, detail[1], zone)
+        game_view(snapshot, detail[1])
     elif page == "Live":
-        live_view(snapshot, zone)
+        live_view(snapshot)
     elif page == "Standings":
         standings_view(snapshot)
     elif page == "Bracket":
-        bracket_view(snapshot, zone, source=source, users_loaded=users_loaded)
+        bracket_view(snapshot, source=source, users_loaded=users_loaded)
     elif page == "Season":
         season_view(snapshot)
     elif page == "History":
@@ -619,17 +611,17 @@ def current_screen(source, endpoint, zone, keyword=""):
     else:
         info_view(snapshot)
     updated = data.parse_time(snapshot["updatedAt"])
-    st.caption(f'Updated {updated.astimezone(ZoneInfo(zone)).strftime("%b %d, %Y · %I:%M %p %Z")}')
+    st.caption(f'Updated {updated.astimezone(data.EASTERN).strftime("%b %d, %Y · %I:%M %p %Z")}')
 
 
 def main():
     st.set_page_config(page_title="MBCC", page_icon="🏆", layout="centered", initial_sidebar_state="collapsed")
     ensure_data_helpers()
     st.markdown('<style>' + (ROOT / "web_app/styles.css").read_text() + '</style>', unsafe_allow_html=True)
-    source, endpoint, zone, keyword = settings()
+    source, endpoint, keyword = settings()
     with st.container(key="primary_nav"):
         st.radio("Main navigation", PAGES, horizontal=True, key="primary_nav_value", label_visibility="collapsed", on_change=change_page, width="stretch")
-    current_screen(source, endpoint, zone, keyword)
+    current_screen(source, endpoint, keyword)
 
 
 if __name__ == "__main__":

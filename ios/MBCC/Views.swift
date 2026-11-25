@@ -87,7 +87,7 @@ struct LiveView: View {
         let ordered = data.games.sorted { $0.date < $1.date }
         if filter == "All" { return ordered }
         var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = TimeZone(identifier: "America/New_York")!
+        calendar.timeZone = EasternTime.zone
         let start = calendar.startOfDay(for: Date())
         let future = ordered.filter { $0.date >= start }
         if filter == "Future" { return future }
@@ -166,7 +166,7 @@ struct LiveView: View {
                         ForEach(filters, id: \.self) { Text($0) }
                     }.pickerStyle(.segmented)
                     if filter == "Today" {
-                        Text("Today shows the next game day when there are no games today. Dates use Eastern Time; kickoff times use your device’s time zone.")
+                        Text("Today shows the next game day when there are no games today. All dates and times use Eastern Time (ET).")
                             .font(.caption).foregroundStyle(.secondary)
                     }
                     let games = filtered(data)
@@ -856,7 +856,7 @@ struct InformationView: View {
                     Text(store.isSampleData ? "You’re exploring fictional sample results. Connect the MBCC spreadsheet backend in Data Connection for real results." : "The app refreshes every minute while open. When enabled, live_scores_and_games supplies game details, scores and winners. Each field is compared with its original spreadsheet entry. Standings and history use their existing summary tabs.")
                         .font(.subheadline).foregroundStyle(.secondary)
                     if let data = store.snapshot { updatedLabel(data) }
-                    Text("Games are grouped by Eastern Time. Kickoff times display in your device’s time zone.").font(.caption).foregroundStyle(.secondary)
+                    Text("All dates and times use Eastern Time (ET).").font(.caption).foregroundStyle(.secondary)
                 }
             }.padding(20)
         }.background(Theme.background)
@@ -935,7 +935,7 @@ struct ConnectionView: View {
 
 private func updatedLabel(_ data: Snapshot) -> some View {
     let date = ISO8601DateFormatter().date(from: data.updatedAt)
-    return Text(date.map { "Updated \($0.formatted(date: .abbreviated, time: .shortened))" } ?? "Update time unavailable")
+    return Text(date.map { "Updated \(EasternTime.text($0))" } ?? "Update time unavailable")
         .font(.caption).foregroundStyle(.secondary)
 }
 

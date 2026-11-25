@@ -7,6 +7,7 @@ struct MBCCApp: App {
     var body: some Scene {
         WindowGroup {
             RootView().environmentObject(store).tint(Theme.orange)
+                .environment(\.timeZone, EasternTime.zone)
         }
     }
 }

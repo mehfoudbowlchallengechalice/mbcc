@@ -25,6 +25,12 @@ def playoff_fixture(snapshot):
 
 
 class WebModelTests(unittest.TestCase):
+    def test_kickoffs_use_eastern_for_winter_summer_and_unknown_times(self):
+        with patch.dict("os.environ", {"TZ": "Asia/Tokyo"}):
+            self.assertEqual(data.kickoff_label({"startTime": "2027-01-02T00:30:00Z"}), "Jan 1 · 7:30 PM EST")
+            self.assertEqual(data.kickoff_label({"startTime": "2027-07-02T00:30:00Z"}), "Jul 1 · 8:30 PM EDT")
+            self.assertEqual(data.kickoff_label({"startTime": "2027-01-02T00:30:00Z", "kickoffTimeKnown": False}), "Jan 01, 2027 · Time TBD")
+
     def setUp(self):
         self.snapshot = data.read_demo()
         self.now = datetime(2026, 11, 20, 2, tzinfo=timezone.utc)

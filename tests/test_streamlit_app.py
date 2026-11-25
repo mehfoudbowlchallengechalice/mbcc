@@ -100,6 +100,16 @@ class StreamlitAppTests(unittest.TestCase):
         self.assertFalse(self.app.warning)
         self.assertEqual(self.app.session_state["source_identity"][-1], data.keyword_identity("incorrect-private-value"))
 
+    def test_eastern_time_is_fixed_even_with_an_old_saved_selection(self):
+        self.app.session_state["time_zone"] = "America/Los_Angeles"
+        self.app.run()
+        self.assert_clean()
+        self.assertFalse(any(field.label == "Kickoff time zone" for field in self.app.selectbox))
+        self.assertTrue(any("All dates and times use Eastern Time (ET)." in item.value for item in self.app.caption))
+        self.assertIn(data.kickoff_label(self.snapshot["games"][0]), self.text())
+        expected = data.parse_time(self.snapshot["updatedAt"]).astimezone(data.EASTERN).strftime("%b %d, %Y · %I:%M %p %Z")
+        self.assertTrue(any(item.value == "Updated " + expected for item in self.app.caption))
+
     def test_group_indicators_are_hidden_on_every_screen(self):
         for group in ("default", "sub", "default+sub"):
             self.snapshot["group"] = group

@@ -1,5 +1,19 @@
 import Foundation
 
+enum EasternTime {
+    static let zone = TimeZone(identifier: "America/New_York")!
+
+    static func text(_ date: Date, includeTime: Bool = true) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = .current
+        formatter.timeZone = zone
+        formatter.dateStyle = .medium
+        formatter.timeStyle = includeTime ? .short : .none
+        let label = formatter.string(from: date)
+        return includeTime ? label + " " + (zone.abbreviation(for: date) ?? "ET") : label
+    }
+}
+
 extension String {
     var groupDisplayName: String {
         for suffix in [" [Main]", " [Sub]"] where hasSuffix(suffix) {
@@ -213,7 +227,7 @@ struct DailyUpdate: Codable {
     var dateLabel: String {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        formatter.timeZone = EasternTime.zone
         formatter.dateFormat = "yyyy-MM-dd"
         guard let date = formatter.date(from: publishedDate) else { return publishedDate }
         formatter.locale = .current
@@ -329,8 +343,8 @@ struct BowlGame: Codable, Identifiable {
         return pick == winner ? .correct : .incorrect
     }
     var kickoffText: String {
-        kickoffTimeKnown == false ? date.formatted(date: .abbreviated, time: .omitted) + " · Time TBD"
-            : date.formatted(date: .abbreviated, time: .shortened)
+        kickoffTimeKnown == false ? EasternTime.text(date, includeTime: false) + " · Time TBD"
+            : EasternTime.text(date)
     }
     static let checkedFields: [(key: String, label: String)] = [
         ("startTime", "Kickoff"), ("awayTeam", "Away team"), ("homeTeam", "Home team"),
