@@ -365,21 +365,17 @@ def bracket_view(snapshot, zone, *, source, users_loaded):
     frame = pd.DataFrame({"player": [data.display_name(row["player"]) for row in rows],
                           "correctPlayoff": pd.array([row.get("correctPlayoff") for row in rows], dtype="Int64"),
                           "correctUnknownPlayoff": pd.array([row.get("correctUnknownPlayoff") for row in rows], dtype="Int64")})
-    # Multi-level columns give Streamlit two clean header lines while retaining
-    # its native numeric sorting, resizing, and fullscreen controls.
-    frame.columns = pd.MultiIndex.from_tuples([
-        ("", "User"), ("Correct playoff", "games"), ("Correct unknown", "playoff games")])
     viewer = data.viewer_player(snapshot)
     if viewer:
         selected_rows = [row["player"] == viewer for row in rows]
         frame = frame.style.apply(lambda row: ["font-weight: bold" if selected_rows[row.name] else "font-weight: normal"] * len(row), axis=1)
     st.dataframe(frame, hide_index=True, width="stretch", row_height=38,
-                 height=min(66 + len(rows) * 38, 640), key="playoff_standings_table",
+                 height=min(40 + len(rows) * 38, 640), key="playoff_standings_table",
                  column_config={
-                     str(("", "User")): st.column_config.TextColumn("User", width=140),
-                     str(("Correct playoff", "games")): st.column_config.NumberColumn("games", width=170, format="%d",
+                     "player": st.column_config.TextColumn("User", width=140),
+                     "correctPlayoff": st.column_config.NumberColumn("Correct playoff games", width=180, format="%d",
                                                      help="Correct playoff games, all time"),
-                     str(("Correct unknown", "playoff games")): st.column_config.NumberColumn("playoff games", width=180, format="%d",
+                     "correctUnknownPlayoff": st.column_config.NumberColumn("Correct unknown playoff games", width=230, format="%d",
                                                      help="Correct unknown playoff games, all time"),
                  })
 
