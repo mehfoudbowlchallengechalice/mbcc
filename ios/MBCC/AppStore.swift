@@ -59,8 +59,7 @@ final class AppStore: ObservableObject {
     var snapshot: Snapshot? { unfilteredSnapshot?.filteringCurrentPlayers(currentPlayersOnly) }
     @Published private(set) var isLoading = false
     @Published private(set) var error: String?
-    @Published private(set) var isDemo: Bool
-    @Published private(set) var endpoint: String
+    let endpoint = AppStore.defaultEndpoint
     @Published private(set) var groupKeyword: String
     @Published private(set) var isCached = false
     private let defaults: UserDefaults
@@ -68,12 +67,15 @@ final class AppStore: ObservableObject {
     private let cacheURL: URL
     private let keywordStorage: GroupKeywordStorage
     private var generation = 0
-    var isSampleData: Bool { isDemo || snapshot?.isDemo == true }
+    var isSampleData: Bool { snapshot?.isDemo == true }
+    #if DEBUG
+    private var usesTestSnapshot = false
+    #endif
     var selectedGroup: ChallengeGroup { ChallengeGroup(rawValue: snapshot?.group ?? "default") ?? .main }
     private var keywordFingerprint: String {
         SHA256.hash(data: Data(groupKeyword.utf8)).map { String(format: "%02x", $0) }.joined()
     }
-    var connectionIdentity: [String] { [isDemo ? "demo" : "api", endpoint, keywordFingerprint] }
+    var connectionIdentity: [String] { [endpoint, keywordFingerprint] }
 
     init(defaults: UserDefaults = .standard, session: URLSession = .shared, cacheURL: URL? = nil,
          keywordStorage: GroupKeywordStorage = KeychainGroupKeywordStorage()) {
@@ -91,25 +93,26 @@ final class AppStore: ObservableObject {
             keywordStorage.save("")
         }
         #endif
-        let savedEndpoint = defaults.string(forKey: "apiEndpoint") ?? Self.defaultEndpoint
-        endpoint = Self.validURL(savedEndpoint).flatMap(SnapshotConnection.snapshotURL)?.absoluteString ?? savedEndpoint
-        isDemo = defaults.object(forKey: "useDemo") as? Bool ?? false
+        defaults.removeObject(forKey: "apiEndpoint")
+        defaults.removeObject(forKey: "useDemo")
         let legacy = defaults.string(forKey: "groupKeyword") ?? ""
         let storedKeyword = SnapshotConnection.normalizedKeyword(keywordStorage.load() ?? (legacy == "default" ? "" : legacy))
         groupKeyword = storedKeyword
         if keywordStorage.save(storedKeyword) { defaults.removeObject(forKey: "groupKeyword") }
         currentPlayersOnly = defaults.object(forKey: "currentPlayersOnly") as? Bool ?? true
         #if DEBUG
-        if ProcessInfo.processInfo.arguments.contains("--ui-testing"),
+        if (ProcessInfo.processInfo.arguments.contains("--ui-testing") ||
+            ProcessInfo.processInfo.arguments.contains("--ui-testing-preserve-state")),
            !ProcessInfo.processInfo.arguments.contains("--live-data") {
-            endpoint = ""
-            isDemo = true
+            usesTestSnapshot = true
+            loadTestSnapshot()
+            return
         }
         #endif
-        if isDemo { loadDemo() } else { loadCache() }
+        loadCache()
     }
 
-    func configure(demo: Bool, endpoint: String, keyword: String = "") async {
+    func configure(keyword: String = "") async {
         let keyword = SnapshotConnection.normalizedKeyword(keyword)
         guard keywordStorage.save(keyword) else {
             error = "Couldn’t save the group keyword securely. Try saving the connection again."
@@ -120,21 +123,25 @@ final class AppStore: ObservableObject {
         unfilteredSnapshot = nil
         error = nil
         isCached = false
-        isDemo = demo
-        let trimmedEndpoint = endpoint.trimmingCharacters(in: .whitespacesAndNewlines)
-        self.endpoint = Self.validURL(trimmedEndpoint).flatMap(SnapshotConnection.snapshotURL)?.absoluteString ?? trimmedEndpoint
         groupKeyword = keyword
-        defaults.set(demo, forKey: "useDemo")
-        defaults.set(self.endpoint, forKey: "apiEndpoint")
+        defaults.removeObject(forKey: "useDemo")
+        defaults.removeObject(forKey: "apiEndpoint")
         defaults.removeObject(forKey: "groupKeyword")
-        if demo { loadDemo() } else { loadCache(); await refresh() }
+        #if DEBUG
+        if usesTestSnapshot { loadTestSnapshot(); return }
+        #endif
+        loadCache()
+        await refresh()
     }
 
     func refresh() async {
-        guard !isDemo, !isLoading else { return }
+        #if DEBUG
+        guard !usesTestSnapshot else { return }
+        #endif
+        guard !isLoading else { return }
         let requestKeyword = groupKeyword
         guard let baseURL = Self.validURL(endpoint), let url = SnapshotConnection.snapshotURL(from: baseURL) else {
-            error = "Add your HTTPS snapshot URL in Data Connection to load MBCC results."
+            error = "Couldn’t connect to MBCC. Try again."
             return
         }
         let requestGeneration = generation
@@ -155,7 +162,7 @@ final class AppStore: ObservableObject {
             guard http.statusCode == 200 else { throw ConnectionError.backend(http.statusCode) }
             let loaded = try JSONDecoder().decode(Snapshot.self, from: data)
             guard !loaded.players.isEmpty else { throw ConnectionError.empty }
-            guard loaded.isDemo == true || loaded.hasLiveGameSource else { throw ConnectionError.wrongSource }
+            guard loaded.isDemo != true, loaded.hasLiveGameSource else { throw ConnectionError.wrongSource }
             guard SnapshotConnection.accepts(loaded, keyword: requestKeyword) else { throw ConnectionError.wrongGroup }
             guard generation == requestGeneration else { return }
             unfilteredSnapshot = loaded
@@ -180,7 +187,7 @@ final class AppStore: ObservableObject {
                 self.error = "The MBCC backend couldn’t load the selected group (HTTP \(status)). Check its spreadsheet settings and backend logs."
             default:
                 self.error = snapshot == nil
-                    ? "Couldn’t load MBCC results. Check the connection URL and try again."
+                    ? "Couldn’t load MBCC results. Check your internet connection and try again."
                     : "Couldn’t refresh. Showing the last saved results."
             }
         }
@@ -197,28 +204,28 @@ final class AppStore: ObservableObject {
         return nil
     }
 
-    private func loadDemo() {
+    #if DEBUG
+    private func loadTestSnapshot() {
         do {
             guard let url = Bundle.main.url(forResource: "demo", withExtension: "json") else {
                 throw ConnectionError.empty
             }
             var data = try Data(contentsOf: url)
-            #if DEBUG
             if ProcessInfo.processInfo.arguments.contains("--ui-testing"),
                let fixture = ProcessInfo.processInfo.environment["MBCC_TEST_SNAPSHOT"] {
                 data = Data(fixture.utf8)
             }
-            #endif
             unfilteredSnapshot = try JSONDecoder().decode(Snapshot.self, from: data)
             error = nil
-        } catch { self.error = "The demo data could not be loaded." }
+        } catch { self.error = "The test fixture could not be loaded." }
     }
+    #endif
 
     private func loadCache() {
         guard let baseURL = Self.validURL(endpoint), let url = SnapshotConnection.snapshotURL(from: baseURL),
               let data = try? Data(contentsOf: cacheURL),
               let cached = try? JSONDecoder().decode(CachedSnapshot.self, from: data),
-              cached.endpoint == url.absoluteString, cached.snapshot.hasLiveGameSource,
+              cached.endpoint == url.absoluteString, cached.snapshot.isDemo != true, cached.snapshot.hasLiveGameSource,
               cached.keywordFingerprint == keywordFingerprint || groupKeyword.isEmpty && cached.keywordFingerprint == nil,
               SnapshotConnection.accepts(cached.snapshot, keyword: groupKeyword) else { return }
         unfilteredSnapshot = cached.snapshot

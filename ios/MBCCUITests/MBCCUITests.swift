@@ -73,17 +73,11 @@ final class MBCCUITests: XCTestCase {
         keyword.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 7) + " SUB ")
         XCTAssertFalse(app.staticTexts["Showing: Subgroup"].exists)
         keyword.typeText("\n")
-        let demoSwitch = app.switches["Explore demo data"]
-        demoSwitch.coordinate(withNormalizedOffset: CGVector(dx: 0.92, dy: 0.5)).tap()
-        XCTAssertEqual(demoSwitch.value as? String, "0")
-        let endpoint = app.textFields["snapshotURL"]
-        endpoint.tap()
-        endpoint.typeText("http://localhost:1/api/snapshot\n")
+        XCTAssertFalse(app.switches["Explore demo data"].exists)
+        XCTAssertFalse(app.textFields["snapshotURL"].exists)
         app.buttons["saveConnection"].tap()
-        XCTAssertTrue(app.staticTexts["Connect to MBCC"].waitForExistence(timeout: 15))
-        XCTAssertFalse(app.staticTexts["DEMO · Sample results, not real standings"].exists)
         app.terminate()
-        app.launchArguments = []
+        app.launchArguments = ["--ui-testing-preserve-state"]
         app.launch()
         app.buttons["dataConnection"].tap()
         XCTAssertTrue(app.secureTextFields["groupKeyword"].waitForExistence(timeout: 5))
@@ -92,7 +86,7 @@ final class MBCCUITests: XCTestCase {
         XCTAssertNotEqual(savedKeyword, "Enter keyword")
         XCTAssertFalse(savedKeyword.lowercased().contains("sub"))
         XCTAssertFalse(app.staticTexts["Showing: Subgroup"].exists)
-        XCTAssertEqual(app.switches["Explore demo data"].value as? String, "0")
+        XCTAssertFalse(app.switches["Explore demo data"].exists)
     }
 
     func testPersonalSchedulePicksAndFullStandings() throws {
@@ -191,7 +185,7 @@ final class MBCCUITests: XCTestCase {
         app.switches["currentPlayersOnly"].tap()
         app.buttons["saveConnection"].tap()
         app.terminate()
-        app.launchArguments = [] // A regular launch retains the saved filter.
+        app.launchArguments = ["--ui-testing-preserve-state"] // A regular launch retains the saved filter.
         app.launch()
         app.buttons["dataConnection"].tap()
         XCTAssertTrue(app.switches["currentPlayersOnly"].waitForExistence(timeout: 5))
@@ -279,23 +273,16 @@ final class MBCCUITests: XCTestCase {
         XCTAssertFalse(app.descendants(matching: .any)["updateVideo"].firstMatch.exists)
     }
 
-    func testConnectionValidationAndNoSilentDemoFallback() {
+    func testConnectionUsesFixedBackendAndKeepsKeywordControls() {
         app.buttons["dataConnection"].tap()
-        let toggle = app.switches["Explore demo data"]
-        XCTAssertTrue(toggle.waitForExistence(timeout: 5))
-        toggle.coordinate(withNormalizedOffset: CGVector(dx: 0.92, dy: 0.5)).tap()
-        XCTAssertEqual(toggle.value as? String, "0")
-        let field = app.textFields["snapshotURL"]
-        field.tap()
-        field.typeText("not-a-url")
-        XCTAssertFalse(app.buttons["saveConnection"].isEnabled)
-        field.tap()
-        field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 9))
-        field.typeText("http://localhost:1/api/snapshot")
+        XCTAssertTrue(app.secureTextFields["groupKeyword"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.switches["Explore demo data"].exists)
+        XCTAssertFalse(app.textFields["snapshotURL"].exists)
+        XCTAssertFalse(app.staticTexts["MBCC snapshot URL"].exists)
+        XCTAssertTrue(app.switches["currentPlayersOnly"].exists)
         XCTAssertTrue(app.buttons["saveConnection"].isEnabled)
         app.buttons["saveConnection"].tap()
-        XCTAssertTrue(app.staticTexts["Connect to MBCC"].waitForExistence(timeout: 15))
-        XCTAssertFalse(app.staticTexts["DEMO · Sample results, not real standings"].exists)
+        XCTAssertTrue(app.navigationBars["MBCC"].exists)
     }
 
     func testTwoVerificationChecks() throws {
@@ -404,9 +391,8 @@ final class MBCCUITests: XCTestCase {
         app.switches["Show more than winners"].tap()
 
         app.buttons["dataConnection"].tap()
-        let field = app.textFields["snapshotURL"]
-        XCTAssertTrue(field.waitForExistence(timeout: 5))
-        XCTAssertEqual(field.value as? String, "https://mbcc-api-jarvycxodq-ue.a.run.app/api/snapshot")
-        XCTAssertEqual(app.switches["Explore demo data"].value as? String, "0")
+        XCTAssertTrue(app.secureTextFields["groupKeyword"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.textFields["snapshotURL"].exists)
+        XCTAssertFalse(app.switches["Explore demo data"].exists)
     }
 }

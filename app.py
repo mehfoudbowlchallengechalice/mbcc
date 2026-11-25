@@ -1,7 +1,7 @@
 """MBCC's Streamlit interface, matching the native iPhone app's screens.
 
 Run: streamlit run app.py
-Data: the same read-only snapshot API as iPhone, or explicit demo data.
+Data: the same fixed, live snapshot API as iPhone.
 """
 import html
 import importlib
@@ -68,10 +68,11 @@ def ensure_data_helpers():
 
 
 @st.cache_data(ttl=60, show_spinner=False)
-def fetch_snapshot(source, endpoint, keyword=""):
-    if source == "Demo":
-        return data.read_demo()
-    return data.fetch_api(endpoint, keyword=keyword) if keyword else data.fetch_api(endpoint)
+def fetch_snapshot(keyword=""):
+    snapshot = data.fetch_api(data.DEFAULT_ENDPOINT, keyword=keyword) if keyword else data.fetch_api(data.DEFAULT_ENDPOINT)
+    if snapshot.get("isDemo") is True:
+        raise data.SnapshotError("Live results are temporarily unavailable. Try refreshing again.")
+    return snapshot
 
 
 def change_page():
@@ -83,14 +84,9 @@ def open_detail(kind, identifier=None):
 
 
 def settings():
-    default = setting("mbcc_data_source", "api")
-    if os.environ.get("MBCC_DEMO") == "1":
-        default = "demo"
-    sources = ["iPhone backend", "Demo"]
-    defaults = {"api": 0, "demo": 1}
-    # Migrate browser sessions that previously selected the direct Sheets source.
-    if st.session_state.get("data_source") not in (None, *sources):
-        st.session_state.data_source = "iPhone backend"
+    # Discard connection controls saved by older versions of the app.
+    st.session_state.pop("data_source", None)
+    st.session_state.pop("snapshot_url", None)
     with st.sidebar:
         st.header("Preferences")
         keyword = st.text_input("Keyword", value=setting("mbcc_group_keyword", ""), key="group_keyword",
@@ -100,24 +96,15 @@ def settings():
         st.toggle("Current players only", value=True, key="current_players_only")
         st.caption("Applies to every tab and game details. Turn off to include former players.")
         st.divider()
-        st.header("Data Connection")
-        source = st.radio("Data source", sources, index=defaults.get(default, 0), key="data_source")
-        endpoint = setting("mbcc_endpoint", data.DEFAULT_ENDPOINT)
-        if source == "iPhone backend":
-            endpoint = st.text_input("Snapshot URL", value=endpoint, key="snapshot_url")
-            st.caption("All live data comes from the same backend as the iPhone app.")
-        else:
-            st.caption("Fictional sample results. Demo data is never used automatically when a live connection fails.")
-        st.divider()
         st.caption("All dates and times use Eastern Time (ET).")
         if st.button("Refresh now", width="stretch"):
             fetch_snapshot.clear()
         st.caption("Results refresh every minute while this page is open.")
-    return source, endpoint.strip(), data.normalize_keyword(keyword)
+    return data.normalize_keyword(keyword)
 
 
-def load_data(source, endpoint, keyword=""):
-    identity = (source, endpoint if source == "iPhone backend" else "demo", data.keyword_identity(keyword))
+def load_data(keyword=""):
+    identity = ("iPhone backend", data.DEFAULT_ENDPOINT, data.keyword_identity(keyword))
     if st.session_state.get("source_identity") != identity:
         st.session_state.source_identity = identity
         st.session_state.pop("last_snapshot", None)
@@ -125,7 +112,7 @@ def load_data(source, endpoint, keyword=""):
         for key in ("game_filter", "season_players", "game_players", "elimination_player", "history_player", "bracket_player", "bracket_saved_player", "bracket_game"):
             st.session_state.pop(key, None)
     try:
-        snapshot = fetch_snapshot(source, endpoint, keyword)
+        snapshot = fetch_snapshot(keyword)
         previous = st.session_state.get("last_snapshot")
         if previous and previous.get("viewerPlayer") != snapshot.get("viewerPlayer"):
             if st.session_state.get("bracket_player") == previous.get("viewerPlayer"):
@@ -134,8 +121,11 @@ def load_data(source, endpoint, keyword=""):
         st.session_state.last_snapshot = snapshot
         return snapshot, None
     except Exception as error:
-        message = str(error) if isinstance(error, data.SnapshotError) else "Couldn’t refresh MBCC. Check Data Connection and try again."
+        message = str(error) if isinstance(error, data.SnapshotError) else "Couldn’t refresh MBCC. Check your internet connection and try again."
         saved = st.session_state.get("last_snapshot")
+        if saved and saved.get("isDemo") is True:
+            st.session_state.pop("last_snapshot", None)
+            saved = None
         if saved:
             message += " Showing the last saved results for this connection."
         return saved, message
@@ -324,7 +314,7 @@ def live_view(snapshot):
             st.button("Everyone’s picks →", key=f'game_{game["id"]}', on_click=open_detail, args=("game", game["id"]), width="stretch")
 
 
-def bracket_view(snapshot, *, source, users_loaded):
+def bracket_view(snapshot, *, users_loaded):
     bracket_games_view(snapshot)
     st.subheader("All-time playoff standings")
     if snapshot.get("group") == "sub" or snapshot.get("playoffHistoryScope") == "none":
@@ -342,13 +332,12 @@ def bracket_view(snapshot, *, source, users_loaded):
     rows = playoff_standings(snapshot)
     if not rows:
         if users_loaded is None:
-            st.info("The iPhone backend has not supplied playoff history. Deploy the updated backend to load it."
-                    if source == "iPhone backend" else "This demo snapshot does not include all-time playoff standings.")
+            st.info("The iPhone backend has not supplied playoff history. Deploy the updated backend to load it.")
         elif users_loaded:
             st.info(f"Loaded {users_loaded} historical users, but none match Current players only. Turn off that sidebar filter to see their standings.")
         else:
             st.info("The playoff worksheet returned no users. Check that playoff_picks has user names in its first row.")
-        st.caption(f"History source: {source} · Users loaded: {users_loaded if users_loaded is not None else 'not supplied'} · Users shown: 0")
+        st.caption(f"Historical users loaded: {users_loaded if users_loaded is not None else 'not supplied'} · Users shown: 0")
         read = snapshot.get("playoffHistoryRead")
         if read:
             st.caption(f"Worksheet: {read['worksheet']} · Rows read: {read['rows']} · Columns read: {read['columns']}")
@@ -572,13 +561,13 @@ def info_view(snapshot):
         st.caption("Half trophies mark shared championships. Nicholas and Joseph shared the first MBCC.")
     with card("about_data"):
         st.subheader("About the data")
-        st.write("You’re exploring fictional sample results." if snapshot.get("isDemo") is True else "The app refreshes every minute while open. Games, scores, and verification use the same snapshot contract as the iPhone app. Standings and history retain their spreadsheet calculations.")
+        st.write("The app refreshes every minute while open. Standings and history retain their spreadsheet calculations.")
         st.caption("All dates and times use Eastern Time (ET).")
 
 
 @st.fragment(run_every=60)
-def current_screen(source, endpoint, keyword=""):
-    snapshot, error = load_data(source, endpoint, keyword)
+def current_screen(keyword=""):
+    snapshot, error = load_data(keyword)
     page = st.session_state.get("primary_nav_value", "Live")
     detail = st.session_state.get("detail")
     if not detail:
@@ -587,10 +576,8 @@ def current_screen(source, endpoint, keyword=""):
         st.warning(error)
     if snapshot is None:
         st.subheader("Connect to MBCC")
-        st.write("Open Data Connection in the sidebar to configure results or explicitly choose Demo.")
+        st.write("Check your internet connection, then use Refresh now in the sidebar to try again.")
         return
-    if snapshot.get("isDemo") is True:
-        st.info("DEMO · Sample results, not real standings")
     history_rows = snapshot.get("playoffStandings")
     users_loaded = len(history_rows) if history_rows is not None else None
     snapshot = data.filter_current_players(snapshot, st.session_state.get("current_players_only", True))
@@ -603,7 +590,7 @@ def current_screen(source, endpoint, keyword=""):
     elif page == "Standings":
         standings_view(snapshot)
     elif page == "Bracket":
-        bracket_view(snapshot, source=source, users_loaded=users_loaded)
+        bracket_view(snapshot, users_loaded=users_loaded)
     elif page == "Season":
         season_view(snapshot)
     elif page == "History":
@@ -618,10 +605,10 @@ def main():
     st.set_page_config(page_title="MBCC", page_icon="🏆", layout="centered", initial_sidebar_state="collapsed")
     ensure_data_helpers()
     st.markdown('<style>' + (ROOT / "web_app/styles.css").read_text() + '</style>', unsafe_allow_html=True)
-    source, endpoint, keyword = settings()
+    keyword = settings()
     with st.container(key="primary_nav"):
         st.radio("Main navigation", PAGES, horizontal=True, key="primary_nav_value", label_visibility="collapsed", on_change=change_page, width="stretch")
-    current_screen(source, endpoint, keyword)
+    current_screen(keyword)
 
 
 if __name__ == "__main__":

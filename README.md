@@ -3,9 +3,9 @@
 A native, read-only SwiftUI app and a matching mobile Streamlit interface.
 `app.py` follows the iPhone app’s six screens, cards, game details, standings,
 season charts, history, trophy cabinet, and Today’s Update blog. The iPhone
-project is in `ios/MBCC.xcodeproj`; fresh installations connect to the deployed
-Cloud Run backend by default. Both interfaces provide explicitly labeled demo
-data through Data Connection.
+project is in `ios/MBCC.xcodeproj`. Both apps always connect to the current
+Cloud Run backend. Connection settings contain the private keyword and player
+filter, with no demo selector or editable backend URL.
 
 ## Run the Streamlit app
 
@@ -72,7 +72,7 @@ suffixes are hidden throughout both apps.
 The selection applies to every screen, player filter, game pick, chart, history,
 and trophy cabinet. Changing groups clears displayed results, player selections,
 and open game details. A failed subgroup load never displays main-group data
-as the subgroup. The bundled demo contains only the main group.
+as the subgroup.
 
 On iPhone, open the gear button's **Data Connection**, enter the same **Keyword**,
 and tap **Save connection**. The selection is saved between launches.
@@ -128,29 +128,22 @@ The deployment scripts update only the non-secret settings in `env.yaml` and
 preserve the keyword variables or Secret Manager references already configured
 in Cloud Run. The config helper refuses keyword values in `env.yaml`.
 
-Open **Data Connection** using the sidebar control at the upper left:
-
-- **iPhone backend** uses the public read-only snapshot API, requiring no Google
-  credentials in Streamlit. All live scores, picks, standings, charts, blog posts,
-  history, and playoff totals use this API. It is the default even when old Sheets
-  credentials exist. This endpoint was checked on November 23, 2026 with real data,
-  48 games, and one published blog post; all-time playoff totals still require
-  deployment of the updated backend.
-- **Demo** loads the same fictional fixture as iPhone. For a local preview only,
-  start with `MBCC_DEMO=1 .venv/bin/streamlit run app.py`. Failed live connections
-  never silently switch to demo data.
-
-Optional web settings use environment variables `MBCC_DATA_SOURCE` (`api` or
-`demo`) and `MBCC_ENDPOINT`, or the matching `[mbcc]` settings shown in
-`.streamlit/secrets.toml.example`. Legacy `sheets` settings and saved Google Sheets
-selections now use the API. Old `[connections.gsheets]` credentials are ignored
-and can be removed from web hosting. The backend owns season, workbook, and
+Open preferences using the sidebar control at the upper left. Both apps use the
+fixed **iPhone backend** for all live scores, picks, standings, charts, blog posts,
+history, and playoff totals, requiring no Google credentials in Streamlit.
+Only the private keyword and player filter are configurable. Older saved demo
+and custom endpoint choices are discarded. `MBCC_DEMO`, `MBCC_DATA_SOURCE`,
+`MBCC_ENDPOINT`, and their old Streamlit secrets equivalents are ignored.
+Demo API responses and cached demo snapshots cannot appear as live results.
+`.streamlit/secrets.toml.example` documents the optional initial keyword.
+Old `[connections.gsheets]` credentials are ignored and can be removed from web
+hosting. The backend owns season, workbook, and
 worksheet settings, including `MBCC_SEASON` and `MBCC_WORKSHEET_TITLES`.
 There is no hardcoded end-of-season game filter cutoff.
 
 Live data refreshes every minute while the browser session is open.
 The last successful snapshot is retained **for that browser session and
-connection** if a refresh fails, with a warning. Changing sources clears it.
+keyword** if a refresh fails, with a warning. Changing keywords clears it.
 Unlike the iPhone app’s on-disk cache, the web copy does not persist after a new
 session. The web loader and API may each cache data for up to a minute.
 Verification freshness is recomputed on every render, including saved results.
@@ -171,9 +164,9 @@ archive behavior, connection failures, and model parity:
 ```
 
 Optional browser checks use Playwright (`pip install playwright` and
-`python -m playwright install chromium`). Start the local demo preview first,
-then run `.venv/bin/python tools/check_streamlit_browser.py`. It uses a temporary,
-explicitly fictional API fixture and saves screenshots for 320 px, 390 px, and
+`python -m playwright install chromium`). Run
+`.venv/bin/python tools/check_streamlit_browser.py`. Its isolated test harness
+supplies fictional API responses and saves screenshots for 320 px, 390 px, and
 1440 px widths in `outputs/streamlit`.
 
 ## Run the iPhone app
@@ -184,7 +177,7 @@ explicitly fictional API fixture and saves screenshots for 320 px, 390 px, and
 
 The live endpoint is [MBCC Cloud Run](https://mbcc-api-jarvycxodq-ue.a.run.app/api/snapshot).
 It was verified on October 29, 2026 with `isDemo: false`, 10 players, 48 games,
-133 history rows, and 14 seasons. Existing saved connection/demo preferences
+133 history rows, and 14 seasons. Existing saved keyword and player-filter preferences
 remain in effect; the gear button lets you change them.
 
 The updated app requires `live_scores_and_games` for real game data and ignores
@@ -336,7 +329,9 @@ set +a
 .venv/bin/python -m backend.server
 ```
 
-5. In the simulator, open **Data Connection** using the gear button, turn off **Explore demo data**, and enter `http://localhost:8000/api/snapshot`. Local HTTP is accepted only in Debug builds. A physical iPhone or Release build should use an HTTPS backend URL.
+5. Inspect the local server directly with `curl http://localhost:8000/api/snapshot`.
+   The shipping apps always use the current Cloud Run backend; their connection
+   screens have no endpoint field. Native transport tests inject a mock URLSession.
 
 You can test the HTTP bridge without any Google credentials using:
 
@@ -344,7 +339,8 @@ You can test the HTTP bridge without any Google credentials using:
 python3 -m backend.server --demo
 ```
 
-This endpoint also marks its payload as demo data, so connecting to it cannot make fictional results look real.
+This development endpoint marks its payload as demo data. The apps reject demo
+responses; fixtures are available only through the automated test harnesses.
 
 For hosted use, run the WSGI app behind HTTPS, for example `gunicorn backend.server:application`. The built-in local server binds only to localhost and is for development. The owner deployed the backend to Cloud Run with a public, read-only endpoint and no player sign-in. A private deployment would need a deliberate authentication design; a shared secret embedded in an app is not sufficient.
 
@@ -391,7 +387,7 @@ mode, the earlier name-based mapping remains available during setup. Malformed
 calculated summary numbers still produce errors instead of inventing standings.
 Sheet dates/times and all app displays use Eastern Time (ET).
 
-The server caches one snapshot for 60 seconds. The iPhone app refreshes on launch, foregrounding, pull-to-refresh, and every minute while active. A failed refresh retains the last successful snapshot for the same endpoint, with a warning; switching sources clears the displayed data. There is no automatic fallback to demo data.
+The server caches one snapshot for 60 seconds. The iPhone app refreshes on launch, foregrounding, pull-to-refresh, and every minute while active. A failed refresh retains the last successful live snapshot for the same keyword, with a warning; switching keywords clears displayed data.
 
 The rules, prize amounts, and winner photo are carried over from the original **2025–26** app. Update these before a new season, along with `MBCC_SEASON` and the source worksheet data. Demo games intentionally have no ESPN IDs, since they are fictional.
 
@@ -430,7 +426,12 @@ xcodebuild -project ios/MBCC.xcodeproj -scheme MBCC \
   -derivedDataPath /tmp/MBCCDerivedData CODE_SIGNING_ALLOWED=NO build
 ```
 
-Run the **MBCCUITests** target using Product → Test to check navigation, game picks, standings, history, charts/elimination, URL validation, failed connections, and the deployed backend. The Debug-only `--ui-testing` launch argument resets the test app’s source preferences and uses demo data for repeatable UI checks; adding `--live-data` tests the real backend.
+Run the **MBCCUITests** target using Product → Test to check navigation, game picks,
+standings, history, charts/elimination, hidden connection controls, and the deployed
+backend. The Debug-only `--ui-testing` argument resets test preferences and injects
+a fixture for repeatable UI checks; adding `--live-data` tests the real backend.
+`--ui-testing-preserve-state` keeps the saved keyword for relaunch checks. These
+fixture hooks are absent from Release builds and have no in-app controls.
 
 The app icon uses diagonal MBCC lettering and the app’s `trophy.fill` SF Symbol. Regenerate its 1024-pixel asset from the repository root with `swift tools/generate_app_icon.swift`.
 

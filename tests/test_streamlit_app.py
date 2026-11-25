@@ -1,6 +1,7 @@
 """Exercise real Streamlit screens without Google access or a running backend."""
 import copy
 import importlib.util
+import io
 import json
 import os
 import unittest
@@ -27,7 +28,9 @@ class StreamlitModuleReloadTests(unittest.TestCase):
             # the group feature, while app.py and the files on disk are updated.
             for name in ("GROUP_LABELS", "KEYWORD_HEADER", "normalize_keyword"):
                 data.__dict__.pop(name, None)
-            with patch.dict(os.environ, {"MBCC_DEMO": "1"}):
+            live = data.read_demo()
+            live.update(isDemo=False, gamesSource="live_scores_and_games", group="default", keywordRouting=True)
+            with patch("urllib.request.OpenerDirector.open", side_effect=lambda *args, **kwargs: io.BytesIO(json.dumps(live).encode())):
                 app = AppTest.from_file(str(Path(__file__).resolve().parents[1] / "app.py"), default_timeout=15).run()
                 self.assertFalse(app.exception)
                 self.assertEqual(app.text_input(key="group_keyword").value, "")
@@ -63,11 +66,12 @@ class StreamlitAppTests(unittest.TestCase):
         self.environment.start()
         self.addCleanup(self.environment.stop)
         self.snapshot = data.read_demo()
+        self.snapshot.update(isDemo=False, gamesSource="live_scores_and_games")
         self.snapshot["updates"] = [
             {"title": "Latest briefing", "publishedDate": "2026-11-19", "message": "First paragraph.\n\nSecond paragraph.", "youtubeURL": "https://youtu.be/dQw4w9WgXcQ"},
             {"title": "Previous briefing", "publishedDate": "2026-11-18", "message": "Earlier news", "youtubeURL": "https://youtu.be/abcdefghijk"},
         ]
-        self.demo_patch = patch("web_app.data.read_demo", return_value=self.snapshot)
+        self.demo_patch = patch("web_app.data.fetch_api", return_value=self.snapshot)
         self.demo_patch.start()
         self.addCleanup(self.demo_patch.stop)
         self.app = AppTest.from_file(str(Path(__file__).resolve().parents[1] / "app.py"), default_timeout=15).run()
@@ -75,6 +79,10 @@ class StreamlitAppTests(unittest.TestCase):
 
     def assert_clean(self):
         self.assertEqual([error.message for error in self.app.exception], [])
+
+    def refresh(self):
+        st.cache_data.clear()
+        return self.app.run()
 
     def page(self, name):
         self.app.radio(key="primary_nav_value").set_value(name).run()
@@ -147,7 +155,7 @@ class StreamlitAppTests(unittest.TestCase):
 
     def test_navigation_scores_charts_filters_history_and_trophy_cabinet(self):
         self.assertIn("Latest briefing", [heading.value for heading in self.app.subheader])
-        self.assertIn("DEMO", self.app.info[0].value)
+        self.assertFalse(self.app.info)
         self.page("Standings")
         self.assertTrue(any("Correct picks are the official score" in item.value for item in self.app.caption))
         self.app.radio(key="standings_metric").set_value("Point difference").run()
@@ -304,13 +312,13 @@ class StreamlitAppTests(unittest.TestCase):
         old.pop("playoffStandings")
         old.update(isDemo=False, gamesSource="live_scores_and_games")
         with patch("web_app.data.fetch_api", return_value=old):
-            self.app.radio(key="data_source").set_value("iPhone backend").run()
+            self.refresh()
         self.assert_clean()
         self.assertTrue(any("backend has not supplied playoff history" in item.value for item in self.app.info))
 
     def test_failed_live_connection_never_uses_demo_and_switching_clears_saved_data(self):
         with patch("web_app.data.fetch_api", side_effect=OSError("private upstream error")):
-            self.app.radio(key="data_source").set_value("iPhone backend").run()
+            self.app.text_input(key="group_keyword").set_value("different-entry").run()
         self.assert_clean()
         self.assertIn("Connect to MBCC", [heading.value for heading in self.app.subheader])
         self.assertFalse(self.app.info)
@@ -326,7 +334,7 @@ class StreamlitAppTests(unittest.TestCase):
         def response(endpoint, keyword=""):
             return {"FixtureSub42": sub, "FixtureBoth42": combined}.get(keyword, main)
         with patch("web_app.data.fetch_api", side_effect=response) as api:
-            self.app.radio(key="data_source").set_value("iPhone backend").run()
+            self.refresh()
             self.page("Season")
             self.app.multiselect(key="season_players").set_value([main["players"][0]]).run()
             self.app.text_input(key="group_keyword").set_value(" FixtureSub42 ").run()
@@ -353,7 +361,7 @@ class StreamlitAppTests(unittest.TestCase):
             self.assertEqual(self.app.session_state["last_snapshot"]["group"], "default")
             self.assertEqual(api.call_count, 4)
 
-    def test_demo_always_shows_main_without_resolving_private_keywords_locally(self):
+    def test_arbitrary_keywords_are_sent_to_the_api_without_local_resolution(self):
         for keyword in ("arbitrary-private-entry", "sub", ""):
             self.app.text_input(key="group_keyword").set_value(keyword).run()
             self.assert_clean()
@@ -371,7 +379,7 @@ class StreamlitAppTests(unittest.TestCase):
         snapshot["games"][2].update(winner=None, homeTeam="Home", awayTeam="Away", live=None,
                                     picks={name: "Home" for name in snapshot["players"]})
         with patch("web_app.data.fetch_api", return_value=snapshot):
-            self.app.radio(key="data_source").set_value("iPhone backend").run()
+            self.refresh()
             self.app.text_input(key="group_keyword").set_value("fixture-personal-code").run()
             self.app.radio(key="game_filter").set_value("All").run()
         self.assert_clean()
@@ -387,7 +395,7 @@ class StreamlitAppTests(unittest.TestCase):
         old = copy.deepcopy(self.snapshot)
         old.update(isDemo=False, gamesSource="live_scores_and_games")
         with patch("web_app.data.fetch_api", return_value=old):
-            self.app.radio(key="data_source").set_value("iPhone backend").run()
+            self.refresh()
         with patch("web_app.data.fetch_api", side_effect=data.SnapshotError("Update the MBCC backend to recognize private group keywords.")):
             self.app.text_input(key="group_keyword").set_value("FixtureSub42").run()
         self.assert_clean()
@@ -402,7 +410,7 @@ class StreamlitAppTests(unittest.TestCase):
         sub["playoffStandings"] = None
         combined = combine_snapshots(main, sub)
         with patch("web_app.data.fetch_api", side_effect=lambda endpoint, keyword="": combined if keyword else main):
-            self.app.radio(key="data_source").set_value("iPhone backend").run()
+            self.refresh()
             self.app.text_input(key="group_keyword").set_value("default+sub").run()
             self.page("Bracket")
         self.assertFalse(self.app.warning)
@@ -416,7 +424,7 @@ class StreamlitAppTests(unittest.TestCase):
         sub["playoffStandingsError"] = "Old backend could not load history"
         with patch("web_app.data.fetch_api", return_value=sub):
             self.app.text_input(key="group_keyword").set_value("sub").run()
-            self.app.radio(key="data_source").set_value("iPhone backend").run()
+            self.refresh()
             self.page("Bracket")
         self.assertFalse(self.app.warning)
         self.assertFalse(self.app.dataframe)
@@ -429,7 +437,7 @@ class StreamlitAppTests(unittest.TestCase):
         combined = combine_snapshots(main, copy.deepcopy(main))
         combined["playoffStandingsError"] = "All-time playoff standings unavailable for: Subgroup."
         with patch("web_app.data.fetch_api", side_effect=lambda endpoint, keyword="": combined if keyword else main):
-            self.app.radio(key="data_source").set_value("iPhone backend").run()
+            self.refresh()
             self.app.text_input(key="group_keyword").set_value("default+sub").run()
             self.page("Bracket")
         self.assertFalse(self.app.warning)
@@ -440,7 +448,7 @@ class StreamlitAppTests(unittest.TestCase):
         fresh["isDemo"] = False
         fresh["gamesSource"] = "live_scores_and_games"
         with patch("web_app.data.fetch_api", return_value=fresh):
-            self.app.radio(key="data_source").set_value("iPhone backend").run()
+            self.refresh()
         self.assert_clean()
         st.cache_data.clear()
         with patch("web_app.data.fetch_api", side_effect=OSError("network unavailable")):
@@ -458,11 +466,11 @@ class StreamlitAppTests(unittest.TestCase):
         ]
         with patch("web_app.data.fetch_api", return_value=snapshot) as api, \
                 patch("streamlit.connection") as sheets:
-            self.app.radio(key="data_source").set_value("iPhone backend").run()
+            self.refresh()
             self.assert_clean()
             self.assertFalse(self.app.warning)
             self.assertIn("Latest briefing", [heading.value for heading in self.app.subheader])
-            self.assertEqual(self.app.radio(key="data_source").options, ["iPhone backend", "Demo"])
+            self.assertFalse(any(field.label == "Data source" for field in self.app.radio))
             self.app.sidebar.toggle(key="current_players_only").set_value(False).run()
             self.page("Bracket")
             table = self.app.dataframe[0].value
@@ -490,12 +498,13 @@ class StreamlitAppTests(unittest.TestCase):
                     app.secrets["mbcc"] = {"data_source": "sheets"}
                 app.run()
                 self.assertFalse(app.exception)
-                self.assertEqual(app.radio(key="data_source").value, "iPhone backend")
+                self.assertFalse(any(field.label == "Data source" for field in app.radio))
                 self.assertFalse(app.info)
                 api.assert_called_once_with(data.DEFAULT_ENDPOINT)
                 sheets.assert_not_called()
 
     def test_saved_google_sheets_selection_migrates_to_api(self):
+        st.cache_data.clear()
         snapshot = copy.deepcopy(self.snapshot)
         snapshot.update(isDemo=False, gamesSource="live_scores_and_games")
         app = AppTest.from_file(str(Path(__file__).resolve().parents[1] / "app.py"), default_timeout=15)
@@ -504,7 +513,35 @@ class StreamlitAppTests(unittest.TestCase):
                 patch("streamlit.connection") as sheets:
             app.run()
             self.assertFalse(app.exception)
-            self.assertEqual(app.radio(key="data_source").value, "iPhone backend")
+            self.assertFalse(any(field.label == "Data source" for field in app.radio))
             self.assertFalse(app.warning)
             api.assert_called_once_with(data.DEFAULT_ENDPOINT)
             sheets.assert_not_called()
+
+    def test_connection_controls_are_hidden_and_legacy_demo_settings_are_ignored(self):
+        st.cache_data.clear()
+        with patch.dict(os.environ, {"MBCC_DEMO": "1", "MBCC_DATA_SOURCE": "demo", "MBCC_ENDPOINT": "https://old.example/api/snapshot"}), \
+                patch("web_app.data.fetch_api", return_value=self.snapshot) as api, \
+                patch("web_app.data.read_demo") as demo:
+            app = AppTest.from_file(str(Path(__file__).resolve().parents[1] / "app.py"), default_timeout=15)
+            app.session_state["data_source"] = "Demo"
+            app.session_state["snapshot_url"] = "https://saved.example/api/snapshot"
+            app.secrets["mbcc"] = {"data_source": "demo", "endpoint": "https://secret-setting.example/api/snapshot"}
+            app.run()
+            self.assertFalse(app.exception)
+            self.assertEqual([field.label for field in app.text_input], ["Keyword"])
+            self.assertFalse(any(field.label == "Data source" for field in app.radio))
+            api.assert_called_once_with(data.DEFAULT_ENDPOINT)
+            demo.assert_not_called()
+
+    def test_demo_payloads_and_saved_demo_results_are_never_displayed(self):
+        sample = copy.deepcopy(self.snapshot)
+        sample["isDemo"] = True
+        self.app.session_state["last_snapshot"] = sample
+        st.cache_data.clear()
+        with patch("web_app.data.fetch_api", return_value=sample):
+            self.app.run()
+        self.assert_clean()
+        self.assertIn("Connect to MBCC", [heading.value for heading in self.app.subheader])
+        self.assertNotIn("The games", [heading.value for heading in self.app.subheader])
+        self.assertNotIn("DEMO", self.text())

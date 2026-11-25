@@ -100,10 +100,10 @@ struct AppStoreChecks {
             try? FileManager.default.removeItem(at: cache)
             session.invalidateAndCancel()
         }
-        let endpoint = "https://fixture.example/api/snapshot?other=keep"
+        let endpoint = AppStore.defaultEndpoint
         let keywords = MemoryKeywordStorage()
-        defaults.set(endpoint, forKey: "apiEndpoint")
-        defaults.set(false, forKey: "useDemo")
+        defaults.set("https://old-custom.example/api/snapshot", forKey: "apiEndpoint")
+        defaults.set(true, forKey: "useDemo")
         let store = AppStore(defaults: defaults, session: session, cacheURL: cache, keywordStorage: keywords)
         precondition(store.groupKeyword.isEmpty && store.snapshot == nil)
 
@@ -111,11 +111,11 @@ struct AppStoreChecks {
             let group = requestedGroup(request)
             return FixtureResponse(status: 200, data: try fixture(group, player: group))
         }
-        await store.configure(demo: false, endpoint: endpoint, keyword: "")
+        await store.configure(keyword: "")
         precondition(store.snapshot?.players == ["default"] && store.error == nil)
-        precondition(FixtureProtocol.requests.last!.url!.query == "other=keep")
+        precondition(FixtureProtocol.requests.last!.url!.absoluteString == endpoint)
         let mainIdentity = store.connectionIdentity
-        await store.configure(demo: false, endpoint: endpoint, keyword: " " + subCode + " ")
+        await store.configure(keyword: " " + subCode + " ")
         precondition(store.groupKeyword == subCode && store.snapshot?.players == ["sub"])
         precondition(store.connectionIdentity != mainIdentity)
         precondition(defaults.string(forKey: "groupKeyword") == nil && keywords.load() == subCode)
@@ -123,35 +123,35 @@ struct AppStoreChecks {
         precondition(!cachedJSON.contains(subCode) && !cachedJSON.contains(Data(subCode.utf8).base64EncodedString()))
         let restored = AppStore(defaults: defaults, session: session, cacheURL: cache, keywordStorage: keywords)
         precondition(restored.groupKeyword == subCode && restored.snapshot?.players == ["sub"] && restored.isCached)
-        await store.configure(demo: false, endpoint: endpoint, keyword: combinedCode)
+        await store.configure(keyword: combinedCode)
         precondition(store.snapshot?.group == "default+sub")
-        precondition(FixtureProtocol.requests.last!.url!.query == "other=keep")
+        precondition(FixtureProtocol.requests.last!.url!.absoluteString == endpoint)
         precondition(submittedKeyword(FixtureProtocol.requests.last!) == combinedCode)
         let requestCount = FixtureProtocol.requests.count
-        await store.configure(demo: false, endpoint: endpoint, keyword: "unknown")
+        await store.configure(keyword: "unknown")
         precondition(FixtureProtocol.requests.count == requestCount + 1)
         precondition(store.groupKeyword == "unknown" && store.snapshot?.players == ["default"] && store.error == nil)
-        await store.configure(demo: false, endpoint: endpoint, keyword: subCode)
+        await store.configure(keyword: subCode)
 
         let beforeSaveFailure = FixtureProtocol.requests.count
         keywords.allowsSaving = false
-        await store.configure(demo: false, endpoint: endpoint, keyword: combinedCode)
+        await store.configure(keyword: combinedCode)
         precondition(FixtureProtocol.requests.count == beforeSaveFailure && store.groupKeyword == subCode)
         precondition(store.error!.contains("securely"))
         keywords.allowsSaving = true
 
         // A failed switch cannot reuse another group's last successful results.
         FixtureProtocol.respond { _ in throw URLError(.notConnectedToInternet) }
-        await store.configure(demo: false, endpoint: endpoint, keyword: "")
+        await store.configure(keyword: "")
         precondition(store.snapshot == nil && !store.isCached && store.error != nil)
         let offlineMain = AppStore(defaults: defaults, session: session, cacheURL: cache, keywordStorage: keywords)
         precondition(offlineMain.snapshot == nil)
 
         // Old APIs without a group field remain valid for main only.
         FixtureProtocol.respond { _ in FixtureResponse(status: 200, data: try fixture(nil, player: "Legacy main")) }
-        await store.configure(demo: false, endpoint: endpoint, keyword: "")
+        await store.configure(keyword: "")
         precondition(store.snapshot?.players == ["Legacy main"] && store.error == nil)
-        await store.configure(demo: false, endpoint: endpoint, keyword: subCode)
+        await store.configure(keyword: subCode)
         precondition(store.snapshot == nil && store.error!.contains("private group keywords"))
 
         // Current-group saved results survive a refresh failure, with no leakage
@@ -159,13 +159,18 @@ struct AppStoreChecks {
         FixtureProtocol.respond { request in
             FixtureResponse(status: 200, data: try fixture(requestedGroup(request), player: "Sub player"))
         }
-        await store.configure(demo: false, endpoint: endpoint, keyword: subCode)
+        await store.configure(keyword: subCode)
         FixtureProtocol.respond { _ in throw URLError(.notConnectedToInternet) }
         await store.refresh()
         precondition(store.isCached && store.snapshot?.players == ["Sub player"] && store.error != nil)
-        let countBeforeDemo = FixtureProtocol.requests.count
-        await store.configure(demo: true, endpoint: endpoint, keyword: subCode)
-        precondition(store.selectedGroup == .main && FixtureProtocol.requests.count == countBeforeDemo)
+        // A demo response from the server must never become live or saved results.
+        var sample = try JSONSerialization.jsonObject(with: fixture("default", player: "Sample")) as! [String: Any]
+        sample["isDemo"] = true
+        let sampleData = try JSONSerialization.data(withJSONObject: sample)
+        FixtureProtocol.respond { _ in FixtureResponse(status: 200, data: sampleData) }
+        await store.configure(keyword: "")
+        precondition(store.snapshot == nil && store.error != nil)
+        precondition(store.endpoint == endpoint && defaults.object(forKey: "useDemo") == nil && defaults.object(forKey: "apiEndpoint") == nil)
 
         // Personal keywords can share the same main roster while identifying
         // different players. Their saved personalization must stay isolated.
@@ -174,10 +179,10 @@ struct AppStoreChecks {
         personal["viewerPlayer"] = "Alice"
         let personalData = try JSONSerialization.data(withJSONObject: personal)
         FixtureProtocol.respond { _ in FixtureResponse(status: 200, data: personalData) }
-        await store.configure(demo: false, endpoint: endpoint, keyword: "FixturePersonalCodeA")
+        await store.configure(keyword: "FixturePersonalCodeA")
         precondition(store.snapshot?.personalizedPlayer == "Alice" && store.snapshot?.players.count == 2)
         FixtureProtocol.respond { _ in throw URLError(.notConnectedToInternet) }
-        await store.configure(demo: false, endpoint: endpoint, keyword: "FixturePersonalCodeB")
+        await store.configure(keyword: "FixturePersonalCodeB")
         precondition(store.snapshot == nil && !store.isCached)
 
         // Configuration errors intentionally returned by the backend stay useful.
@@ -185,7 +190,7 @@ struct AppStoreChecks {
             FixtureResponse(status: 409, data: Data("{\"error\":\"Subgroup is not configured\"}".utf8))
         }
         try? FileManager.default.removeItem(at: cache)
-        await store.configure(demo: false, endpoint: endpoint, keyword: subCode)
+        await store.configure(keyword: subCode)
         precondition(store.snapshot == nil && store.error == "Subgroup is not configured")
 
         // A response from before the switch must not replace the new group or
@@ -203,7 +208,7 @@ struct AppStoreChecks {
             try await Task.sleep(nanoseconds: 1_000_000)
         }
         precondition(FixtureProtocol.requests.count > before)
-        await switching.configure(demo: false, endpoint: endpoint, keyword: subCode)
+        await switching.configure(keyword: subCode)
         await earlier.value
         precondition(switching.groupKeyword == subCode && switching.snapshot?.players == ["sub"])
         precondition(!switching.isLoading && switching.error == nil)

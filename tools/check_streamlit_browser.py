@@ -1,14 +1,19 @@
-"""Check an explicitly demo-mode Streamlit preview at phone and desktop widths.
+"""Check Streamlit at phone and desktop widths using isolated test responses.
 
 Install optional tooling with: python -m pip install playwright
 Then: python -m playwright install chromium
-Run after starting app.py with MBCC_DEMO=1. No external services are modified.
+Fixture mode starts its own local test app. Use --live with an existing preview.
+No external services are modified.
 """
 import argparse
 import copy
 import json
-import threading
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+import socket
+import subprocess
+import sys
+import tempfile
+import time
+from urllib.request import urlopen
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
@@ -31,7 +36,8 @@ def main():
         {"title": "A new season, a familiar tradition.", "publishedDate": "2026-11-19",
          "message": "An earlier sample post, preserved in the archive.", "youtubeURL": "https://youtu.be/M7lc1UVf-VE"},
     ]
-    fixture["isDemo"] = True
+    fixture["isDemo"] = False
+    fixture["gamesSource"] = "live_scores_and_games"
     fixture["playoffStandings"] = [
         {"player": player, "correctPlayoff": 20 + index, "correctUnknownPlayoff": index}
         for index, player in enumerate(fixture["players"])
@@ -52,21 +58,41 @@ def main():
                     homeScore=0 if index < 4 else None, awayScore=7 if index < 4 else None,
                     winner="Tulane" if index < 4 else None, picks={player: "Tulane" for player in fixture["players"]})
         fixture["games"].append(game)
-    payload = json.dumps(fixture).encode()
-
-    class Handler(BaseHTTPRequestHandler):
-        def do_GET(self):
-            self.send_response(200)
-            self.send_header("Content-Type", "application/json")
-            self.end_headers()
-            self.wfile.write(payload)
-
-        def log_message(self, *unused):
-            pass
-
-    server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
-    threading.Thread(target=server.serve_forever, daemon=True).start()
+    temporary = tempfile.TemporaryDirectory(prefix="mbcc-browser-checks-")
+    process = None
+    if not args.live:
+        root = Path(__file__).resolve().parents[1]
+        runner = Path(temporary.name) / "app.py"
+        runner.write_text(
+            "import sys, json, copy, runpy\n"
+            + f"sys.path.insert(0, {str(root)!r})\n"
+            + "from web_app import data\n"
+            + f"fixture = json.loads({json.dumps(fixture)!r})\n"
+            + "data.fetch_api = lambda endpoint, keyword='': copy.deepcopy(fixture)\n"
+            + f"runpy.run_path({str(root / 'app.py')!r}, run_name='__main__')\n"
+        )
+        with socket.socket() as listener:
+            listener.bind(("127.0.0.1", 0))
+            port = listener.getsockname()[1]
+        args.url = f"http://127.0.0.1:{port}"
+        process = subprocess.Popen([sys.executable, "-m", "streamlit", "run", str(runner),
+                                    "--server.port", str(port), "--server.address", "127.0.0.1",
+                                    "--server.headless", "true"], cwd=root,
+                                   stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
     try:
+        if process:
+            for attempt in range(200):
+                if process.poll() is not None:
+                    raise RuntimeError("The isolated Streamlit preview failed to start.")
+                try:
+                    with urlopen(args.url + "/_stcore/health", timeout=1) as response:
+                        if response.status == 200:
+                            break
+                except OSError:
+                    pass
+                time.sleep(0.1)
+            else:
+                raise RuntimeError("The isolated Streamlit preview did not become ready.")
         with sync_playwright() as playwright:
             browser = playwright.chromium.launch()
             for label, width, height in [("iphone", 390, 844), ("small-phone", 320, 720), ("desktop", 1440, 1000)]:
@@ -85,7 +111,7 @@ def main():
                     print(f"Passed live backend {label}: real Live and Standings screens, no demo fallback, no horizontal overflow")
                     page.close()
                     continue
-                page.get_by_role("heading", name="No update yet", exact=True).wait_for()
+                page.get_by_role("heading", name="The chase for the chalice begins.", exact=True).wait_for()
                 if args.inspect:
                     page.screenshot(path=str(output / "inspect.png"), full_page=True)
                     print(page.locator("button").evaluate_all("items => items.map(item => ({text:item.innerText, label:item.getAttribute('aria-label'), title:item.getAttribute('title')}))"))
@@ -96,10 +122,9 @@ def main():
                 page.locator("button").filter(has_text="keyboard_double_arrow_right").click()
                 sidebar = page.get_by_test_id("stSidebar")
                 sidebar.get_by_text("Current players only", exact=True).click()
-                sidebar.get_by_text("iPhone backend", exact=True).click()
-                endpoint = sidebar.get_by_role("textbox", name="Snapshot URL")
-                endpoint.fill(f"http://127.0.0.1:{server.server_port}/api/snapshot")
-                endpoint.press("Enter")
+                assert not sidebar.get_by_role("textbox", name="Snapshot URL").count()
+                assert not sidebar.get_by_text("Demo", exact=True).count()
+                assert not sidebar.get_by_text("Data source", exact=True).count()
                 page.get_by_role("heading", name="The chase for the chalice begins.").wait_for()
                 page.locator("button").filter(has_text="keyboard_double_arrow_left").click()
                 page.wait_for_function("() => { const sidebar = document.querySelector('[data-testid=stSidebar]'); return !sidebar || sidebar.getBoundingClientRect().right <= 1; }")
@@ -147,16 +172,16 @@ def main():
                             grid = table_region.locator(".dvn-scroller")
                             bounds = grid.bounding_box()
                             def copied_user(row):
-                                grid.click(position={"x": 60, "y": 90 + row * 38})
+                                grid.click(position={"x": 60, "y": 54 + row * 38})
                                 page.keyboard.press("ControlOrMeta+c")
                                 page.wait_for_function("() => navigator.clipboard.readText().then(text => text.length > 0)")
                                 return page.evaluate("navigator.clipboard.readText()").strip()
-                            grid.click(position={"x": 60, "y": 53})
+                            grid.click(position={"x": 60, "y": 18})
                             assert copied_user(0) == "Christopher", "User column did not sort ascending"
-                            grid.click(position={"x": bounds["width"] / 2, "y": 53})
+                            grid.click(position={"x": bounds["width"] / 2, "y": 18})
                             assert copied_user(0) == "Former player", "Numeric column did not sort ascending"
                             assert copied_user(1) == "Christopher", "Counts sorted as text instead of numbers"
-                            grid.click(position={"x": bounds["width"] / 2, "y": 53})
+                            grid.click(position={"x": bounds["width"] / 2, "y": 18})
                             assert copied_user(0) == "Poppi", "Numeric column did not sort descending"
                         page.get_by_role("heading", name="All-time playoff standings", exact=True).scroll_into_view_if_needed()
                         page.screenshot(path=str(output / f"playoff-standings-{label}.png"), full_page=True)
@@ -174,8 +199,14 @@ def main():
                 page.close()
             browser.close()
     finally:
-        server.shutdown()
-        server.server_close()
+        if process:
+            process.terminate()
+            try:
+                process.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.wait()
+        temporary.cleanup()
 
 
 if __name__ == "__main__":

@@ -40,7 +40,7 @@ struct RootView: View {
                         if store.isLoading { ProgressView("Loading MBCC…") }
                         else {
                             ContentUnavailableView("Connect to MBCC", systemImage: "network",
-                                description: Text(store.error ?? "Open Data Connection to configure your results or explore demo data."))
+                                description: Text(store.error ?? "Check your internet connection and try again."))
                             Button("Data Connection") { showConnection = true }.buttonStyle(.borderedProminent)
                             Button("Try again") { Task { await store.refresh() } }
                         }
@@ -853,7 +853,7 @@ struct InformationView: View {
                 }
                 Card {
                     SectionHeading(title: "About the data")
-                    Text(store.isSampleData ? "You’re exploring fictional sample results. Connect the MBCC spreadsheet backend in Data Connection for real results." : "The app refreshes every minute while open. When enabled, live_scores_and_games supplies game details, scores and winners. Each field is compared with its original spreadsheet entry. Standings and history use their existing summary tabs.")
+                    Text("The app refreshes every minute while open. Each game and score is compared with its original spreadsheet entry. Standings and history use their existing summary tabs.")
                         .font(.subheadline).foregroundStyle(.secondary)
                     if let data = store.snapshot { updatedLabel(data) }
                     Text("All dates and times use Eastern Time (ET).").font(.caption).foregroundStyle(.secondary)
@@ -873,13 +873,9 @@ struct InformationView: View {
 struct ConnectionView: View {
     @EnvironmentObject private var store: AppStore
     @Environment(\.dismiss) private var dismiss
-    @State private var demo = true
-    @State private var endpoint = ""
     @State private var keyword = ""
     @FocusState private var focusedField: ConnectionField?
-    private enum ConnectionField { case keyword, endpoint }
-    private var validEndpoint: Bool { demo || AppStore.validURL(endpoint.trimmingCharacters(in: .whitespacesAndNewlines)) != nil }
-    private var valid: Bool { validEndpoint }
+    private enum ConnectionField { case keyword }
 
     var body: some View {
         NavigationStack {
@@ -903,32 +899,15 @@ struct ConnectionView: View {
                     Text("Applies immediately to every tab and game details. Turn off to include former players.")
                 }
                 Section {
-                    Toggle("Explore demo data", isOn: $demo)
-                } footer: {
-                    Text("Demo scores and history are fictional. Turn this off to connect to your real MBCC data.")
-                }
-                Section {
-                    TextField("https://your-server.com/api/snapshot", text: $endpoint)
-                        .textInputAutocapitalization(.never).autocorrectionDisabled().keyboardType(.URL)
-                        .focused($focusedField, equals: .endpoint).submitLabel(.done)
-                        .onSubmit { focusedField = nil }
-                        .accessibilityIdentifier("snapshotURL")
-                    if !validEndpoint { Text("Enter a full HTTPS URL.").font(.caption).foregroundStyle(.red) }
-                } header: {
-                    Text("MBCC snapshot URL")
-                } footer: {
-                    Text("Use the read-only backend included with this project. Google credentials stay on your server.")
-                }
-                Section {
                     Button("Save connection") {
-                        let useDemo = demo, url = endpoint, groupKeyword = keyword
+                        let groupKeyword = keyword
                         dismiss()
-                        Task { await store.configure(demo: useDemo, endpoint: url, keyword: groupKeyword) }
-                    }.disabled(!valid).accessibilityIdentifier("saveConnection")
+                        Task { await store.configure(keyword: groupKeyword) }
+                    }.accessibilityIdentifier("saveConnection")
                 }
             }.navigationTitle("Data Connection").navigationBarTitleDisplayMode(.inline)
                 .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } } }
-                .onAppear { demo = store.isDemo; endpoint = store.endpoint; keyword = store.groupKeyword }
+                .onAppear { keyword = store.groupKeyword }
         }
     }
 }
