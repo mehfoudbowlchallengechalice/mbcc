@@ -18,6 +18,9 @@ and no downloadable service-account keys. Streamlit remains separate.
 
 ## Deployment steps
 
+Always name the deployment archive `mbcc-cloudrun.zip`, replacing the previous
+package when preparing an update. Do not add dates or feature names to the filename.
+
 For the existing service, upload the current `mbcc-cloudrun.zip` to Cloud Shell,
 extract it over `~/mbcc-cloudrun`, and run `bash cloudrun/update-live-source.sh`.
 This deploys the updated backend with `MBCC_LIVE_SCORES_ENABLED=1` and the
@@ -100,7 +103,7 @@ All nine worksheet names used by Streamlit—including `basic_history`,
 `agg_history`, and `season_history`—are in the challenge workbook
 `1jKYvXmWIB39FPGsEIGatP_KTY_VK53TnDxNSBVokfVs`. Both spreadsheet environment
 variables therefore point to that same workbook. The separate raw history file
-is not queried directly by this backend. The extra `pick_summary` tab is not
+is queried only for the first three rows of `playoff_picks`. The extra `pick_summary` tab is not
 needed by the current Streamlit screens.
 
 Check `https://SERVICE_URL/health` for `{"status":"ok"}`, then check

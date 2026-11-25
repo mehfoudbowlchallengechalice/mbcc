@@ -37,6 +37,52 @@ exists; new players without either record use the current season roster.
 History keeps its individual player and winner filters. Season-wide historical
 totals retain the spreadsheet's original aggregate calculations.
 
+In the sidebar's **Groups** settings, enter a **Group keyword**:
+
+| Keyword | Results shown |
+| --- | --- |
+| Blank or `default` | Main group from the existing challenge spreadsheet |
+| `sub` | Subgroup from the second challenge spreadsheet |
+| `default+sub` | Both rosters together, with a shared standings ranking |
+
+Keywords ignore case and surrounding spaces. An unknown keyword shows an error.
+The selection applies to every screen, player filter, game pick, chart, history,
+and trophy cabinet. Changing groups clears the previous group's saved results
+and player selections. A failed subgroup load never displays main-group data
+as the subgroup. The bundled demo contains only the main group.
+
+To add the subgroup spreadsheet:
+
+1. Use the same tab names and column layout as the main workbook, with the
+   subgroup's players and statistics. For a combined view, use the same season,
+   game schedule and row order, and keep scores and tracker rows synchronized.
+2. Share the second workbook with the backend's `mbcc-sheet-reader` service
+   account as **Viewer**.
+3. Set `MBCC_SUB_CHALLENGE_SHEET_ID` in `cloudrun/env.yaml` (or `backend/.env`
+   locally) to the second spreadsheet's ID. Its three history tabs are read
+   from that workbook by default. Set `MBCC_SUB_HISTORY_SHEET_ID` only if they
+   are in a separate subgroup history workbook.
+4. Deploy the updated backend using `bash cloudrun/update-live-source.sh`,
+   and publish/reboot the updated Streamlit app. Then select `sub` or
+   `default+sub` in the sidebar.
+
+The combined view labels player names `[Main]` and `[Sub]`, including matching
+names, so each entry retains its own picks and stats. Games appear once and
+combine both rosters' picks. Scores and standings values remain those from each
+spreadsheet; both spreadsheets must use comparable scoring formulas. Historical
+awards stay with their original group, and season aggregate rows are labeled
+by group. The main group's updates supply the combined news feed. Incompatible
+seasons, schedules, results, or trackers show a message instead of a partial merge.
+
+Subgroup playoff totals are optional: set `MBCC_SUB_PLAYOFF_HISTORY_SHEET_ID`
+to its workbook containing `playoff_picks`. Main-group playoff totals are never
+copied into the subgroup. `MBCC_SUB_UPDATES_ENABLED=1` enables a subgroup
+`todays_update` tab; it defaults to off. Optional `MBCC_SUB_SEASON` and
+`MBCC_SUB_WORKSHEET_TITLES` override the main backend's season and tab mapping.
+`MBCC_GROUP_KEYWORD` or `[mbcc].group_keyword` sets Streamlit's initial selection.
+The API defaults to the main group and accepts `?group=sub` or
+`?group=default%2Bsub`; group choices are display filters, not access controls.
+
 Open **Data Connection** using the sidebar control at the upper left:
 
 - **iPhone backend** uses the public read-only snapshot API, requiring no Google

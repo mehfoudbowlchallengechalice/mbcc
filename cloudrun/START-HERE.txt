@@ -24,7 +24,7 @@ Existing overall summary/history tabs remain in the challenge workbook.
 The new all-time playoff table reads rows 1–3 of playoff_picks in the separate
 history workbook (1Iwl1WEzLEXu05ZtFcfZovWwQsECNy8LH3II760C-w2E).
 The reader service account needs Viewer access to that workbook too.
-Today's Update is enabled and reads the todays_update tab in that same workbook.
+Today's Update is enabled and reads the todays_update tab in the challenge workbook.
 The deployment check prints the number of published blog posts. Newest posts
 appear first; earlier posts remain below them with their dates and video links.
 

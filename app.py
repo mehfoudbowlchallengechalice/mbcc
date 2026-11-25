@@ -36,10 +36,16 @@ def setting(name, default=None):
 
 
 @st.cache_data(ttl=60, show_spinner=False)
-def fetch_snapshot(source, endpoint):
+def fetch_snapshot(source, endpoint, group="default"):
+    group = data.group_keyword(group)
     if source == "Demo":
+        if group != "default":
+            raise data.SnapshotError("The bundled demo has only the main group. Use default or connect to a configured live subgroup.")
         return data.read_demo()
-    return data.fetch_api(endpoint)
+    snapshot = data.fetch_api(data.group_endpoint(endpoint, group))
+    if group != "default" and snapshot.get("group") != group:
+        raise data.SnapshotError("This backend does not support the selected group yet. Deploy the updated backend and configure the subgroup spreadsheet.")
+    return snapshot
 
 
 def change_page():
@@ -60,6 +66,14 @@ def settings():
     if st.session_state.get("data_source") not in (None, *sources):
         st.session_state.data_source = "iPhone backend"
     with st.sidebar:
+        st.header("Groups")
+        keyword = st.text_input("Group keyword", value=setting("mbcc_group_keyword", "default"), key="group_keyword",
+                                help="Blank or default: main group. sub: subgroup. default+sub: both groups together.")
+        group = keyword.strip().lower() or "default"
+        st.caption("Blank / default → main group · sub → subgroup · default+sub → both together")
+        if group in data.GROUP_LABELS:
+            st.caption("Showing: " + data.GROUP_LABELS[group])
+        st.divider()
         st.header("Player filters")
         st.toggle("Current players only", value=True, key="current_players_only")
         st.caption("Applies to every tab and game details. Turn off to include former players.")
@@ -84,11 +98,11 @@ def settings():
         if st.button("Refresh now", width="stretch"):
             fetch_snapshot.clear()
         st.caption("Results refresh every minute while this page is open.")
-    return source, endpoint.strip(), zone
+    return source, endpoint.strip(), zone, group
 
 
-def load_data(source, endpoint):
-    identity = (source, endpoint if source == "iPhone backend" else "demo")
+def load_data(source, endpoint, group="default"):
+    identity = (source, endpoint if source == "iPhone backend" else "demo", group)
     if st.session_state.get("source_identity") != identity:
         st.session_state.source_identity = identity
         st.session_state.pop("last_snapshot", None)
@@ -96,7 +110,7 @@ def load_data(source, endpoint):
         for key in ("game_filter", "season_players", "game_players", "elimination_player", "history_player", "bracket_player", "bracket_saved_player", "bracket_game"):
             st.session_state.pop(key, None)
     try:
-        snapshot = fetch_snapshot(source, endpoint)
+        snapshot = fetch_snapshot(source, endpoint, group)
         st.session_state.last_snapshot = snapshot
         return snapshot, None
     except Exception as error:
@@ -284,9 +298,10 @@ def bracket_view(snapshot, zone, *, source, users_loaded):
     st.subheader("All-time playoff standings")
     if snapshot.get("playoffStandingsError"):
         error = snapshot["playoffStandingsError"]
-        st.warning(error if isinstance(error, str) and error.startswith("playoff_picks ")
+        st.warning(error if isinstance(error, str) and error.startswith(("playoff_picks ", "All-time playoff standings unavailable for: "))
                    else "Couldn’t load all-time playoff standings from the history spreadsheet.")
-        return
+        if not snapshot.get("playoffStandings"):
+            return
     rows = playoff_standings(snapshot)
     if not rows:
         if users_loaded is None:
@@ -507,8 +522,8 @@ def info_view(snapshot):
 
 
 @st.fragment(run_every=60)
-def current_screen(source, endpoint, zone):
-    snapshot, error = load_data(source, endpoint)
+def current_screen(source, endpoint, zone, group="default"):
+    snapshot, error = load_data(source, endpoint, group)
     page = st.session_state.get("primary_nav_value", "Live")
     detail = st.session_state.get("detail")
     if not detail:
@@ -521,6 +536,7 @@ def current_screen(source, endpoint, zone):
         return
     if snapshot.get("isDemo") is True:
         st.info("DEMO · Sample results, not real standings")
+    st.caption(data.GROUP_LABELS.get(group, group))
     history_rows = snapshot.get("playoffStandings")
     users_loaded = len(history_rows) if history_rows is not None else None
     snapshot = data.filter_current_players(snapshot, st.session_state.get("current_players_only", True))
@@ -547,10 +563,10 @@ def current_screen(source, endpoint, zone):
 def main():
     st.set_page_config(page_title="MBCC", page_icon="🏆", layout="centered", initial_sidebar_state="collapsed")
     st.markdown('<style>' + (ROOT / "web_app/styles.css").read_text() + '</style>', unsafe_allow_html=True)
-    source, endpoint, zone = settings()
+    source, endpoint, zone, group = settings()
     with st.container(key="primary_nav"):
         st.radio("Main navigation", PAGES, horizontal=True, key="primary_nav_value", label_visibility="collapsed", on_change=change_page, width="stretch")
-    current_screen(source, endpoint, zone)
+    current_screen(source, endpoint, zone, group)
 
 
 if __name__ == "__main__":

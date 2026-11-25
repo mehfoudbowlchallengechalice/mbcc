@@ -5,12 +5,14 @@ import re
 from collections import defaultdict
 from datetime import date, datetime, timezone
 from pathlib import Path
-from urllib.parse import parse_qs, urlsplit
+from urllib.error import HTTPError
+from urllib.parse import parse_qs, parse_qsl, urlencode, urlsplit, urlunsplit
 from urllib.request import Request, urlopen
 from zoneinfo import ZoneInfo
 
 EASTERN = ZoneInfo("America/New_York")
 DEFAULT_ENDPOINT = "https://mbcc-api-jarvycxodq-ue.a.run.app/api/snapshot"
+GROUP_LABELS = {"default": "Main group", "sub": "Subgroup", "default+sub": "Main group + subgroup"}
 ROOT = Path(__file__).resolve().parents[1]
 CHECKED_FIELDS = (
     ("startTime", "Kickoff"), ("awayTeam", "Away team"), ("homeTeam", "Home team"),
@@ -20,6 +22,22 @@ CHECKED_FIELDS = (
 
 class SnapshotError(ValueError):
     pass
+
+
+def group_keyword(value):
+    keyword = (value or "").strip().lower() or "default"
+    if keyword not in GROUP_LABELS:
+        raise SnapshotError("Enter default, sub, or default+sub as the group keyword.")
+    return keyword
+
+
+def group_endpoint(endpoint, group):
+    """Replace an existing group query without losing other connection options."""
+    parts = urlsplit(endpoint)
+    query = [(key, value) for key, value in parse_qsl(parts.query, keep_blank_values=True) if key != "group"]
+    if group != "default":
+        query.append(("group", group))
+    return urlunsplit(parts._replace(query=urlencode(query)))
 
 
 def parse_time(value):
@@ -100,8 +118,18 @@ def fetch_api(endpoint):
     if not valid_endpoint(endpoint):
         raise SnapshotError("Enter an HTTPS snapshot URL (local HTTP is supported for development).")
     request = Request(endpoint, headers={"Accept": "application/json", "User-Agent": "MBCC-Streamlit/1.0"})
-    with urlopen(request, timeout=20) as response:
-        payload = response.read(16 * 1024 * 1024 + 1)
+    try:
+        with urlopen(request, timeout=20) as response:
+            payload = response.read(16 * 1024 * 1024 + 1)
+    except HTTPError as error:
+        if error.code == 409:
+            try:
+                message = json.loads(error.read(4096)).get("error")
+            except (ValueError, AttributeError):
+                message = None
+            if isinstance(message, str) and message:
+                raise SnapshotError(message[:1000]) from None
+        raise
     if len(payload) > 16 * 1024 * 1024:
         raise SnapshotError("The snapshot is too large to load.")
     return validate_snapshot(json.loads(payload))

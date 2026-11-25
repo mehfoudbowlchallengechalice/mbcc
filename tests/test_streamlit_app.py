@@ -8,6 +8,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from web_app import data, playoffs
+from backend.groups import combine_snapshots
 from test_web_models import playoff_fixture
 
 AVAILABLE = importlib.util.find_spec("streamlit") is not None
@@ -217,6 +218,70 @@ class StreamlitAppTests(unittest.TestCase):
         self.assertIn("Connect to MBCC", [heading.value for heading in self.app.subheader])
         self.assertFalse(self.app.info)
         self.assertNotIn("private upstream", " ".join(item.value for item in self.app.warning))
+
+    def test_group_keyword_switches_rosters_and_combines_every_screen(self):
+        main = copy.deepcopy(self.snapshot)
+        main.update(isDemo=False, gamesSource="live_scores_and_games", group="default")
+        sub = copy.deepcopy(main)
+        sub["group"] = "sub"
+        sub["standings"][0]["correct"] = 0
+        combined = combine_snapshots(main, sub)
+        responses = {data.DEFAULT_ENDPOINT: main,
+                     data.group_endpoint(data.DEFAULT_ENDPOINT, "sub"): sub,
+                     data.group_endpoint(data.DEFAULT_ENDPOINT, "default+sub"): combined}
+        with patch("web_app.data.fetch_api", side_effect=lambda endpoint: responses[endpoint]) as api:
+            self.app.radio(key="data_source").set_value("iPhone backend").run()
+            self.page("Season")
+            self.app.multiselect(key="season_players").set_value([main["players"][0]]).run()
+            self.app.text_input(key="group_keyword").set_value(" SUB ").run()
+            self.assert_clean()
+            self.assertEqual(self.app.session_state["last_snapshot"]["group"], "sub")
+            self.assertEqual(self.app.multiselect(key="season_players").value, sub["players"])
+            self.app.text_input(key="group_keyword").set_value("default+sub").run()
+            self.assert_clean()
+            self.assertEqual(len(self.app.multiselect(key="season_players").options), 2 * len(main["players"]))
+            for page in ("Standings", "Bracket", "History", "Info", "Live"):
+                self.page(page)
+            self.assertEqual(self.app.session_state["last_snapshot"]["group"], "default+sub")
+            self.app.text_input(key="group_keyword").set_value("").run()
+            self.assert_clean()
+            self.assertEqual(self.app.session_state["last_snapshot"]["group"], "default")
+            self.assertEqual(api.call_count, 3)
+
+    def test_unsupported_keyword_and_subgroup_do_not_show_saved_main_results(self):
+        for keyword, message in (("invalid", "Enter default"), ("sub", "demo has only the main group")):
+            self.app.text_input(key="group_keyword").set_value(keyword).run()
+            self.assert_clean()
+            self.assertIn(message, self.app.warning[0].value)
+            self.assertIn("Connect to MBCC", [heading.value for heading in self.app.subheader])
+            self.assertNotIn("The games", [heading.value for heading in self.app.subheader])
+        self.app.text_input(key="group_keyword").set_value("default").run()
+        self.assert_clean()
+        self.assertIn("The games", [heading.value for heading in self.app.subheader])
+
+    def test_old_backend_cannot_silently_return_main_group_for_subgroup(self):
+        old = copy.deepcopy(self.snapshot)
+        old.update(isDemo=False, gamesSource="live_scores_and_games")
+        with patch("web_app.data.fetch_api", return_value=old):
+            self.app.radio(key="data_source").set_value("iPhone backend").run()
+            self.app.text_input(key="group_keyword").set_value("sub").run()
+        self.assert_clean()
+        self.assertIn("does not support the selected group", self.app.warning[0].value)
+        self.assertIn("Connect to MBCC", [heading.value for heading in self.app.subheader])
+
+    def test_combined_playoff_table_keeps_available_group_with_missing_subgroup_totals(self):
+        main = copy.deepcopy(self.snapshot)
+        main.update(isDemo=False, gamesSource="live_scores_and_games", group="default")
+        sub = copy.deepcopy(main)
+        main["playoffStandings"] = [{"player": "Christopher", "correctPlayoff": 4, "correctUnknownPlayoff": 0}]
+        sub["playoffStandings"] = None
+        combined = combine_snapshots(main, sub)
+        with patch("web_app.data.fetch_api", side_effect=lambda endpoint: combined if "group=" in endpoint else main):
+            self.app.radio(key="data_source").set_value("iPhone backend").run()
+            self.app.text_input(key="group_keyword").set_value("default+sub").run()
+            self.page("Bracket")
+        self.assertTrue(any("Subgroup" in warning.value for warning in self.app.warning))
+        self.assertEqual(self.playoff_users(), ["Christopher [Main]"])
 
     def test_failed_refresh_retains_the_same_connection_and_recomputes_verification(self):
         fresh = copy.deepcopy(self.snapshot)

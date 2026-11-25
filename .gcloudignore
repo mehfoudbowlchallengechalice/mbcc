@@ -1,0 +1,21 @@
+# Source deployment uploads only the API runtime and its container recipe.
+/*
+!.gcloudignore
+!.dockerignore
+!Dockerfile
+!backend/
+/backend/*
+!backend/__init__.py
+!backend/server.py
+!backend/sheets_adapter.py
+!backend/groups.py
+!backend/requirements.txt
+!cloudrun/
+/cloudrun/*
+!cloudrun/gunicorn.conf.py
+!ios/
+/ios/*
+!ios/MBCC/
+/ios/MBCC/*
+!ios/MBCC/demo.json
+
