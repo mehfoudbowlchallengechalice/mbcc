@@ -46,6 +46,11 @@ A failed read of the separate workbook leaves the main snapshot available and
 returns a playoff-history availability message. The deployment check reports
 whether the new table loaded.
 
+The subgroup has no all-time playoff history worksheet. The API skips that
+read, and Streamlit and iPhone explain that subgroup playoff history is not
+tracked. Combined views show only main-group all-time playoff totals. A missing
+subgroup history worksheet is expected and does not produce a load warning.
+
 The October 29 snapshot described above was the original source check. It did
 not yet use the combined live tab. The switch is not applied remotely merely
 by updating the local configuration or ZIP; run the update script to deploy it.

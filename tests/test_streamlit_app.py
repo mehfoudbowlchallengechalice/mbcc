@@ -317,7 +317,34 @@ class StreamlitAppTests(unittest.TestCase):
             self.app.radio(key="data_source").set_value("iPhone backend").run()
             self.app.text_input(key="group_keyword").set_value("default+sub").run()
             self.page("Bracket")
-        self.assertTrue(any("Subgroup" in warning.value for warning in self.app.warning))
+        self.assertFalse(self.app.warning)
+        self.assertTrue(any("Main-group history only" in caption.value for caption in self.app.caption))
+        self.assertEqual(self.playoff_users(), ["Christopher [Main]"])
+
+    def test_subgroup_playoff_history_is_not_expected_even_from_an_older_backend(self):
+        sub = copy.deepcopy(self.snapshot)
+        sub.update(isDemo=False, gamesSource="live_scores_and_games", group="sub")
+        sub["playoffStandings"] = None
+        sub["playoffStandingsError"] = "Old backend could not load history"
+        with patch("web_app.data.fetch_api", return_value=sub):
+            self.app.text_input(key="group_keyword").set_value("sub").run()
+            self.app.radio(key="data_source").set_value("iPhone backend").run()
+            self.page("Bracket")
+        self.assertFalse(self.app.warning)
+        self.assertFalse(self.app.dataframe)
+        self.assertTrue(any("not tracked for the subgroup" in item.value for item in self.app.info))
+
+    def test_combined_older_backend_subgroup_history_warning_is_suppressed(self):
+        main = copy.deepcopy(self.snapshot)
+        main.update(isDemo=False, gamesSource="live_scores_and_games", group="default")
+        main["playoffStandings"] = [{"player": "Christopher", "correctPlayoff": 4, "correctUnknownPlayoff": 0}]
+        combined = combine_snapshots(main, copy.deepcopy(main))
+        combined["playoffStandingsError"] = "All-time playoff standings unavailable for: Subgroup."
+        with patch("web_app.data.fetch_api", side_effect=lambda endpoint: combined if "group=" in endpoint else main):
+            self.app.radio(key="data_source").set_value("iPhone backend").run()
+            self.app.text_input(key="group_keyword").set_value("default+sub").run()
+            self.page("Bracket")
+        self.assertFalse(self.app.warning)
         self.assertEqual(self.playoff_users(), ["Christopher [Main]"])
 
     def test_failed_refresh_retains_the_same_connection_and_recomputes_verification(self):

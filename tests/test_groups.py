@@ -10,7 +10,7 @@ from unittest.mock import Mock, patch
 from backend import server
 from backend.groups import GroupError, combine_snapshots, normalize_group
 from backend.sheets_adapter import build_snapshot
-from web_app import data
+from web_app import data, playoffs
 from test_backend import fixture
 
 
@@ -45,7 +45,8 @@ class GroupTests(unittest.TestCase):
         self.assertEqual(len(merged["games"]), len(self.main["games"]))
         self.assertEqual(set(merged["games"][0]["picks"]), set(merged["players"]))
         self.assertEqual(merged["progress"][0]["correct"]["Alice [Sub]"], self.sub["progress"][0]["correct"]["Alice"])
-        self.assertEqual([row["correctPlayoff"] for row in merged["playoffStandings"]], [4, 2])
+        self.assertEqual([row["correctPlayoff"] for row in merged["playoffStandings"]], [4])
+        self.assertEqual(merged["playoffHistoryScope"], "main")
         self.assertEqual(merged["careers"][0]["player"], self.main["careers"][0]["player"] + " [Main]")
         self.assertTrue(merged["history"][-1]["player"].endswith("[Sub]"))
         self.assertTrue(merged["seasons"][0]["season"].endswith("[Main]"))
@@ -68,11 +69,25 @@ class GroupTests(unittest.TestCase):
             with self.subTest(field=field), self.assertRaises(GroupError):
                 combine_snapshots(self.main, broken)
 
-    def test_optional_playoff_data_does_not_claim_subgroup_totals(self):
+    def test_absent_subgroup_playoff_history_is_expected(self):
         self.sub["playoffStandings"] = None
         merged = combine_snapshots(self.main, self.sub)
         self.assertEqual(len(merged["playoffStandings"]), 1)
-        self.assertIn("Subgroup", merged["playoffStandingsError"])
+        self.assertNotIn("playoffStandingsError", merged)
+
+    def test_main_playoff_history_failure_is_still_reported(self):
+        self.main["playoffStandings"] = None
+        self.main["playoffStandingsError"] = "Couldn’t load all-time playoff standings from the history spreadsheet."
+        merged = combine_snapshots(self.main, self.sub)
+        self.assertIsNone(merged["playoffStandings"])
+        self.assertEqual(merged["playoffStandingsError"], self.main["playoffStandingsError"])
+
+    def test_subgroup_does_not_display_inherited_playoff_totals(self):
+        self.sub["group"] = "sub"
+        self.assertEqual(playoffs.playoff_standings(self.sub), [])
+        self.sub.pop("group")
+        self.sub["playoffHistoryScope"] = "none"
+        self.assertEqual(playoffs.playoff_standings(self.sub), [])
 
     def test_sub_workbook_routes_history_without_inheriting_main_history(self):
         env = {"MBCC_CHALLENGE_SHEET_ID": "main", "MBCC_HISTORY_SHEET_ID": "main-history",
@@ -96,13 +111,16 @@ class GroupTests(unittest.TestCase):
             return io.BytesIO(json.dumps({"valueRanges": [{"values": tables[name.strip("'")]}
                                                          for name in query["ranges"]]}).encode())
         env = {"MBCC_SUB_CHALLENGE_SHEET_ID": "sub-file", "MBCC_HISTORY_SHEET_ID": "main-history",
-               "MBCC_PLAYOFF_HISTORY_ENABLED": "1", "MBCC_LIVE_SCORES_ENABLED": "0"}
+               "MBCC_PLAYOFF_HISTORY_ENABLED": "1", "MBCC_LIVE_SCORES_ENABLED": "0",
+               "MBCC_SUB_PLAYOFF_HISTORY_SHEET_ID": "obsolete-setting-must-not-be-read"}
         with patch.dict(os.environ, env, clear=True), \
                 patch("google.auth.default", return_value=(Mock(token="test-token"), None)), \
                 patch.object(server, "urlopen", side_effect=read) as fetch:
             snapshot = server.fetch_snapshot("sub")
         self.assertEqual(snapshot["group"], "sub")
         self.assertIsNone(snapshot["playoffStandings"])
+        self.assertEqual(snapshot["playoffHistoryScope"], "none")
+        self.assertNotIn("playoffStandingsError", snapshot)
         self.assertEqual(fetch.call_count, 1)
 
     def test_group_caches_are_independent_and_combined_reuses_them(self):
@@ -149,6 +167,17 @@ class GroupTests(unittest.TestCase):
         with patch.object(data, "urlopen", side_effect=error):
             with self.assertRaisesRegex(data.SnapshotError, "Subgroup not configured"):
                 data.fetch_api(data.DEFAULT_ENDPOINT)
+
+    def test_backend_failures_identify_the_requested_group_without_leaking_response_details(self):
+        for group, label in data.GROUP_LABELS.items():
+            endpoint = data.group_endpoint(data.DEFAULT_ENDPOINT, group)
+            error = HTTPError(endpoint, 502, "Bad Gateway", {}, io.BytesIO(b'private upstream details'))
+            with self.subTest(group=group), patch.object(data, "urlopen", side_effect=error):
+                with self.assertRaises(data.SnapshotError) as caught:
+                    data.fetch_api(endpoint)
+                self.assertIn(label.lower(), str(caught.exception))
+                self.assertIn("HTTP 502", str(caught.exception))
+                self.assertNotIn("private", str(caught.exception))
 
 
 if __name__ == "__main__":

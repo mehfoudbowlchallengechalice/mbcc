@@ -82,10 +82,10 @@ def combine_snapshots(main, sub):
     # labels distinct instead of inventing a combined historical championship.
     combined["seasons"] = [dict(row, season=f'{row["season"]} [{label}]')
                            for snapshot, label in ((main, "Main"), (sub, "Sub")) for row in snapshot["seasons"]]
-    combined["playoffStandings"] = (combined.get("playoffStandings") or []) + (other.get("playoffStandings") or [])
-    missing = [label for snapshot, label in ((main, "Main group"), (sub, "Subgroup"))
-               if snapshot.get("playoffStandings") is None or snapshot.get("playoffStandingsError")]
-    if missing:
-        combined["playoffStandingsError"] = "All-time playoff standings unavailable for: " + ", ".join(missing) + "."
+    # All-time playoff history belongs to the main group only. Missing subgroup
+    # history is expected and must never become a load error or invented zero.
+    combined["playoffHistoryScope"] = "main"
+    if main.get("playoffStandings") is None and not main.get("playoffStandingsError"):
+        combined["playoffStandingsError"] = "All-time playoff standings unavailable for: Main group."
     # The main group's published updates remain the shared news feed.
     return combined

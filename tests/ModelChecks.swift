@@ -14,6 +14,7 @@ struct ModelChecks {
         precondition(snapshot.todaysUpdate == nil) // Compatible with existing servers and caches.
         precondition(snapshot.updatePosts.isEmpty)
         precondition(snapshot.playoffStandings == nil && snapshot.rankedPlayoffStandings.isEmpty)
+        precondition(snapshot.tracksPlayoffHistory && !snapshot.mainGroupPlayoffHistoryOnly)
         var historyTotals = try JSONSerialization.jsonObject(with: original) as! [String: Any]
         historyTotals["playoffStandings"] = [
             ["player": "Zoe", "correctPlayoff": 3, "correctUnknownPlayoff": 1],
@@ -25,6 +26,26 @@ struct ModelChecks {
         let allTime = try decode(historyTotals).rankedPlayoffStandings
         precondition(allTime.map(\.player) == ["Alice", "Bob", "Zoe", "Zero", "Missing"])
         precondition(allTime.last?.correctPlayoff == nil)
+        var subgroupHistory = historyTotals
+        subgroupHistory["group"] = "sub"
+        subgroupHistory["playoffStandingsError"] = "Old backend could not load history"
+        let subgroup = try decode(subgroupHistory)
+        precondition(!subgroup.tracksPlayoffHistory && !subgroup.playoffHistoryUnavailable)
+        precondition(subgroup.rankedPlayoffStandings.isEmpty)
+        subgroupHistory.removeValue(forKey: "group")
+        subgroupHistory["playoffHistoryScope"] = "none"
+        let explicitScope = try decode(subgroupHistory)
+        precondition(!explicitScope.tracksPlayoffHistory)
+        var combinedHistory = historyTotals
+        combinedHistory["group"] = "default+sub"
+        combinedHistory["playoffStandingsError"] = "All-time playoff standings unavailable for: Subgroup."
+        let combined = try decode(combinedHistory)
+        precondition(combined.tracksPlayoffHistory && combined.mainGroupPlayoffHistoryOnly)
+        precondition(!combined.playoffHistoryUnavailable)
+        precondition(combined.rankedPlayoffStandings.count == allTime.count)
+        combinedHistory["playoffStandingsError"] = "Main-group history failed"
+        let failedMainHistory = try decode(combinedHistory)
+        precondition(failedMainHistory.playoffHistoryUnavailable)
         // The app-wide player setting follows the web filter and preserves
         // source snapshots, game results, and historical playoff totals.
         var filterObject = try JSONSerialization.jsonObject(with: original) as! [String: Any]

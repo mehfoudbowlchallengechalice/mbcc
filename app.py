@@ -315,8 +315,16 @@ def live_view(snapshot, zone):
 def bracket_view(snapshot, zone, *, source, users_loaded):
     bracket_games_view(snapshot, zone)
     st.subheader("All-time playoff standings")
-    if snapshot.get("playoffStandingsError"):
-        error = snapshot["playoffStandingsError"]
+    if snapshot.get("group") == "sub" or snapshot.get("playoffHistoryScope") == "none":
+        st.info("All-time playoff history is not tracked for the subgroup.")
+        return
+    combined = snapshot.get("group") == "default+sub"
+    if combined:
+        st.caption("Main-group history only. The subgroup does not track all-time playoff history.")
+    error = snapshot.get("playoffStandingsError")
+    # Older group-aware backends reported the intentionally absent subgroup
+    # history as an error. Keep their valid main-group totals visible as well.
+    if error and not (combined and error == "All-time playoff standings unavailable for: Subgroup."):
         st.warning(error if isinstance(error, str) and error.startswith(("playoff_picks ", "All-time playoff standings unavailable for: "))
                    else "Couldn’t load all-time playoff standings from the history spreadsheet.")
         if not snapshot.get("playoffStandings"):

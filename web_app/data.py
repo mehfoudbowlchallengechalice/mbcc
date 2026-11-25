@@ -122,6 +122,10 @@ def fetch_api(endpoint):
         with urlopen(request, timeout=20) as response:
             payload = response.read(16 * 1024 * 1024 + 1)
     except HTTPError as error:
+        if 500 <= error.code < 600:
+            group = parse_qs(urlsplit(endpoint).query).get("group", ["default"])[0]
+            label = GROUP_LABELS.get(group, "Selected group").lower()
+            raise SnapshotError(f"The MBCC backend couldn’t load {label} (HTTP {error.code}). Check that group’s spreadsheet settings and backend logs.") from None
         if error.code == 409:
             try:
                 message = json.loads(error.read(4096)).get("error")

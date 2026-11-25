@@ -34,6 +34,8 @@ def playoff_games(snapshot):
 
 
 def playoff_standings(snapshot):
+    if snapshot.get("group") == "sub" or snapshot.get("playoffHistoryScope") == "none":
+        return []
     return sorted(snapshot.get("playoffStandings") or [], key=lambda row: (
         -(row["correctPlayoff"] if row.get("correctPlayoff") is not None else -1),
         -(row["correctUnknownPlayoff"] if row.get("correctUnknownPlayoff") is not None else -1),

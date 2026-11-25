@@ -16,6 +16,8 @@ struct Snapshot: Codable {
     let updates: [DailyUpdate]?
     var playoffStandings: [PlayoffStanding]?
     let playoffStandingsError: String?
+    let group: String?
+    let playoffHistoryScope: String?
     var updatePosts: [DailyUpdate] { updates ?? todaysUpdate.map { [$0] } ?? [] }
     var hasLiveGameSource: Bool { gamesSource == "live_scores_and_games" }
 
@@ -50,8 +52,16 @@ struct Snapshot: Codable {
         return filtered
     }
 
+    var tracksPlayoffHistory: Bool { group != "sub" && playoffHistoryScope != "none" }
+    var mainGroupPlayoffHistoryOnly: Bool { group == "default+sub" }
+    var playoffHistoryUnavailable: Bool {
+        guard tracksPlayoffHistory, let error = playoffStandingsError else { return false }
+        return !(mainGroupPlayoffHistoryOnly && error == "All-time playoff standings unavailable for: Subgroup.")
+    }
+
     var rankedPlayoffStandings: [PlayoffStanding] {
-        (playoffStandings ?? []).sorted {
+        guard tracksPlayoffHistory else { return [] }
+        return (playoffStandings ?? []).sorted {
             if $0.correctPlayoff != $1.correctPlayoff { return ($0.correctPlayoff ?? -1) > ($1.correctPlayoff ?? -1) }
             if $0.correctUnknownPlayoff != $1.correctUnknownPlayoff { return ($0.correctUnknownPlayoff ?? -1) > ($1.correctUnknownPlayoff ?? -1) }
             return $0.player.lowercased() < $1.player.lowercased()

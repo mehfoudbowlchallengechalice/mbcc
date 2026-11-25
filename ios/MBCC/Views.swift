@@ -241,7 +241,8 @@ struct PlayoffBracketView: View {
                             }
                         }
                     }
-                    PlayoffStandingsTable(standings: data.rankedPlayoffStandings, unavailable: data.playoffStandingsError != nil)
+                    PlayoffStandingsTable(standings: data.rankedPlayoffStandings, unavailable: data.playoffHistoryUnavailable,
+                                          tracksHistory: data.tracksPlayoffHistory, mainGroupOnly: data.mainGroupPlayoffHistoryOnly)
                     updatedLabel(data)
                 }.padding(20)
             }.refreshable { await store.refresh() }
@@ -255,6 +256,8 @@ struct PlayoffBracketView: View {
 private struct PlayoffStandingsTable: View {
     let standings: [PlayoffStanding]
     let unavailable: Bool
+    let tracksHistory: Bool
+    let mainGroupOnly: Bool
     @State private var sortColumn = SortColumn.playoff
     @State private var ascending = false
 
@@ -283,7 +286,13 @@ private struct PlayoffStandingsTable: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             SectionHeading(title: "All-time playoff standings")
-            if unavailable {
+            if mainGroupOnly && tracksHistory {
+                Text("Main-group history only. The subgroup does not track all-time playoff history.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+            if !tracksHistory {
+                EmptyCard(title: "No subgroup playoff history", message: "All-time playoff history is not tracked for the subgroup.")
+            } else if unavailable {
                 EmptyCard(title: "Couldn’t load all-time playoff standings", message: "Pull to refresh and try again.")
             } else if standings.isEmpty {
                 EmptyCard(title: "All-time playoff standings aren’t available yet", message: "Check back for historical playoff results.")

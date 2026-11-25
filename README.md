@@ -74,9 +74,13 @@ awards stay with their original group, and season aggregate rows are labeled
 by group. The main group's updates supply the combined news feed. Incompatible
 seasons, schedules, results, or trackers show a message instead of a partial merge.
 
-Subgroup playoff totals are optional: set `MBCC_SUB_PLAYOFF_HISTORY_SHEET_ID`
-to its workbook containing `playoff_picks`. Main-group playoff totals are never
-copied into the subgroup. `MBCC_SUB_UPDATES_ENABLED=1` enables a subgroup
+The subgroup does not track all-time playoff history and needs no
+`playoff_history` / `playoff_picks` worksheet. The API skips that read, and both
+apps explain that this history is not tracked rather than showing a load error.
+In the combined view, all-time playoff standings show main-group history only,
+with a caption identifying that scope. Main-group playoff totals are never
+copied into the subgroup. Any old `MBCC_SUB_PLAYOFF_HISTORY_SHEET_ID` setting is
+ignored. `MBCC_SUB_UPDATES_ENABLED=1` enables a subgroup
 `todays_update` tab; it defaults to off. Optional `MBCC_SUB_SEASON` and
 `MBCC_SUB_WORKSHEET_TITLES` override the main backend's season and tab mapping.
 `MBCC_GROUP_KEYWORD` or `[mbcc].group_keyword` sets Streamlit's initial selection.

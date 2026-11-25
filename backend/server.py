@@ -115,12 +115,14 @@ def fetch_snapshot(group="default"):
     season = os.environ.get("MBCC_SEASON", "MBCC 15 · 2026–27")
     snapshot = build_snapshot(tables, season=os.environ.get("MBCC_SUB_SEASON", season) if group == "sub" else season)
     snapshot["group"] = group
+    snapshot["playoffHistoryScope"] = "none" if group == "sub" else "main"
     if group == "sub":
-        playoff_id = os.environ.get("MBCC_SUB_PLAYOFF_HISTORY_SHEET_ID", "").strip()
-        playoff_enabled = bool(playoff_id)
-    else:
-        playoff_id = os.environ.get("MBCC_PLAYOFF_HISTORY_SHEET_ID") or DEFAULT_PLAYOFF_HISTORY_SHEET_ID
-        playoff_enabled = os.environ.get("MBCC_PLAYOFF_HISTORY_ENABLED", "0") == "1"
+        # The subgroup does not track all-time playoff history. Even an old
+        # optional subgroup playoff setting must not trigger a workbook read.
+        snapshot["playoffStandings"] = None
+        return snapshot
+    playoff_id = os.environ.get("MBCC_PLAYOFF_HISTORY_SHEET_ID") or DEFAULT_PLAYOFF_HISTORY_SHEET_ID
+    playoff_enabled = os.environ.get("MBCC_PLAYOFF_HISTORY_ENABLED", "0") == "1"
     if playoff_enabled:
         try:
             playoff_tables = read_worksheets(playoff_id,
