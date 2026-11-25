@@ -147,7 +147,7 @@ struct LiveView: View {
                                 PlayerAvatar(player: leader.player)
                                 VStack(alignment: .leading, spacing: 3) {
                                     Text("SETTING THE PACE").font(.caption2.bold()).foregroundStyle(Theme.orange)
-                                    Text(leader.player.groupDisplayName).font(.headline)
+                                    PlayerName(player: leader.player).font(.headline)
                                 }
                                 Spacer()
                                 VStack(alignment: .trailing, spacing: 3) {
@@ -206,7 +206,7 @@ struct PlayoffBracketView: View {
                     } else {
                         Picker("Show picks for", selection: $player) {
                             Text("Results only").tag(nil as String?)
-                            ForEach(data.players, id: \.self) { Text($0.groupDisplayName).tag(Optional($0)) }
+                            ForEach(data.players, id: \.self) { PlayerName(player: $0).tag(Optional($0)) }
                         }.pickerStyle(.menu)
                         Text("\(games.filter(\.isFinal).count) of \(games.count) playoff games complete · Swipe sideways to see every round.")
                             .font(.caption).foregroundStyle(.secondary)
@@ -248,7 +248,7 @@ struct PlayoffBracketView: View {
                         }
                     }
                     PlayoffStandingsTable(standings: data.rankedPlayoffStandings, unavailable: data.playoffHistoryUnavailable,
-                                          tracksHistory: data.tracksPlayoffHistory, mainGroupOnly: data.mainGroupPlayoffHistoryOnly)
+                                          tracksHistory: data.tracksPlayoffHistory)
                     updatedLabel(data)
                 }.padding(20)
             }.refreshable { await store.refresh() }
@@ -269,7 +269,6 @@ private struct PlayoffStandingsTable: View {
     let standings: [PlayoffStanding]
     let unavailable: Bool
     let tracksHistory: Bool
-    let mainGroupOnly: Bool
     @State private var sortColumn = SortColumn.playoff
     @State private var ascending = false
 
@@ -298,12 +297,8 @@ private struct PlayoffStandingsTable: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             SectionHeading(title: "All-time playoff standings")
-            if mainGroupOnly && tracksHistory {
-                Text("Main-group history only. The subgroup does not track all-time playoff history.")
-                    .font(.caption).foregroundStyle(.secondary)
-            }
             if !tracksHistory {
-                EmptyCard(title: "No subgroup playoff history", message: "All-time playoff history is not tracked for the subgroup.")
+                EmptyCard(title: "No playoff history", message: "All-time playoff history is not tracked for these results.")
             } else if unavailable {
                 EmptyCard(title: "Couldn’t load all-time playoff standings", message: "Pull to refresh and try again.")
             } else if standings.isEmpty {
@@ -320,7 +315,7 @@ private struct PlayoffStandingsTable: View {
                     Divider()
                     ForEach(entries) { entry in
                         HStack(alignment: .firstTextBaseline, spacing: 10) {
-                            Text(entry.player.groupDisplayName).fontWeight(.semibold)
+                            PlayerName(player: entry.player)
                                 .fixedSize(horizontal: false, vertical: true)
                                 .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
                             Text(entry.correctPlayoff.map(String.init) ?? "—")
@@ -469,7 +464,7 @@ struct GameDetailView: View {
                     ForEach(players.filter { selected.contains($0) }, id: \.self) { player in
                         HStack {
                             PlayerAvatar(player: player)
-                            Text(player.groupDisplayName).font(.subheadline)
+                            PlayerName(player: player).font(.subheadline)
                             Spacer(minLength: 10)
                             VStack(alignment: .trailing, spacing: 3) {
                                 Text(game.picks[player] ?? "No pick").font(.subheadline.weight(.semibold)).multilineTextAlignment(.trailing)
@@ -515,7 +510,7 @@ struct StandingsView: View {
                                 Text(String(rank)).font(.headline.monospacedDigit()).foregroundStyle(rank == 1 ? Theme.orange : .secondary).frame(minWidth: 20)
                                 PlayerAvatar(player: entry.player)
                                 VStack(alignment: .leading, spacing: 4) {
-                                    Text(entry.player.groupDisplayName).font(.headline)
+                                    PlayerName(player: entry.player).font(.headline)
                                     Text(margin ? "\(entry.correct) correct picks" : "Correct picks")
                                         .font(.caption).foregroundStyle(.secondary)
                                 }
@@ -558,7 +553,7 @@ struct SeasonView: View {
                         SectionHeading(title: "Correct picks")
                         if selected.isEmpty { Text("Choose players to see the charts.").foregroundStyle(.secondary) }
                         else {
-                            CorrectPicksChart(standings: data.standings.filter { selected.contains($0.player) })
+                            CorrectPicksChart(standings: data.standings.filter { selected.contains($0.player) }, viewer: data.personalizedPlayer)
                         }
                     }
                     Picker("Progress metric", selection: $margin) {
@@ -575,6 +570,7 @@ struct SeasonView: View {
                                         if let value = (margin ? point.pointDifference : point.correct)[player] {
                                             LineMark(x: .value("Game", point.gameIndex), y: .value("Score", value))
                                                 .foregroundStyle(by: .value("Player", player))
+                                                .lineStyle(StrokeStyle(lineWidth: player == data.personalizedPlayer ? 4 : data.personalizedPlayer == nil ? 2.5 : 1.8))
                                                 .accessibilityLabel(player.groupDisplayName)
                                         }
                                     }
@@ -588,7 +584,7 @@ struct SeasonView: View {
                                             HStack(spacing: 5) {
                                                 Circle().fill(Theme.playerColors[index % Theme.playerColors.count])
                                                     .frame(width: 8, height: 8)
-                                                Text(name.groupDisplayName).font(.caption)
+                                                PlayerName(player: name).font(.caption)
                                             }
                                         }
                                     }
@@ -601,7 +597,7 @@ struct SeasonView: View {
                     SectionHeading(title: "Elimination check", caption: "Who can still reach the top?")
                     Card {
                         Picker("Player", selection: $player) {
-                            ForEach(data.players, id: \.self) { Text($0.groupDisplayName).tag($0) }
+                            ForEach(data.players, id: \.self) { PlayerName(player: $0).tag($0) }
                         }.pickerStyle(.menu)
                         if !player.isEmpty {
                             let result = data.elimination(for: player)
@@ -611,7 +607,7 @@ struct SeasonView: View {
                             Text("\(result.best) correct picks in \(player.groupDisplayName)’s best case").font(.subheadline)
                             ForEach(result.comparisons) { comparison in
                                 HStack {
-                                    Text(comparison.player.groupDisplayName)
+                                    PlayerName(player: comparison.player)
                                     Spacer()
                                     Text(String(comparison.correct)).monospacedDigit()
                                 }.font(.subheadline).foregroundStyle(comparison.player == player ? .primary : .secondary)
@@ -625,11 +621,11 @@ struct SeasonView: View {
                             Grid(alignment: .leading, horizontalSpacing: 18, verticalSpacing: 12) {
                                 GridRow {
                                     Text("Best case for ↓").font(.caption.bold())
-                                    ForEach(data.players, id: \.self) { Text($0.groupDisplayName).font(.caption.bold()) }
+                                    ForEach(data.players, id: \.self) { PlayerName(player: $0).font(.caption) }
                                 }
                                 ForEach(data.players, id: \.self) { candidate in
                                     GridRow {
-                                        Text(candidate.groupDisplayName).font(.caption.bold())
+                                        PlayerName(player: candidate).font(.caption)
                                         ForEach(data.elimination(for: candidate).comparisons) { item in
                                             Text(String(item.correct)).font(.caption.monospacedDigit())
                                         }
@@ -662,7 +658,7 @@ struct HistoryView: View {
                     Card {
                         Picker("Player", selection: $player) {
                             Text("All Players").tag("All Players")
-                            ForEach(players, id: \.self) { Text($0.groupDisplayName).tag($0) }
+                            ForEach(players, id: \.self) { PlayerName(player: $0).tag($0) }
                         }
                         Toggle("Show more than winners", isOn: $moreThanWinners)
                     }.font(.subheadline)
@@ -683,7 +679,7 @@ struct HistoryView: View {
                                 Text(entry.award).font(.caption).foregroundStyle(.secondary)
                             }
                             HStack {
-                                Text(entry.player.groupDisplayName).font(.title3.bold())
+                                PlayerName(player: entry.player).font(.title3)
                                 Spacer()
                                 Text(entry.percentage.percentText).font(.title3.bold().monospacedDigit())
                             }
@@ -694,7 +690,7 @@ struct HistoryView: View {
                     Card {
                         ForEach(data.careers.filter { player == "All Players" || player == $0.player }) { career in
                             HStack {
-                                Text(career.player.groupDisplayName).font(.subheadline.bold())
+                                PlayerName(player: career.player).font(.subheadline)
                                 Spacer()
                                 VStack(alignment: .trailing, spacing: 3) {
                                     Text(career.percentage.percentText).font(.headline.monospacedDigit())
@@ -894,12 +890,9 @@ struct ConnectionView: View {
                         .focused($focusedField, equals: .keyword).submitLabel(.done)
                         .onSubmit { focusedField = nil }.accessibilityIdentifier("groupKeyword")
                 } header: {
-                    Text("Group keyword")
+                    Text("Keyword")
                 } footer: {
                     Text("Applies to every tab and game details.")
-                    if demo {
-                        Text("The bundled demo contains only the main group.")
-                    }
                 }
                 Section {
                     Toggle("Current players only", isOn: $store.currentPlayersOnly)
@@ -948,16 +941,22 @@ private func updatedLabel(_ data: Snapshot) -> some View {
 
 private struct CorrectPicksChart: View {
     let standings: [Standing]
+    let viewer: String?
     var body: some View {
         Chart(standings) { entry in
             BarMark(x: .value("Correct", entry.correct), y: .value("Player", entry.player))
                 .foregroundStyle(Theme.orange)
+                .annotation(position: .trailing) {
+                    if entry.player == viewer { Text(entry.correct, format: .number).font(.caption.bold()) }
+                }
                 .accessibilityLabel(entry.player.groupDisplayName)
         }
         .chartYAxis {
             AxisMarks { value in
                 AxisValueLabel {
-                    if let name = value.as(String.self) { Text(name.groupDisplayName) }
+                    if let name = value.as(String.self) {
+                        PlayerName(player: name).fontWeight(name == viewer ? .bold : .regular)
+                    }
                 }
             }
         }

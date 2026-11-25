@@ -1,6 +1,7 @@
 """Exercise real Streamlit screens without Google access or a running backend."""
 import copy
 import importlib.util
+import json
 import os
 import unittest
 from datetime import datetime, timezone
@@ -98,6 +99,40 @@ class StreamlitAppTests(unittest.TestCase):
         self.assert_clean()
         self.assertFalse(self.app.warning)
         self.assertEqual(self.app.session_state["source_identity"][-1], data.keyword_identity("incorrect-private-value"))
+
+    def test_group_indicators_are_hidden_on_every_screen(self):
+        for group in ("default", "sub", "default+sub"):
+            self.snapshot["group"] = group
+            st.cache_data.clear()
+            for page in ("Live", "Standings", "Bracket", "Season", "History", "Info"):
+                self.page(page)
+                visible = self.text() + "\n" + "\n".join(item.value for kind in (self.app.caption, self.app.info, self.app.warning) for item in kind)
+                self.assertNotRegex(visible.lower(), r"main[- ]group|subgroup|\[main\]|\[sub\]")
+
+    def test_personal_player_is_emphasized_in_lists_tables_and_charts(self):
+        self.snapshot["viewerPlayer"] = "Christopher"
+        self.snapshot["playoffStandings"] = [
+            {"player": "Christopher", "correctPlayoff": 4, "correctUnknownPlayoff": 1},
+            {"player": "Nicholas", "correctPlayoff": 5, "correctUnknownPlayoff": 2},
+        ]
+        st.cache_data.clear()
+        for page in ("Standings", "History", "Info"):
+            self.page(page)
+            if page == "History":
+                self.app.toggle(key="history_more").set_value(True).run()
+            self.assertIn('class="player-name selected-player">Christopher</span>', self.text())
+            self.assertIn('class="player-name other-player">Nicholas</span>', self.text())
+        self.page("Season")
+        charts = self.app.get("arrow_vega_lite_chart")
+        progress = json.loads(charts[1].proto.spec)
+        widths = progress["encoding"]["strokeWidth"]
+        self.assertEqual(widths["condition"]["value"], 4)
+        self.assertIn("Christopher", widths["condition"]["test"])
+        self.assertLess(widths["value"], widths["condition"]["value"])
+        self.page("Bracket")
+        styles = self.app.dataframe[0].proto.styler.styles
+        self.assertIn("font-weight: bold", styles)
+        self.assertEqual(set(self.playoff_users()), {"Christopher", "Nicholas"})
         self.assertNotIn("incorrect-private-value", self.text())
 
     def test_navigation_scores_charts_filters_history_and_trophy_cabinet(self):
@@ -361,7 +396,7 @@ class StreamlitAppTests(unittest.TestCase):
             self.app.text_input(key="group_keyword").set_value("default+sub").run()
             self.page("Bracket")
         self.assertFalse(self.app.warning)
-        self.assertTrue(any("Main-group history only" in caption.value for caption in self.app.caption))
+        self.assertFalse(any("Main-group" in caption.value for caption in self.app.caption))
         self.assertEqual(self.playoff_users(), ["Christopher"])
 
     def test_subgroup_playoff_history_is_not_expected_even_from_an_older_backend(self):
@@ -375,7 +410,7 @@ class StreamlitAppTests(unittest.TestCase):
             self.page("Bracket")
         self.assertFalse(self.app.warning)
         self.assertFalse(self.app.dataframe)
-        self.assertTrue(any("not tracked for the subgroup" in item.value for item in self.app.info))
+        self.assertTrue(any("not tracked for these results" in item.value for item in self.app.info))
 
     def test_combined_older_backend_subgroup_history_warning_is_suppressed(self):
         main = copy.deepcopy(self.snapshot)

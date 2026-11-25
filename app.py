@@ -28,8 +28,13 @@ def esc(value):
     return html.escape(str(value), quote=True)
 
 
-def name_label(value):
-    return esc(data.display_name(value))
+def name_label(value, snapshot=None):
+    label = esc(data.display_name(value))
+    viewer = data.viewer_player(snapshot) if snapshot else None
+    if not viewer:
+        return label
+    style = "selected-player" if value == viewer else "other-player"
+    return f'<span class="player-name {style}">{label}</span>'
 
 
 def setting(name, default=None):
@@ -88,8 +93,8 @@ def settings():
     if st.session_state.get("data_source") not in (None, *sources):
         st.session_state.data_source = "iPhone backend"
     with st.sidebar:
-        st.header("Groups")
-        keyword = st.text_input("Group keyword", value=setting("mbcc_group_keyword", ""), key="group_keyword",
+        st.header("Preferences")
+        keyword = st.text_input("Keyword", value=setting("mbcc_group_keyword", ""), key="group_keyword",
                                 type="password", placeholder="Enter keyword")
         st.divider()
         st.header("Player filters")
@@ -282,7 +287,7 @@ def game_view(snapshot, identifier, zone):
             if data.is_final(game) and pick:
                 correct = pick == game["winner"]
                 result = f'<span class="pick-result {"correct" if correct else "incorrect"}">{"✓ Correct" if correct else "✕ Incorrect"}</span>'
-            st.markdown(f'<div class="list-row">{avatar(player)}<strong>{name_label(player)}</strong><div class="row-value">{esc(pick or "No pick")}{result}</div></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="list-row">{avatar(player)}<strong>{name_label(player, snapshot)}</strong><div class="row-value">{esc(pick or "No pick")}{result}</div></div>', unsafe_allow_html=True)
 
 
 def live_view(snapshot, zone):
@@ -306,7 +311,7 @@ def live_view(snapshot, zone):
     if standings:
         leader = standings[0]
         with card("leader"):
-            st.markdown(f'<div class="list-row">{avatar(leader["player"])}<div><p class="eyebrow">SETTING THE PACE</p><strong>{name_label(leader["player"])}</strong></div><div class="row-value"><strong class="large-score">{leader["correct"]}</strong> <span class="muted">({esc(data.score(leader["overallScore"]))})</span><small>correct picks</small></div></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="list-row">{avatar(leader["player"])}<div><p class="eyebrow">SETTING THE PACE</p><strong>{name_label(leader["player"], snapshot)}</strong></div><div class="row-value"><strong class="large-score">{leader["correct"]}</strong> <span class="muted">({esc(data.score(leader["overallScore"]))})</span><small>correct picks</small></div></div>', unsafe_allow_html=True)
     st.subheader("The games")
     viewer = data.viewer_player(snapshot)
     st.caption(f"Picks for {data.display_name(viewer)}" if viewer else "Scores and everyone’s picks, in one place.")
@@ -331,16 +336,14 @@ def bracket_view(snapshot, zone, *, source, users_loaded):
     bracket_games_view(snapshot, zone)
     st.subheader("All-time playoff standings")
     if snapshot.get("group") == "sub" or snapshot.get("playoffHistoryScope") == "none":
-        st.info("All-time playoff history is not tracked for the subgroup.")
+        st.info("All-time playoff history is not tracked for these results.")
         return
     combined = snapshot.get("group") == "default+sub"
-    if combined:
-        st.caption("Main-group history only. The subgroup does not track all-time playoff history.")
     error = snapshot.get("playoffStandingsError")
     # Older group-aware backends reported the intentionally absent subgroup
     # history as an error. Keep their valid main-group totals visible as well.
     if error and not (combined and error == "All-time playoff standings unavailable for: Subgroup."):
-        st.warning(error if isinstance(error, str) and error.startswith(("playoff_picks ", "All-time playoff standings unavailable for: "))
+        st.warning(error if isinstance(error, str) and error.startswith("playoff_picks ")
                    else "Couldn’t load all-time playoff standings from the history spreadsheet.")
         if not snapshot.get("playoffStandings"):
             return
@@ -366,6 +369,10 @@ def bracket_view(snapshot, zone, *, source, users_loaded):
     # its native numeric sorting, resizing, and fullscreen controls.
     frame.columns = pd.MultiIndex.from_tuples([
         ("", "User"), ("Correct playoff", "games"), ("Correct unknown", "playoff games")])
+    viewer = data.viewer_player(snapshot)
+    if viewer:
+        selected_rows = [row["player"] == viewer for row in rows]
+        frame = frame.style.apply(lambda row: ["font-weight: bold" if selected_rows[row.name] else "font-weight: normal"] * len(row), axis=1)
     st.dataframe(frame, hide_index=True, width="stretch", row_height=38,
                  height=min(66 + len(rows) * 38, 640), key="playoff_standings_table",
                  column_config={
@@ -450,7 +457,7 @@ def standings_view(snapshot):
             else:
                 value = f'{entry["correct"]} <span class="secondary-score">({esc(data.score(entry["overallScore"]))})</span>'
                 subtitle = "Correct picks"
-            st.markdown(f'<div class="list-row"><span class="rank {"leading" if rank == 1 else ""}">{rank}</span>{avatar(entry["player"])}<div><strong>{name_label(entry["player"])}</strong><small>{subtitle}</small></div><div class="row-value large-score">{value}</div></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="list-row"><span class="rank {"leading" if rank == 1 else ""}">{rank}</span>{avatar(entry["player"])}<div><strong>{name_label(entry["player"], snapshot)}</strong><small>{subtitle}</small></div><div class="row-value large-score">{value}</div></div>', unsafe_allow_html=True)
     st.caption("Points gained in wins, minus points lost in losses, for each player’s picks." if margin else "Correct picks are the official score. The smaller value in parentheses is the MBCC score from the spreadsheet.")
 
 
@@ -461,15 +468,19 @@ def chart_theme(chart):
 def season_view(snapshot):
     st.subheader("How the season unfolds")
     selected = player_filter(snapshot, "season_players")
+    viewer = data.viewer_player(snapshot)
     labels = {player: data.display_name(player) for player in snapshot["players"]}
     label_expression = f'({json.dumps(labels)})[datum.label] || datum.label'
-    color = alt.Color("player:N", scale=alt.Scale(domain=snapshot["players"], range=COLORS), legend=alt.Legend(title=None, labelExpr=label_expression))
+    label_weight = alt.ExprRef(expr=f"datum.value === {json.dumps(viewer)} ? 'bold' : 'normal'") if viewer else "normal"
+    color = alt.Color("player:N", scale=alt.Scale(domain=snapshot["players"], range=COLORS), legend=alt.Legend(title=None, labelExpr=label_expression, labelFontWeight=label_weight))
     with card("correct_chart"):
         st.subheader("Correct picks")
         rows = [dict(row, playerLabel=data.display_name(row["player"])) for row in snapshot["standings"] if row["player"] in selected]
         if rows:
             chart = alt.Chart(pd.DataFrame(rows)).mark_bar(cornerRadiusTopLeft=4, cornerRadiusTopRight=4).encode(
-                x=alt.X("player:N", title=None, sort=selected, axis=alt.Axis(labelExpr=label_expression)), y=alt.Y("correct:Q", title="Correct picks", axis=alt.Axis(tickMinStep=1)),
+                x=alt.X("player:N", title=None, sort=selected, axis=alt.Axis(labelExpr=label_expression, labelFontWeight=label_weight)), y=alt.Y("correct:Q", title="Correct picks", axis=alt.Axis(tickMinStep=1)),
+                stroke=alt.condition(alt.datum.player == viewer, alt.value("#172432"), alt.value("transparent")),
+                strokeWidth=alt.condition(alt.datum.player == viewer, alt.value(2.5), alt.value(0)),
                 color=color, tooltip=[alt.Tooltip("playerLabel:N", title="Player"), alt.Tooltip("correct:Q", title="Correct picks")]).properties(height=240)
             st.altair_chart(chart_theme(chart), use_container_width=True)
         else:
@@ -485,6 +496,7 @@ def season_view(snapshot):
             chart = alt.Chart(pd.DataFrame(points)).mark_line(point=True).encode(
                 x=alt.X("game:Q", title="Games completed", axis=alt.Axis(tickMinStep=1)),
                 y=alt.Y("value:Q", title=metric), color=color,
+                strokeWidth=alt.condition(alt.datum.player == viewer, alt.value(4), alt.value(1.8 if viewer else 2.5)),
                 tooltip=[alt.Tooltip("playerLabel:N", title="Player"), alt.Tooltip("game:Q", title="Game"), alt.Tooltip("value:Q", title=metric)]).properties(height=280)
             st.altair_chart(chart_theme(chart), use_container_width=True)
         else:
@@ -502,12 +514,19 @@ def season_view(snapshot):
         (st.warning if result["eliminated"] else st.success)("Eliminated" if result["eliminated"] else "Not yet eliminated")
         st.write(f'{result["best"]} correct picks in {data.display_name(player)}’s best case')
         for comparison in result["comparisons"]:
-            st.markdown(f'<div class="comparison-row"><span>{name_label(comparison["player"])}</span><strong>{comparison["correct"]}</strong></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="comparison-row"><span>{name_label(comparison["player"], snapshot)}</span><strong>{comparison["correct"]}</strong></div>', unsafe_allow_html=True)
         st.caption("Assumes this player wins every remaining possible pick, then compares the shared picks others would also win. Ties remain alive. Like the iPhone app, this check does not solve every possible playoff bracket.")
     with st.expander("Full elimination matrix"):
         matrix = {name: {row["player"]: row["correct"] for row in data.elimination(snapshot, name)["comparisons"]} for name in snapshot["players"]}
         frame = pd.DataFrame.from_dict(matrix, orient="index").rename_axis("Best case for ↓")
-        st.dataframe(frame.rename(index=data.display_name), width="stretch",
+        viewer = data.viewer_player(snapshot)
+        if viewer:
+            # Style by stable IDs before hiding internal suffixes in labels.
+            frame = frame.style.apply(lambda row: ["font-weight: bold" if row.name == viewer or name == viewer else "font-weight: normal" for name in row.index], axis=1)
+            frame.data.index = frame.data.index.map(data.display_name)
+        else:
+            frame = frame.rename(index=data.display_name)
+        st.dataframe(frame, width="stretch",
                      column_config={name: st.column_config.NumberColumn(label=data.display_name(name)) for name in frame.columns})
 
 
@@ -526,12 +545,12 @@ def history_view(snapshot):
         st.info("No matching results. Try changing the sidebar player filter or showing more than winners.")
     for index, row in enumerate(sorted(entries, key=lambda row: row["season"], reverse=True)):
         with card(f"history_{index}"):
-            st.markdown(f'<div class="comparison-row"><span class="eyebrow">{name_label(row["season"])}</span><span class="small muted">{esc(row["award"])}</span></div><div class="list-row"><strong>{name_label(row["player"])}</strong><strong class="row-value">{row["percentage"]:.1%}</strong></div><p class="small muted">{row["correct"]} correct of {row["games"]} picks</p>', unsafe_allow_html=True)
+            st.markdown(f'<div class="comparison-row"><span class="eyebrow">{name_label(row["season"])}</span><span class="small muted">{esc(row["award"])}</span></div><div class="list-row"><strong>{name_label(row["player"], snapshot)}</strong><strong class="row-value">{row["percentage"]:.1%}</strong></div><p class="small muted">{row["correct"]} correct of {row["games"]} picks</p>', unsafe_allow_html=True)
     st.subheader("Player career breakdown")
     with card("careers"):
         for row in snapshot["careers"]:
             if player == "All Players" or row["player"] == player:
-                st.markdown(f'<div class="list-row"><strong>{name_label(row["player"])}</strong><div class="row-value"><strong>{row["percentage"]:.1%}</strong><small>{row["wins"]} W · {row["losses"]} L</small></div></div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="list-row"><strong>{name_label(row["player"], snapshot)}</strong><div class="row-value"><strong>{row["percentage"]:.1%}</strong><small>{row["wins"]} W · {row["losses"]} L</small></div></div>', unsafe_allow_html=True)
     st.subheader("MBCC season breakdown")
     with card("seasons"):
         for row in sorted(snapshot["seasons"], key=lambda row: row["season"], reverse=True):
@@ -561,7 +580,7 @@ def info_view(snapshot):
         for record in data.championships(snapshot):
             trophies = TROPHY * record["fullWins"] + ''.join(f'<span class="half-trophy">{TROPHY}</span>' for _ in range(record["sharedWins"]))
             description = f'{record["fullWins"]} outright championships, {record["sharedWins"]} shared championships'
-            st.markdown(f'<div class="list-row"><strong>{name_label(record["player"])}</strong><span class="trophy-row row-value" role="img" aria-label="{esc(description)}">{trophies}</span></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="list-row"><strong>{name_label(record["player"], snapshot)}</strong><span class="trophy-row row-value" role="img" aria-label="{esc(description)}">{trophies}</span></div>', unsafe_allow_html=True)
         st.caption("Half trophies mark shared championships. Nicholas and Joseph shared the first MBCC.")
     with card("about_data"):
         st.subheader("About the data")
@@ -584,7 +603,6 @@ def current_screen(source, endpoint, zone, keyword=""):
         return
     if snapshot.get("isDemo") is True:
         st.info("DEMO · Sample results, not real standings")
-    st.caption(data.GROUP_LABELS.get(snapshot.get("group"), "Main group"))
     history_rows = snapshot.get("playoffStandings")
     users_loaded = len(history_rows) if history_rows is not None else None
     snapshot = data.filter_current_players(snapshot, st.session_state.get("current_players_only", True))

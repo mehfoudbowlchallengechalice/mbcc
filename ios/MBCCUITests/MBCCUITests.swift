@@ -112,7 +112,11 @@ final class MBCCUITests: XCTestCase {
             "games": [game("Correct Pick Bowl", "Correct Choice", "Other One", "Correct Choice", "Correct Choice"),
                       game("Incorrect Pick Bowl", "Other Two", "Incorrect Choice", "Incorrect Choice", "Other Two"),
                       game("Pending Pick Bowl", "Pending Choice", "Other Three", "Pending Choice", nil)],
-            "progress": [], "history": [], "careers": [], "seasons": []
+            "progress": [["gameIndex": 1, "correct": ["Alice": 1, "Bob": 2], "pointDifference": ["Alice": 7, "Bob": 14]],
+                         ["gameIndex": 2, "correct": ["Alice": 2, "Bob": 2], "pointDifference": ["Alice": 14, "Bob": 14]]],
+            "history": [["player": "Alice", "season": "2025", "correct": 3, "games": 4, "percentage": 0.75, "award": "Winner", "current": true],
+                        ["player": "Bob", "season": "2025", "correct": 2, "games": 4, "percentage": 0.5, "award": "", "current": true]],
+            "careers": [], "seasons": []
         ]
         app.launchEnvironment["MBCC_TEST_SNAPSHOT"] = String(data: try JSONSerialization.data(withJSONObject: fixture), encoding: .utf8)!
         app.launch()
@@ -126,6 +130,16 @@ final class MBCCUITests: XCTestCase {
         openTab("Standings")
         XCTAssertTrue(app.staticTexts["Alice"].firstMatch.exists)
         XCTAssertTrue(app.staticTexts["Bob"].firstMatch.exists)
+        XCTAssertEqual(app.staticTexts["personalizedPlayerName"].firstMatch.label, "Alice")
+        XCTAssertFalse(app.staticTexts["Main group"].exists)
+        openTab("Season")
+        XCTAssertTrue(app.staticTexts["How the season unfolds"].exists)
+        XCTAssertEqual(app.staticTexts["personalizedPlayerName"].firstMatch.label, "Alice")
+        openTab("History")
+        XCTAssertEqual(app.staticTexts["personalizedPlayerName"].firstMatch.label, "Alice")
+        app.buttons["dataConnection"].tap()
+        XCTAssertTrue(app.secureTextFields["groupKeyword"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.staticTexts["The bundled demo contains only the main group."].exists)
     }
 
     func testCurrentPlayerSettingAppliesToStandingsPlayoffsAndHistory() throws {

@@ -37,7 +37,7 @@ exists; new players without either record use the current season roster.
 History keeps its individual player and winner filters. Season-wide historical
 totals retain the spreadsheet's original aggregate calculations.
 
-In the sidebar's **Groups** settings, enter a masked **Group keyword**. The API
+In the sidebar's **Preferences** settings, enter a masked **Keyword**. The API
 resolves the entry using its runtime configuration:
 
 | Keyword | Results shown |
@@ -59,20 +59,23 @@ Add the nine player variables using their roster names, such as
 case, spaces, punctuation, or accents; the name must identify one current roster
 entry. No list of player codes is hardcoded in either app.
 Everyone remains visible in standings and other screens. The selected player's
-schedule pick is bold, with a solid green underline for a correct final result
+name is bold in standings, game picks, historical records, and the trophy cabinet.
+Their season chart line is thicker, with bold chart labels. The web bar chart
+outlines their bar, and the iPhone bar chart labels their score. Their schedule pick is bold,
+with a solid green underline for a correct final result
 or a dotted gray underline for an incorrect final result. Pending picks are bold
 without a result line. Bracket selection starts with that player and remains
 adjustable. Unknown or ambiguous player names leave the ordinary main view.
 Both apps mask the keyword field and omit accepted values from on-screen hints,
-placeholders, and validation messages. The group names remain visible so users
-can tell which results they are viewing.
+placeholders, and validation messages. Group indicators and internal group
+suffixes are hidden throughout both apps.
 The selection applies to every screen, player filter, game pick, chart, history,
 and trophy cabinet. Changing groups clears displayed results, player selections,
 and open game details. A failed subgroup load never displays main-group data
 as the subgroup. The bundled demo contains only the main group.
 
-On iPhone, open the gear button's **Data Connection**, enter the same **Group
-keyword**, and tap **Save connection**. The selection is saved between launches.
+On iPhone, open the gear button's **Data Connection**, enter the same **Keyword**,
+and tap **Save connection**. The selection is saved between launches.
 The iPhone stores the entered keyword in Keychain, and cache files contain only
 its fingerprint. Saved results are reused only for the same endpoint and entry.
 Both apps check that the API supports private keyword routing, so an older
@@ -105,8 +108,8 @@ seasons, schedules, results, or trackers show a message instead of a partial mer
 The subgroup does not track all-time playoff history and needs no
 `playoff_history` / `playoff_picks` worksheet. The API skips that read, and both
 apps explain that this history is not tracked rather than showing a load error.
-In the combined view, all-time playoff standings show main-group history only,
-with a caption identifying that scope. Main-group playoff totals are never
+In the combined view, all-time playoff standings show main-group history only.
+Main-group playoff totals are never
 copied into the subgroup. Any old `MBCC_SUB_PLAYOFF_HISTORY_SHEET_ID` setting is
 ignored. `MBCC_SUB_UPDATES_ENABLED=1` enables a subgroup
 `todays_update` tab; it defaults to off. Optional `MBCC_SUB_SEASON` and

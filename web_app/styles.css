@@ -3,6 +3,8 @@ html { -webkit-text-size-adjust:100%; }
 .stMainBlockContainer { max-width:750px; padding:2rem 1.4rem 8rem; }
 /* Keep saved group keywords masked, including the password reveal control. */
 .st-key-group_keyword button { display:none; }
+.player-name.other-player { font-weight:400; }
+.player-name.selected-player { font-weight:800; }
 h1,h2,h3 { letter-spacing:-.035em; }
 h1 { font-size:2rem; font-weight:760; padding-bottom:.7rem; }
 h2 { font-size:1.55rem; } h3 { font-size:1.2rem; }

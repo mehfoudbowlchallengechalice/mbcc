@@ -42,6 +42,21 @@ struct PlayerAvatar: View {
     }
 }
 
+struct PlayerName: View {
+    @EnvironmentObject private var store: AppStore
+    let player: String
+    var baseline: Font.Weight = .semibold
+
+    private var viewer: String? { store.snapshot?.personalizedPlayer }
+    private var isPersonal: Bool { viewer == player }
+
+    var body: some View {
+        Text(player.groupDisplayName)
+            .fontWeight(viewer == nil ? baseline : isPersonal ? .bold : .regular)
+            .accessibilityIdentifier(isPersonal ? "personalizedPlayerName" : "playerName")
+    }
+}
+
 struct StandingScore: View {
     let standing: Standing
     var font: Font = .title3
@@ -65,7 +80,7 @@ struct ChampionshipRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            Text(record.player.groupDisplayName).font(.headline)
+            PlayerName(player: record.player).font(.headline)
             Spacer(minLength: 8)
             HStack(spacing: 4) {
                 ForEach(0..<record.fullWins, id: \.self) { _ in trophy }
@@ -219,7 +234,11 @@ struct PlayerFilter: View {
                 Button {
                     if selected.contains(player) { selected.remove(player) } else { selected.insert(player) }
                 } label: {
-                    Label(player.groupDisplayName, systemImage: selected.contains(player) ? "checkmark.circle.fill" : "circle")
+                    Label {
+                        PlayerName(player: player)
+                    } icon: {
+                        Image(systemName: selected.contains(player) ? "checkmark.circle.fill" : "circle")
+                    }
                 }
             }
         } label: {
